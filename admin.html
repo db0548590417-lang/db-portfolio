@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>הכנת עבודות לפרסום | דקל</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-page">
+    <main class="admin-shell">
+        <header class="admin-header">
+            <h1>הכנת עבודות לפרסום</h1>
+            <a href="index.html">חזרה לגלריה</a>
+        </header>
+
+        <p>
+            כאן מכינים את הגלריה. השינויים נשארים בעמוד הזה בלבד,
+            עד שתוריד את הקובץ ותעלה אותו לגיטהאב.
+        </p>
+
+        <ol class="publishing-steps">
+            <li>הוסף או ערוך עבודות.</li>
+            <li>לחץ על ״הורדת קובץ הגלריה״. התמונות כלולות בקובץ.</li>
+            <li>
+                במאגר שלך בגיטהאב, בחר Add file → Upload files,
+                העלה את projects.json ואשר עם Commit changes.
+            </li>
+        </ol>
+
+        <p>
+            רק מי שיש לו הרשאת כתיבה במאגר יכול לפרסם שינויים.
+            העמוד הזה אינו מפרסם בעצמו.
+        </p>
+
+        <div class="admin-actions">
+            <button id="export" class="action" type="button">
+                הורדת קובץ הגלריה
+            </button>
+
+            <label class="import-label">
+                טעינת קובץ גלריה
+                <input
+                    id="import"
+                    type="file"
+                    accept="application/json,.json"
+                >
+            </label>
+        </div>
+
+        <p class="status" role="status" aria-live="polite">
+            טוען את הגלריה הקיימת…
+        </p>
+
+        <form id="project-form">
+            <h2 id="form-title">הוספת עבודה</h2>
+
+            <label>
+                שם העבודה
+                <input name="title" required maxlength="100">
+            </label>
+
+            <label>
+                קטגוריה
+                <select name="category">
+                    <option>מיתוג</option>
+                    <option>עיצוב אתרים</option>
+                    <option>דפוס</option>
+                    <option>אחר</option>
+                </select>
+            </label>
+
+            <label>
+                תיאור
+                <textarea
+                    name="description"
+                    rows="3"
+                    maxlength="2000"
+                ></textarea>
+            </label>
+
+            <label>
+                תמונה
+                <input
+                    name="image"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                >
+                <span>
+                    PNG, JPG או WebP, עד 8MB.
+                    התמונות יוקטנו להעלאה נוחה.
+                </span>
+            </label>
+
+            <img
+                id="image-preview"
+                alt="תצוגה מקדימה"
+                hidden
+            >
+
+            <div class="admin-actions">
+                <button class="action" type="submit">
+                    הוספה לטיוטה
+                </button>
+
+                <button
+                    id="cancel-edit"
+                    class="secondary"
+                    type="button"
+                    hidden
+                >
+                    ביטול עריכה
+                </button>
+            </div>
+        </form>
+
+        <h2>העבודות בטיוטה</h2>
+        <div id="admin-projects"></div>
+    </main>
+
+    <script src="content.js" defer></script>
+    <script src="admin.js" defer></script>
+</body>
+</html>
