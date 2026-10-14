@@ -767,3 +767,14 @@ body {
         width: 28%;
     }
 }
+/* לצפייה בעבודה וכפתור הסגירה — בצבע ליים */
+.project__hint,
+.viewer .viewer__close {
+    background-color: #BFFF45;
+    color: #183036;
+}
+
+.viewer .viewer__close:hover {
+    background-color: #BFFF45;
+    color: #183036;
+}
