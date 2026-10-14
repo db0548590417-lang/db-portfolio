@@ -713,3 +713,14 @@ body {
         height: 110px;
     }
 }
+/* כפתור השליחה */
+.contact-form .action {
+    background-color: #BFFF45; /* צבע הרקע */
+    color: #183036;            /* צבע הכיתוב */
+}
+
+/* כשעוברים על הכפתור עם העכבר */
+.contact-form .action:hover {
+    background-color: #43D6CB;
+    color: #103F46;
+}
