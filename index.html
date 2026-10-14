@@ -3,25 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DB – Design & Branding | תיק עבודות</title>
+    <meta name="theme-color" content="#103F46">
+    <title>דקל | תיק עבודות</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>DB – Design & Branding</h1>
-        <p>ברוכים הבאים לתיק העבודות שלי</p>
-    </header>
+    <div class="portfolio">
+        <header class="brand" aria-label="דקל — תיק עבודות">
+            <img class="brand__logo" src="assets/logo-placeholder.svg" alt="דקל">
+            <img class="brand__palm" src="assets/palm-turquoise.svg" alt="" aria-hidden="true">
+        </header>
 
-    <main>
-        <section>
-            <h2>קצת על הסטודיו</h2>
-            <p>כאן נוסיף בהמשך מידע על השירותים והעיצובים של הסטודיו.</p>
-        </section>
-        
-        <section>
-            <h2>העבודות שלי</h2>
-            <p>כאן נציג את הפרויקטים השונים (למשל מיתוג, עיצוב אתרים ודפוס).</p>
-        </section>
-    </main>
+        <main class="gallery" aria-label="גלריית עבודות">
+            <div class="gallery__heading">
+                <div>
+                    <p class="gallery__eyebrow">תיק עבודות</p>
+                    <h1>העבודות שלי<span aria-hidden="true">.</span></h1>
+                </div>
+                <p class="gallery__intro">מקום לרעיונות שקיבלו צורה.</p>
+            </div>
+
+            <nav class="filters" aria-label="סינון עבודות לפי קטגוריה"></nav>
+            <p class="gallery-status" role="status" aria-live="polite">טוען עבודות…</p>
+            <div class="projects" aria-label="גלריית העבודות"></div>
+
+            <footer class="gallery-footer">
+                <span>דקל — רעיונות שקיבלו צורה.</span>
+                <a href="admin.html">הכנת עבודות לפרסום</a>
+            </footer>
+        </main>
+    </div>
+
+    <dialog class="viewer" aria-labelledby="viewer-title">
+        <div class="viewer__top">
+            <h2 id="viewer-title"></h2>
+            <button class="viewer__close" type="button" aria-label="סגירת התצוגה">✕</button>
+        </div>
+        <div class="viewer__canvas">
+            <img class="viewer__image" alt="">
+        </div>
+        <p class="viewer__description"></p>
+        <div class="viewer__navigation">
+            <button type="button" class="viewer__previous">→ העבודה הקודמת</button>
+            <span class="viewer__count" aria-live="polite"></span>
+            <button type="button" class="viewer__next">העבודה הבאה ←</button>
+        </div>
+    </dialog>
+
+    <script src="content.js" defer></script>
+    <script src="gallery.js" defer></script>
 </body>
 </html>
