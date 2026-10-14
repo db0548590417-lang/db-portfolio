@@ -724,3 +724,29 @@ body {
     background-color: #43D6CB;
     color: #103F46;
 }
+/* כפתורי ליים הופכים לטורקיז */
+.action,
+.viewer button {
+    background-color: #43D6CB;
+    color: #183036;
+}
+
+/* כפתור השליחה */
+.contact-form .action {
+    background-color: #43D6CB;
+    color: #183036;
+}
+
+/* במעבר עכבר */
+.action:hover,
+.viewer button:hover,
+.contact-form .action:hover {
+    background-color: #103F46;
+    color: #F7F8F3;
+}
+
+/* התווית שעל תמונות העבודות */
+.project__hint {
+    background-color: #43D6CB;
+    color: #183036;
+}
