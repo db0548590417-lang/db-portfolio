@@ -918,3 +918,31 @@ html {
         bottom: -15px;
     }
 }
+/* פעימה עדינה לכפתור בואו נדבר */
+.brand .brand__contact {
+    animation: talk-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes talk-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgb(191 255 69 / 35%);
+    }
+
+    50% {
+        transform: scale(1.04);
+        box-shadow: 0 0 0 12px rgb(191 255 69 / 0%);
+    }
+}
+
+.brand .brand__contact:hover,
+.brand .brand__contact:focus-visible {
+    animation: none;
+}
+
+/* כיבוד העדפת המשתמש להפחתת תנועה */
+@media (prefers-reduced-motion: reduce) {
+    .brand .brand__contact {
+        animation: none;
+    }
+}
