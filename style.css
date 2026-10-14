@@ -863,3 +863,47 @@ html {
         transform: none;
     }
 }
+.brand a.brand__contact {
+    position: absolute;
+    left: 6%;
+    right: auto;
+    top: auto;
+    bottom: 36px;
+    z-index: 5;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 54px;
+    padding: 12px 34px;
+
+    background: #BFFF45;
+    color: #183036;
+    border: 2px solid #BFFF45;
+    border-radius: 40px;
+    box-shadow: 0 5px 16px rgb(0 0 0 / 18%);
+
+    font-family: 'Assistant', Arial, sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    text-decoration: none;
+
+    transition: background-color .2s ease, box-shadow .2s ease;
+}
+
+.brand a.brand__contact:hover {
+    background: #103F46;
+    color: #BFFF45;
+    box-shadow: 0 7px 20px rgb(0 0 0 / 24%);
+}
+
+@media (max-width: 600px) {
+    .brand a.brand__contact {
+        left: 2%;
+        right: auto;
+        bottom: 20px;
+        min-height: 44px;
+        padding: 10px 20px;
+        font-size: 18px;
+    }
+}
