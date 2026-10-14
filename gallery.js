@@ -84,7 +84,7 @@ function render() {
 function createFilters() {
     const navigation = document.querySelector('.filters');
 
-    ['הכול', 'מיתוג', 'עיצוב אתרים', 'דפוס', 'אחר'].forEach(name => {
+    ['הכול', 'מיתוג', 'דפוס', 'אחר'].forEach(name => {
         const button = document.createElement('button');
         button.type = 'button';
         button.textContent = name;
