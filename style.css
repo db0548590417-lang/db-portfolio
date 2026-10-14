@@ -750,3 +750,20 @@ body {
     background-color: #43D6CB;
     color: #183036;
 }
+/* הלוגו מחליף את העץ בצד שמאל */
+.brand__logo {
+    top: 4.8vw;
+    left: 1.5%;
+    right: auto;
+    width: 23.5%;
+    height: auto;
+}
+
+@media (max-width: 600px) {
+    .brand__logo {
+        top: 8vw;
+        left: 1%;
+        right: auto;
+        width: 28%;
+    }
+}
