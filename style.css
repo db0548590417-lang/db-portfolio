@@ -790,3 +790,76 @@ body {
         right: 1%;
     }
 }
+/* הכפתור בצד שמאל */
+.brand__contact {
+    position: absolute;
+    z-index: 3;
+    left: 6%;
+    top: 48%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    padding: 14px 36px;
+    border-radius: 40px;
+    background: var(--turquoise);
+    color: var(--ink);
+    font-size: clamp(20px, 2vw, 30px);
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+/* חץ מסולסל באמצע, לכיוון הכפתור */
+.brand__arrow {
+    position: absolute;
+    z-index: 2;
+    top: 25%;
+    left: 32%;
+    width: 27%;
+    height: auto;
+    color: var(--lime);
+    pointer-events: none;
+}
+
+#contact-title {
+    scroll-margin-top: 32px;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+@media (hover: hover) {
+    .brand__contact:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgb(0 0 0 / 18%);
+    }
+}
+
+/* התאמה לנייד */
+@media (max-width: 600px) {
+    .brand__contact {
+        left: 2%;
+        top: 48%;
+        min-height: 44px;
+        padding: 10px 18px;
+        font-size: 18px;
+    }
+
+    .brand__arrow {
+        top: 18%;
+        left: 35%;
+        width: 28%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .brand__contact:hover {
+        transform: none;
+    }
+}
