@@ -20,15 +20,62 @@
                     <p class="gallery__eyebrow">תיק עבודות</p>
                     <h1>העבודות שלי<span aria-hidden="true">.</span></h1>
                 </div>
-                <p class="gallery__intro">מקום לרעיונות שקיבלו צורה.</p>
+                <p class="gallery__intro">מקום לרעיונות שקיבלו גובה.</p>
             </div>
 
             <nav class="filters" aria-label="סינון עבודות לפי קטגוריה"></nav>
             <p class="gallery-status" role="status" aria-live="polite">טוען עבודות…</p>
             <div class="projects" aria-label="גלריית העבודות"></div>
+<section class="contact" aria-labelledby="contact-title">
+    <h2 id="contact-title">בואו ניצור משהו ביחד</h2>
+    <p>יש לכם רעיון? השאירו פרטים ואחזור אליכם.</p>
 
+    <form
+        class="contact-form"
+        action="https://formspree.io/f/xnpjoakr"
+        method="POST"
+    >
+        <label>
+            שם
+            <input
+                type="text"
+                name="name"
+                autocomplete="name"
+                maxlength="100"
+                required
+            >
+        </label>
+
+        <label>
+            כתובת מייל
+            <input
+                type="email"
+                name="email"
+                autocomplete="email"
+                dir="ltr"
+                required
+            >
+        </label>
+
+        <label>
+            במה אפשר לעזור?
+            <textarea
+                name="message"
+                rows="5"
+                maxlength="5000"
+                required
+            ></textarea>
+        </label>
+
+        <button class="action" type="submit">
+            שליחת הודעה
+        </button>
+
+        <p>הפרטים ישמשו לחזרה לפנייה ויישלחו באמצעות Formspree.</p>
+    </form>
+</section>
             <footer class="gallery-footer">
-                <span>דקל — רעיונות שקיבלו צורה.</span>
+                <span>כל הזכויות שמורות לסטודיו - דקל 2026.</span>
             </footer>
         </main>
     </div>
