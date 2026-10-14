@@ -910,7 +910,7 @@ html {
 /* החץ יורד מעט לתוך הכרטיס הלבן */
 .brand .brand__arrow {
     top: auto;
-    bottom: -40px;
+    bottom: -100px;
 }
 
 @media (max-width: 600px) {
