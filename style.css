@@ -677,3 +677,39 @@ body {
         height: 120px;
     }
 }
+/* רווח מתחת לכרטיס יצירת הקשר */
+.contact {
+    overflow: visible;
+    margin-bottom: 80px;
+}
+
+/* הצגת החץ מעל הכרטיס */
+.contact::before {
+    content: "";
+    display: block;
+    position: absolute;
+    z-index: 5;
+    top: -75px;
+    left: -45px;
+    width: 190px;
+    height: 160px;
+    opacity: 1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 160' fill='none'%3E%3Cpath d='M8 10 C60 7 104 45 104 72 C104 109 57 94 77 57 C97 18 151 26 168 66 C181 93 178 117 176 145 M161 117 L176 145 L201 122' stroke='%23BFFF45' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+@media (max-width: 700px) {
+    .contact {
+        margin-bottom: 48px;
+    }
+
+    .contact::before {
+        top: -65px;
+        left: 0;
+        width: 120px;
+        height: 110px;
+    }
+}
