@@ -778,3 +778,15 @@ body {
     background-color: #BFFF45;
     color: #183036;
 }
+/* העברת הלוגו לצד ימין */
+.brand__logo {
+    left: auto;
+    right: 1.5%;
+}
+
+@media (max-width: 600px) {
+    .brand__logo {
+        left: auto;
+        right: 1%;
+    }
+}
