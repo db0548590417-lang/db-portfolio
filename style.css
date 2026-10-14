@@ -408,3 +408,69 @@ button, input, select, textarea {
         transform: none;
     }
 }
+.contact {
+    margin-top: 72px;
+    padding-top: 40px;
+    border-top: 1px solid #c6d1ca;
+}
+
+.contact h2 {
+    margin: 0 0 12px;
+    font-size: clamp(28px, 3vw, 44px);
+    color: var(--deep-green);
+}
+
+.contact > p {
+    margin-bottom: 28px;
+    line-height: 1.7;
+}
+
+.contact-form {
+    display: grid;
+    gap: 20px;
+    max-width: 640px;
+}
+
+.contact-form label {
+    display: grid;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.contact-form input,
+.contact-form textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 14px 16px;
+    border: 1px solid #a8bdb3;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+}
+
+.contact-form textarea {
+    resize: vertical;
+    min-height: 140px;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+    outline: 2px solid var(--turquoise);
+    outline-offset: 3px;
+    border-color: var(--deep-green);
+}
+
+.contact-form .action {
+    justify-self: start;
+    min-height: 48px;
+    padding-inline: 32px;
+    font-weight: 700;
+}
+
+.contact-form > p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #52665d;
+}
