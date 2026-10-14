@@ -907,3 +907,14 @@ html {
         font-size: 18px;
     }
 }
+/* החץ יורד מעט לתוך הכרטיס הלבן */
+.brand .brand__arrow {
+    top: auto;
+    bottom: -25px;
+}
+
+@media (max-width: 600px) {
+    .brand .brand__arrow {
+        bottom: -15px;
+    }
+}
