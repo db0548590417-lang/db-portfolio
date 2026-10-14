@@ -26,6 +26,32 @@
             <nav class="filters" aria-label="סינון עבודות לפי קטגוריה"></nav>
             <p class="gallery-status" role="status" aria-live="polite">טוען עבודות…</p>
             <div class="projects" aria-label="גלריית העבודות"></div>
+            <footer class="gallery-footer">
+                <span>כל הזכויות שמורות לסטודיו - דקל 2026.</span>
+            </footer>
+        </main>
+    </div>
+
+    <dialog class="viewer" aria-labelledby="viewer-title">
+        <div class="viewer__top">
+            <h2 id="viewer-title"></h2>
+            <button class="viewer__close" type="button" aria-label="סגירת התצוגה">✕</button>
+        </div>
+        <div class="viewer__canvas">
+            <img class="viewer__image" alt="">
+        </div>
+        <p class="viewer__description"></p>
+        <div class="viewer__navigation">
+            <button type="button" class="viewer__previous">→ העבודה הקודמת</button>
+            <span class="viewer__count" aria-live="polite"></span>
+            <button type="button" class="viewer__next">העבודה הבאה ←</button>
+        </div>
+    </dialog>
+
+    <script src="content.js" defer></script>
+    <script src="gallery.js" defer></script>
+</body>
+</html>
 <section class="contact" aria-labelledby="contact-title">
     <h2 id="contact-title">בואו ניצור משהו ביחד</h2>
     <p>יש לכם רעיון? השאירו פרטים ואחזור אליכם.</p>
@@ -74,29 +100,3 @@
         <p>הפרטים ישמשו לחזרה לפנייה ויישלחו באמצעות Formspree.</p>
     </form>
 </section>
-            <footer class="gallery-footer">
-                <span>כל הזכויות שמורות לסטודיו - דקל 2026.</span>
-            </footer>
-        </main>
-    </div>
-
-    <dialog class="viewer" aria-labelledby="viewer-title">
-        <div class="viewer__top">
-            <h2 id="viewer-title"></h2>
-            <button class="viewer__close" type="button" aria-label="סגירת התצוגה">✕</button>
-        </div>
-        <div class="viewer__canvas">
-            <img class="viewer__image" alt="">
-        </div>
-        <p class="viewer__description"></p>
-        <div class="viewer__navigation">
-            <button type="button" class="viewer__previous">→ העבודה הקודמת</button>
-            <span class="viewer__count" aria-live="polite"></span>
-            <button type="button" class="viewer__next">העבודה הבאה ←</button>
-        </div>
-    </dialog>
-
-    <script src="content.js" defer></script>
-    <script src="gallery.js" defer></script>
-</body>
-</html>
