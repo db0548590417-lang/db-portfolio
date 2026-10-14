@@ -474,3 +474,123 @@ button, input, select, textarea {
     line-height: 1.6;
     color: #52665d;
 }
+/* רקע כהה מסביב לכרטיס יצירת הקשר */
+body {
+    background-color: var(--ink);
+    background-image:
+        radial-gradient(
+            ellipse 100% 700px at 48% 18%,
+            #267e7c 0%,
+            transparent 100%
+        );
+}
+
+/* אזור יצירת הקשר מחוץ לגלריה */
+.contact {
+    position: relative;
+    width: min(100%, 730px);
+    margin: 36px auto 0;
+    padding: 0;
+    border: 0;
+}
+
+.contact h2 {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 10px;
+    color: var(--lime);
+    text-align: right;
+    font-size: clamp(30px, 3.6vw, 48px);
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+/* חץ מסולסל */
+.contact__arrow {
+    position: absolute;
+    z-index: 2;
+    top: -64px;
+    left: -70px;
+    width: 190px;
+    height: auto;
+    color: var(--lime);
+    pointer-events: none;
+}
+
+/* הכרטיס הלבן */
+.contact-form {
+    display: grid;
+    gap: 22px;
+    max-width: none;
+    padding: 76px clamp(28px, 10vw, 145px) 48px;
+    background: var(--paper);
+    border-radius: 44px;
+}
+
+.contact-form label {
+    display: grid;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.contact-form input,
+.contact-form textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 11px 14px;
+    border: 1px solid #c6d6d1;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px;
+}
+
+.contact-form textarea {
+    min-height: 112px;
+    resize: vertical;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+    outline: 2px solid var(--turquoise);
+    outline-offset: 3px;
+    border-color: var(--deep-green);
+}
+
+.contact-form .action {
+    justify-self: stretch;
+    min-height: 48px;
+    font-weight: 700;
+}
+
+.contact-form > p {
+    margin: 0;
+    color: #52665d;
+    font-size: 12px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* התאמה לנייד */
+@media (max-width: 600px) {
+    .contact {
+        margin-top: 40px;
+    }
+
+    .contact h2 {
+        font-size: clamp(26px, 6.6vw, 36px);
+    }
+
+    .contact-form {
+        padding: 54px 24px 30px;
+        border-radius: 28px;
+    }
+
+    .contact__arrow {
+        top: -30px;
+        left: -5px;
+        width: 105px;
+    }
+}
