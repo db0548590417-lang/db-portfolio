@@ -1295,3 +1295,30 @@ html {
         right: 24px;
     }
 }
+/* החץ מעל הכפתור, במרכז */
+.client-card__button-area {
+    padding-top: 130px;
+    min-height: 220px;
+}
+
+.client-card__arrow {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 150px;
+    height: 120px;
+}
+
+@media (max-width: 600px) {
+    .client-card__button-area {
+        padding-top: 110px;
+        min-height: 190px;
+    }
+
+    .client-card__arrow {
+        top: 0;
+        left: 50%;
+        width: 125px;
+        height: 100px;
+    }
+}
