@@ -10,41 +10,76 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="admin-page">
+<body class="admin-page client-page">
     <main class="admin-shell client-card">
-        <header class="admin-header">
-            <a href="index.html">דקל — חזרה לאתר ↗</a>
+
+        <header class="client-card__header">
+            <a href="index.html" aria-label="דקל — חזרה לאתר">
+                <img
+                    class="client-card__logo"
+                    src="assets/logo.png"
+                    alt="דקל"
+                >
+            </a>
         </header>
 
-        <h1>הפרויקט שלכם, במקום אחד.</h1>
+        <div class="client-card__content">
+            <h1>הפרויקט שלכם, במקום אחד.</h1>
 
-        <p>
-            כאן תוכלו לעבור לתיקיית הפרויקט,
-            לצפות בסקיצות ולהוריד את הקבצים המוכנים.
-        </p>
+            <p class="client-card__intro">
+                סקיצות, רעיונות וקבצים מוכנים —
+                הכול מחכה לכם בתיקיית הפרויקט.
+            </p>
 
-        <a
-            id="project-folder"
-            class="action"
-            target="_blank"
-            rel="noopener noreferrer"
-            hidden
-        >
-            צפייה בסקיצות ובקבצים ↗
-        </a>
+            <div class="client-card__button-area">
+                <svg
+                    class="client-card__arrow"
+                    viewBox="0 0 220 160"
+                    fill="none"
+                    aria-hidden="true"
+                    focusable="false"
+                >
+                    <path
+                        d="M12 12
+                           C65 5 103 38 98 67
+                           C93 99 53 78 74 49
+                           C104 12 171 45 178 91
+                           L183 140
+                           M163 120 L183 140 L199 115"
+                        stroke="currentColor"
+                        stroke-width="3.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
 
-        <p id="project-status" role="status" aria-live="polite">
-            טוען את הקישור לפרויקט…
-        </p>
+                <a
+                    id="project-folder"
+                    class="action client-card__button"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    hidden
+                >
+                    צפייה בסקיצות ובקבצים
+                </a>
+            </div>
+        </div>
 
-        <p>
-            התיקייה תיפתח בגוגל דרייב בכרטיסייה חדשה.
-            התחברו עם כתובת המייל שקיבלה הרשאה.
-        </p>
+        <footer class="client-card__notes">
+            <p id="project-status" role="status" aria-live="polite">
+                טוען את הקישור לפרויקט…
+            </p>
+
+            <p>
+                התיקייה תיפתח בגוגל דרייב בכרטיסייה חדשה.
+                התחברו עם כתובת המייל שקיבלה הרשאה.
+            </p>
+        </footer>
 
         <noscript>
             יש להפעיל JavaScript כדי לפתוח את קישור הפרויקט.
         </noscript>
+
     </main>
 
     <script src="client.js" defer></script>
