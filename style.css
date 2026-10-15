@@ -1355,3 +1355,24 @@ html {
     margin: 0;
     max-width: 100%;
 }
+/* שלוש תמונות בשורה במחשב */
+.projects,
+.project-album {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* שתי תמונות בשורה בטאבלט */
+@media (max-width: 900px) {
+    .projects,
+    .project-album {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* תמונה אחת בשורה בנייד */
+@media (max-width: 600px) {
+    .projects,
+    .project-album {
+        grid-template-columns: 1fr;
+    }
+}
