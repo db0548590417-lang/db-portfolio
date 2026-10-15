@@ -1,9 +1,32 @@
 function validateProjects(value) {
     if (!Array.isArray(value) || value.length > 100) {
-        throw Error('קובץ הגלריה חייב להכיל עד 100 עבודות');
+        throw Error('אפשר להוסיף עד 100 פרויקטים');
     }
 
     const ids = new Set();
+    const categories = ['מיתוג', 'עיצוב אתרים', 'דפוס', 'אחר'];
+
+    function validateImage(image) {
+        if (typeof image !== 'string') {
+            throw Error('קובץ התמונה אינו תקין');
+        }
+
+        const embeddedImage =
+            /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(image);
+
+        const imageFile =
+            /^assets\/[A-Za-z0-9_/-]+\.(png|jpe?g|webp)$/i.test(image);
+
+        if (
+            (!embeddedImage && !imageFile) ||
+            image.length > 12000000 ||
+            image.includes('..')
+        ) {
+            throw Error('יש לבחור תמונת PNG, JPG או WebP תקינה');
+        }
+
+        return image;
+    }
 
     return value.map(project => {
         if (
@@ -14,39 +37,45 @@ function validateProjects(value) {
             typeof project.title !== 'string' ||
             !project.title.trim() ||
             project.title.length > 100 ||
-            !['מיתוג', 'עיצוב אתרים', 'דפוס', 'אחר'].includes(project.category) ||
+            !categories.includes(project.category) ||
             typeof project.description !== 'string' ||
-            project.description.length > 2000 ||
-            typeof project.image !== 'string'
+            project.description.length > 2000
         ) {
-            throw Error('פרטי עבודה בקובץ אינם תקינים');
+            throw Error('פרטי הפרויקט אינם תקינים');
         }
 
-        const embeddedImage =
-            /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(project.image);
-
-        const imageFile =
-            /^assets\/[A-Za-z0-9_/-]+\.(png|jpe?g|webp)$/i.test(project.image);
-
-        if (!embeddedImage && !imageFile) {
-            throw Error('תמונה אינה תקינה: יש לבחור תמונת PNG, JPG או WebP');
-        }
+        /* תמיכה גם בעבודות הישנות */
+        const sourceImages = project.images === undefined
+            ? [project.image]
+            : project.images;
 
         if (
-            project.image.length > 12000000 ||
-            project.image.includes('..')
+            !Array.isArray(sourceImages) ||
+            sourceImages.length === 0 ||
+            sourceImages.length > 30
         ) {
-            throw Error('התמונה גדולה מדי או שהנתיב אינו תקין');
+            throw Error('כל פרויקט צריך להכיל בין תמונה אחת ל־30 תמונות');
         }
+
+        const images = sourceImages.map(validateImage);
+
+        /* תמונת השער חייבת להיות חלק מהגלריה */
+        const cover = typeof project.image === 'string' &&
+            images.includes(project.image)
+                ? project.image
+                : images[0];
 
         ids.add(project.id);
 
         return {
             id: project.id,
             title: project.title.trim(),
-            category: project.category,
+            category: project.category === 'עיצוב אתרים'
+                ? 'אחר'
+                : project.category,
             description: project.description,
-            image: project.image
+            image: cover,
+            images: images
         };
     });
 }
