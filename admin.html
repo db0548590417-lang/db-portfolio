@@ -60,16 +60,24 @@
                 <input name="title" required maxlength="100">
             </label>
 
-            <label>
-                קטגוריה
-                <select name="category">
-                    <option>מיתוג</option>
-                    <option>עיצוב אתרים</option>
-                    <option>דפוס</option>
-                    <option>אחר</option>
-                </select>
-            </label>
+           <fieldset class="category-options">
+    <legend>קטגוריות — אפשר לסמן כמה</legend>
 
+    <label>
+        <input type="checkbox" name="categories" value="מיתוג">
+        מיתוג
+    </label>
+
+    <label>
+        <input type="checkbox" name="categories" value="דפוס">
+        דפוס
+    </label>
+
+    <label>
+        <input type="checkbox" name="categories" value="אחר">
+        אחר
+    </label>
+</fieldset>
             <label>
                 תיאור
                 <textarea
