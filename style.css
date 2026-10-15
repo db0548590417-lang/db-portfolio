@@ -1404,3 +1404,7 @@ html {
     padding: 0;
     accent-color: #103F46;
 }
+/* הצגת כל הפרויקטים ללא כפתורי סינון */
+.gallery .filters {
+    display: none;
+}
