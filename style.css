@@ -1518,3 +1518,7 @@ html {
 .viewer:has(.viewer__canvas:not([hidden])) .viewer__navigation {
     flex-shrink: 0;
 }
+/* חלון התמונות מוסתר עד שלוחצים לפתוח אותו */
+dialog.viewer:not([open]) {
+    display: none !important;
+}
