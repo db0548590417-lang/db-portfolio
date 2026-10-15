@@ -115,7 +115,62 @@
         </form>
 
         <h2>העבודות בטיוטה</h2>
-        <div id="admin-projects"></div>
+        <div id="admin-projects"></div
+                                     <section class="client-link-builder">
+    <h2>יצירת קישור ללקוח</h2>
+
+    <p>
+        הדבק קישור לתיקיית דרייב כדי לקבל
+        קישור לעמוד הפרויקט באתר שלך.
+    </p>
+
+    <form id="client-link-form">
+        <label for="drive-folder-link">
+            הקישור לתיקייה בדרייב
+        </label>
+
+        <input
+            id="drive-folder-link"
+            type="url"
+            dir="ltr"
+            placeholder="https://drive.google.com/drive/folders/..."
+            autocomplete="off"
+            required
+        >
+
+        <button class="action" type="submit">
+            יצירת קישור ללקוח
+        </button>
+    </form>
+
+    <div id="generated-link-area" hidden>
+        <label for="generated-client-link">
+            הקישור לשליחה ללקוח
+        </label>
+
+        <input
+            id="generated-client-link"
+            type="text"
+            dir="ltr"
+            readonly
+        >
+
+        <button
+            id="copy-client-link"
+            class="action"
+            type="button"
+        >
+            העתקת הקישור
+        </button>
+    </div>
+
+    <p id="link-builder-status" role="status" aria-live="polite"></p>
+
+    <p>
+        התיקייה בדרייב צריכה להישאר במצב ״מוגבל״
+        ולהיות משותפת עם המייל של הלקוח.
+    </p>
+</section>
     </main>
 
     <script src="content.js" defer></script>
