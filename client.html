@@ -1,1 +1,52 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#103F46">
 
+    <title>הפרויקט שלכם | דקל</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="admin-page">
+    <main class="admin-shell client-card">
+        <header class="admin-header">
+            <a href="index.html">דקל — חזרה לאתר ↗</a>
+        </header>
+
+        <h1>הפרויקט שלכם, במקום אחד.</h1>
+
+        <p>
+            כאן תוכלו לעבור לתיקיית הפרויקט,
+            לצפות בסקיצות ולהוריד את הקבצים המוכנים.
+        </p>
+
+        <a
+            id="project-folder"
+            class="action"
+            target="_blank"
+            rel="noopener noreferrer"
+            hidden
+        >
+            צפייה בסקיצות ובקבצים ↗
+        </a>
+
+        <p id="project-status" role="status" aria-live="polite">
+            טוען את הקישור לפרויקט…
+        </p>
+
+        <p>
+            התיקייה תיפתח בגוגל דרייב בכרטיסייה חדשה.
+            התחברו עם כתובת המייל שקיבלה הרשאה.
+        </p>
+
+        <noscript>
+            יש להפעיל JavaScript כדי לפתוח את קישור הפרויקט.
+        </noscript>
+    </main>
+
+    <script src="client.js" defer></script>
+</body>
+</html>
