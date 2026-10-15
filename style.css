@@ -1262,3 +1262,36 @@ html {
         animation: none;
     }
 }
+/* חץ בכחול כהה */
+.client-card__arrow,
+.client-card__arrow path {
+    color: #103F46;
+    stroke: #103F46;
+}
+
+/* משאירים מקום ללוגו מעל הכרטיס */
+.client-page .client-card {
+    position: relative;
+    overflow: visible;
+    margin-top: 110px;
+    padding-top: 120px;
+}
+
+/* הלוגו חופף לשפה העליונה של הכרטיס */
+.client-card__header {
+    position: absolute;
+    top: 0;
+    right: 48px;
+    transform: translateY(-50%);
+}
+
+@media (max-width: 600px) {
+    .client-page .client-card {
+        margin-top: 80px;
+        padding-top: 90px;
+    }
+
+    .client-card__header {
+        right: 24px;
+    }
+}
