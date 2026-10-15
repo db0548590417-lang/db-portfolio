@@ -1463,3 +1463,58 @@ html {
 .viewer:has(.viewer__canvas:not([hidden])) .viewer__navigation {
     flex-shrink: 0;
 }
+/* חלון הפרויקט מתרחב רק כשפותחים תמונה */
+.viewer:has(.viewer__canvas:not([hidden])) {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 16px;
+    border-radius: 0;
+    background: #183036;
+    color: #F7F8F3;
+    overflow: auto;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.viewer:has(.viewer__canvas:not([hidden])) .viewer__top {
+    flex-shrink: 0;
+}
+
+.viewer:has(.viewer__canvas:not([hidden])) .viewer__top h2 {
+    font-size: 18px;
+}
+
+.viewer:has(.viewer__canvas:not([hidden])) .album-back {
+    align-self: flex-start;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.viewer:has(.viewer__canvas:not([hidden])) .viewer__canvas {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow: hidden;
+}
+
+.viewer:has(.viewer__canvas:not([hidden])) .viewer__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.viewer:has(.viewer__canvas:not([hidden])) .viewer__navigation {
+    flex-shrink: 0;
+}
