@@ -1376,3 +1376,31 @@ html {
         grid-template-columns: 1fr;
     }
 }
+.category-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid #a8bdb3;
+    border-radius: 12px;
+}
+
+.category-options legend {
+    padding: 0 8px;
+    font-weight: 600;
+}
+
+.admin-shell .category-options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.admin-shell .category-options input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    accent-color: #103F46;
+}
