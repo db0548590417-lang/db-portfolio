@@ -4,7 +4,7 @@ function validateProjects(value) {
     }
 
     const ids = new Set();
-    const categories = ['מיתוג', 'עיצוב אתרים', 'דפוס', 'אחר'];
+    const allowedCategories = ['מיתוג', 'דפוס', 'אחר'];
 
     function validateImage(image) {
         if (typeof image !== 'string') {
@@ -37,14 +37,40 @@ function validateProjects(value) {
             typeof project.title !== 'string' ||
             !project.title.trim() ||
             project.title.length > 100 ||
-            !categories.includes(project.category) ||
             typeof project.description !== 'string' ||
             project.description.length > 2000
         ) {
             throw Error('פרטי הפרויקט אינם תקינים');
         }
 
-        /* תמיכה גם בעבודות הישנות */
+        /* תמיכה בפרויקטים ישנים עם קטגוריה אחת */
+        const sourceCategories = project.categories === undefined
+            ? [project.category]
+            : project.categories;
+
+        if (
+            !Array.isArray(sourceCategories) ||
+            sourceCategories.length === 0 ||
+            sourceCategories.length > 3
+        ) {
+            throw Error('יש לבחור לפחות קטגוריה אחת לפרויקט');
+        }
+
+        const categories = [...new Set(
+            sourceCategories.map(category =>
+                category === 'עיצוב אתרים' ? 'אחר' : category
+            )
+        )];
+
+        if (
+            categories.some(category =>
+                !allowedCategories.includes(category)
+            )
+        ) {
+            throw Error('אחת הקטגוריות אינה תקינה');
+        }
+
+        /* תמיכה בפרויקטים ישנים עם תמונה אחת */
         const sourceImages = project.images === undefined
             ? [project.image]
             : project.images;
@@ -59,7 +85,6 @@ function validateProjects(value) {
 
         const images = sourceImages.map(validateImage);
 
-        /* תמונת השער חייבת להיות חלק מהגלריה */
         const cover = typeof project.image === 'string' &&
             images.includes(project.image)
                 ? project.image
@@ -70,10 +95,9 @@ function validateProjects(value) {
         return {
             id: project.id,
             title: project.title.trim(),
-            category: project.category === 'עיצוב אתרים'
-                ? 'אחר'
-                : project.category,
             description: project.description,
+            category: categories[0],
+            categories: categories,
             image: cover,
             images: images
         };
