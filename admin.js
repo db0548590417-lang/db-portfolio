@@ -1,22 +1,100 @@
 const status = document.querySelector('.status');
 const form = document.querySelector('#project-form');
+const submitButton = form.querySelector('[type=submit]');
+const exportButton = document.querySelector('#export');
+const importInput = document.querySelector('#import');
 
 let projects = [];
 let editing = null;
+let draftImages = [];
+let cover = null;
 let dirty = false;
 let busy = false;
+
+const previews = document.createElement('div');
+previews.className = 'project-album';
+form.elements.image.closest('label').after(previews);
 
 function message(text) {
     status.textContent = text;
 }
 
+function setBusy(value) {
+    busy = value;
+    submitButton.disabled = value;
+    exportButton.disabled = value;
+    importInput.disabled = value;
+    form.elements.image.disabled = value;
+}
+
 function reset() {
     editing = null;
+    draftImages = [];
+    cover = null;
     form.reset();
-    document.querySelector('#form-title').textContent = 'הוספת עבודה';
-    form.querySelector('[type=submit]').textContent = 'הוספה לטיוטה';
+    previews.replaceChildren();
+
+    document.querySelector('#form-title').textContent = 'הוספת פרויקט';
+    submitButton.textContent = 'שמירת הפרויקט בטיוטה';
     document.querySelector('#cancel-edit').hidden = true;
-    document.querySelector('#image-preview').hidden = true;
+
+    const oldPreview = document.querySelector('#image-preview');
+    if (oldPreview) oldPreview.hidden = true;
+}
+
+function renderPreviews() {
+    previews.replaceChildren();
+
+    draftImages.forEach((source, index) => {
+        const card = document.createElement('div');
+
+        const image = document.createElement('img');
+        image.src = source;
+        image.alt = `תמונה ${index + 1}`;
+        image.style.width = '100%';
+        image.style.height = '140px';
+        image.style.objectFit = 'contain';
+
+        const choose = document.createElement('button');
+        choose.type = 'button';
+        choose.className = 'secondary';
+        choose.textContent = source === cover
+            ? '✓ תמונת שער'
+            : 'בחירה כתמונת שער';
+        choose.setAttribute('aria-pressed', String(source === cover));
+
+        choose.addEventListener('click', () => {
+            if (busy) return;
+            cover = source;
+            dirty = true;
+            renderPreviews();
+        });
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'secondary';
+        remove.textContent = 'הסרת תמונה';
+        remove.setAttribute(
+            'aria-label',
+            `הסרת תמונה ${index + 1} מהפרויקט`
+        );
+
+        remove.addEventListener('click', () => {
+            if (busy) return;
+
+            draftImages.splice(index, 1);
+
+            if (!draftImages.includes(cover)) {
+                cover = draftImages[0] || null;
+            }
+
+            dirty = true;
+            renderPreviews();
+        });
+
+        card.append(image, choose, remove);
+        previews.append(card);
+    });
 }
 
 function render() {
@@ -24,11 +102,11 @@ function render() {
     list.replaceChildren();
 
     if (!projects.length) {
-        list.textContent = 'עדיין אין עבודות. הוסף את העבודה הראשונה שלך.';
+        list.textContent = 'עדיין אין פרויקטים. הוסף את הפרויקט הראשון שלך.';
         return;
     }
 
-    for (const project of projects) {
+    projects.forEach(project => {
         const row = document.createElement('article');
         row.className = 'admin-project';
 
@@ -37,7 +115,8 @@ function render() {
         image.alt = project.title;
 
         const title = document.createElement('h3');
-        title.textContent = project.title;
+        title.textContent =
+            `${project.title} · ${project.images.length} תמונות`;
 
         const edit = document.createElement('button');
         edit.type = 'button';
@@ -46,60 +125,73 @@ function render() {
 
         edit.addEventListener('click', () => {
             if (busy) return;
-            reset();
-            editing = project.id;
 
-            for (const key of ['title', 'category', 'description']) {
-                form.elements[key].value = project[key];
+            if (
+                (draftImages.length || form.elements.title.value) &&
+                !confirm('לעבור לעריכת הפרויקט? שינויים שלא נשמרו בטופס יאבדו.')
+            ) {
+                return;
             }
 
-            document.querySelector('#form-title').textContent = 'עריכת עבודה';
-            form.querySelector('[type=submit]').textContent = 'עדכון הטיוטה';
-            document.querySelector('#cancel-edit').hidden = false;
+            reset();
+            editing = project.id;
+            draftImages = [...project.images];
+            cover = project.image;
 
-            const preview = document.querySelector('#image-preview');
-            preview.src = project.image;
-            preview.hidden = false;
+            form.elements.title.value = project.title;
+            form.elements.category.value = project.category;
+            form.elements.description.value = project.description;
+
+            document.querySelector('#form-title').textContent =
+                'עריכת פרויקט';
+
+            document.querySelector('#cancel-edit').hidden = false;
+            renderPreviews();
             form.elements.title.focus();
         });
 
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'secondary';
-        remove.textContent = 'מחיקה';
+        remove.textContent = 'מחיקת פרויקט';
 
         remove.addEventListener('click', () => {
             if (busy) return;
-            if (!confirm(`למחוק מהטיוטה את ״${project.title}״?`)) return;
+
+            if (!confirm(`למחוק מהטיוטה את הפרויקט ״${project.title}״?`)) {
+                return;
+            }
 
             projects = projects.filter(item => item.id !== project.id);
+
             if (editing === project.id) reset();
 
             dirty = true;
             render();
-            message('העבודה הוסרה מהטיוטה. הורד את הקובץ והעלה לגיטהאב כדי לפרסם.');
+            message('הפרויקט הוסר מהטיוטה. לפרסום השינוי, הורד והעלה את הקובץ לגיטהאב.');
         });
 
         row.append(image, title, edit, remove);
         list.append(row);
-    }
+    });
 }
 
 async function imageData(file) {
     const formats = ['image/png', 'image/jpeg', 'image/webp'];
 
     if (file.size > 8000000 || !formats.includes(file.type)) {
-        throw Error('בחר PNG, JPG או WebP עד 8MB');
+        throw Error('כל תמונה חייבת להיות PNG, JPG או WebP, עד 8MB');
     }
 
     const bitmap = await createImageBitmap(file);
 
     try {
         if (bitmap.width * bitmap.height > 25000000) {
-            throw Error('התמונה גדולה מדי');
+            throw Error('אחת התמונות גדולה מדי');
         }
 
         const canvas = document.createElement('canvas');
+
         const scale = Math.min(
             1,
             1600 / Math.max(bitmap.width, bitmap.height)
@@ -118,29 +210,61 @@ async function imageData(file) {
     }
 }
 
-form.addEventListener('submit', async event => {
+form.elements.image.addEventListener('change', async () => {
+    if (busy) return;
+
+    const files = [...form.elements.image.files];
+    if (!files.length) return;
+
+    setBusy(true);
+    message('מכין את התמונות…');
+
+    try {
+        if (draftImages.length + files.length > 30) {
+            throw Error('אפשר להוסיף עד 30 תמונות לפרויקט');
+        }
+
+        const additions = [];
+
+        for (const file of files) {
+            additions.push(await imageData(file));
+        }
+
+        draftImages.push(...additions);
+        cover = cover || draftImages[0];
+        dirty = true;
+
+        renderPreviews();
+        message('התמונות נוספו לטופס. בחר תמונת שער ולחץ על שמירת הפרויקט בטיוטה.');
+    } catch (error) {
+        message(error.message || 'לא הצלחנו לקרוא את התמונות');
+    } finally {
+        form.elements.image.value = '';
+        setBusy(false);
+    }
+});
+
+form.addEventListener('input', () => {
+    dirty = true;
+});
+
+form.addEventListener('submit', event => {
     event.preventDefault();
     if (busy) return;
 
-    busy = true;
-    const button = form.querySelector('[type=submit]');
-    button.disabled = true;
-
     try {
-        const file = form.elements.image.files[0];
-        const old = projects.find(project => project.id === editing);
+        if (!draftImages.length) {
+            throw Error('יש לבחור לפחות תמונה אחת לפרויקט');
+        }
 
-        if (!file && !old) throw Error('יש לבחור תמונה');
-
-        const project = {
+        const project = validateProjects([{
             id: editing || crypto.randomUUID(),
             title: form.elements.title.value,
             category: form.elements.category.value,
             description: form.elements.description.value,
-            image: file ? await imageData(file) : old.image
-        };
-
-        validateProjects([project]);
+            image: cover,
+            images: [...draftImages]
+        }])[0];
 
         if (editing) {
             projects = projects.map(item =>
@@ -148,29 +272,37 @@ form.addEventListener('submit', async event => {
             );
         } else {
             if (projects.length >= 100) {
-                throw Error('ניתן להוסיף עד 100 עבודות');
+                throw Error('אפשר להוסיף עד 100 פרויקטים');
             }
+
             projects.unshift(project);
         }
 
         dirty = true;
         reset();
         render();
-        message('הטיוטה עודכנה. הורד את קובץ הגלריה והעלה אותו לגיטהאב כדי לפרסם.');
+
+        message('הפרויקט נשמר בטיוטה. הורד את קובץ הגלריה והעלה אותו לגיטהאב כדי לפרסם.');
     } catch (error) {
-        message(error.message || 'לא הצלחנו לקרוא את התמונה');
-    } finally {
-        busy = false;
-        button.disabled = false;
+        message(error.message);
     }
 });
 
 document.querySelector('#cancel-edit').addEventListener('click', () => {
-    if (!busy) reset();
+    if (busy) return;
+
+    if (!confirm('לבטל את השינויים בטופס?')) return;
+
+    reset();
 });
 
-document.querySelector('#export').addEventListener('click', () => {
+exportButton.addEventListener('click', () => {
     if (busy) return;
+
+    if (draftImages.length || form.elements.title.value.trim()) {
+        message('יש בטופס פרויקט שעדיין לא נשמר. שמור אותו בטיוטה או בטל את העריכה לפני ההורדה.');
+        return;
+    }
 
     const blob = new Blob(
         [JSON.stringify(projects, null, 2) + '\n'],
@@ -178,22 +310,24 @@ document.querySelector('#export').addEventListener('click', () => {
     );
 
     if (blob.size > 20000000) {
-        message('הקובץ גדול מדי. השתמש בתמונות קטנות יותר — עד 20MB לקובץ הגלריה.');
+        message('קובץ הגלריה גדול מדי. יש להקטין תמונות או להסיר תמונות — המקסימום הוא 20MB.');
         return;
     }
 
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
+
     link.href = url;
     link.download = 'projects.json';
     link.click();
 
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+
     dirty = false;
-    message('הקובץ הוכן להורדה. העלה את projects.json לגיטהאב כדי לעדכן את האתר.');
+    message('הקובץ הוכן להורדה. העלה את projects.json לגיטהאב כדי לפרסם את הפרויקטים.');
 });
 
-document.querySelector('#import').addEventListener('change', async event => {
+importInput.addEventListener('change', async event => {
     const file = event.target.files[0];
     if (!file || busy) return;
 
@@ -201,6 +335,8 @@ document.querySelector('#import').addEventListener('change', async event => {
         event.target.value = '';
         return;
     }
+
+    setBusy(true);
 
     try {
         if (file.size > 20000000) throw Error('הקובץ גדול מדי');
@@ -213,11 +349,13 @@ document.querySelector('#import').addEventListener('change', async event => {
         dirty = true;
         reset();
         render();
-        message('הקובץ נטען לטיוטה. השינויים עדיין לא פורסמו.');
+
+        message('הפרויקטים נטענו לטיוטה. השינויים עדיין לא פורסמו.');
     } catch (error) {
         message(error.message);
     } finally {
         event.target.value = '';
+        setBusy(false);
     }
 });
 
@@ -228,7 +366,8 @@ window.addEventListener('beforeunload', event => {
     }
 });
 
-form.querySelector('[type=submit]').disabled = true;
+setBusy(true);
+form.hidden = true;
 
 (async () => {
     try {
@@ -239,12 +378,20 @@ form.querySelector('[type=submit]').disabled = true;
         if (!response.ok) throw Error();
 
         projects = validateProjects(await response.json());
+
+        reset();
         render();
-        message('הגלריה נטענה. אפשר לערוך ולהוריד קובץ מעודכן.');
+        form.hidden = false;
+
+        message('הפרויקטים נטענו. אפשר להוסיף פרויקט ולבחור כמה תמונות יחד.');
     } catch {
-        render();
-        message('לא ניתן לטעון את הגלריה. טען עותק של projects.json לפני עריכה כדי לשמור על העבודות הקיימות.');
+        message('לא ניתן לטעון את הגלריה. אפשר לטעון עותק של projects.json באמצעות טעינת קובץ גלריה.');
     } finally {
-        form.querySelector('[type=submit]').disabled = false;
+        setBusy(false);
     }
 })();
+
+/* פתיחת הטופס גם אחרי ייבוא קובץ */
+importInput.addEventListener('change', () => {
+    form.hidden = false;
+});
