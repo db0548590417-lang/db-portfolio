@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#103F46">
+
+    <title>אזור לקוחות | דקל</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+
+<body class="admin-page">
+    <main class="admin-shell clients-page">
+        <header class="admin-header">
+            <h1>אזור לקוחות</h1>
+            <a href="index.html">חזרה לאתר ↗</a>
+        </header>
+
+        <h2>העבודות שלכם, במקום אחד</h2>
+
+        <p>
+            הדביקו את הקישור האישי שקיבלתם ממני
+            כדי לצפות בסקיצות ולהוריד את הקבצים המוכנים.
+        </p>
+
+        <form id="client-access">
+            <label for="client-link">
+                הקישור לתיקיית הפרויקט
+            </label>
+
+            <input
+                id="client-link"
+                type="url"
+                placeholder="https://drive.google.com/drive/folders/..."
+                dir="ltr"
+                autocomplete="off"
+                spellcheck="false"
+                aria-describedby="client-help client-status"
+                required
+            >
+
+            <button class="action" type="submit" disabled>
+                פתיחת תיקיית הפרויקט ↗
+            </button>
+
+            <p id="client-status" role="status" aria-live="polite"></p>
+        </form>
+
+        <div id="client-help">
+            <p>
+                התיקייה תיפתח בגוגל דרייב בכרטיסייה חדשה.
+                התחברו עם כתובת המייל שאיתה קיבלתם הרשאה.
+            </p>
+
+            <p>
+                אם מופיעה הודעה שאין גישה, ודאו שאתם מחוברים
+                לחשבון הנכון או פנו אליי לקבלת הרשאה.
+            </p>
+
+            <p>
+                אין להזין כאן סיסמה או קוד אימות.
+                האתר אינו מעניק הרשאות — הגישה נקבעת בגוגל דרייב.
+            </p>
+        </div>
+
+        <noscript>
+            יש להפעיל JavaScript כדי להשתמש בכפתור.
+            אפשר גם לפתוח ישירות את הקישור שקיבלתם.
+        </noscript>
+    </main>
+
+    <script src="clients.js" defer></script>
+</body>
+</html>
