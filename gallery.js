@@ -106,7 +106,7 @@ function openProject(project) {
 
 function render(category = 'הכול') {
     visible = projects.filter(project =>
-        category === 'הכול' || project.category === category
+     category === 'הכול' || project.categories.includes(category)
     );
 
     grid.replaceChildren();
@@ -147,7 +147,7 @@ function render(category = 'הכול') {
 
         const label = document.createElement('span');
         label.textContent =
-            `${project.category} · ${project.images.length} תמונות`;
+         `${project.categories.join(' · ')} · ${project.images.length} תמונות`
 
         caption.append(label);
         figure.append(button, caption);
