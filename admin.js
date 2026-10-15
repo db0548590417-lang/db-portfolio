@@ -139,7 +139,9 @@ function render() {
             cover = project.image;
 
             form.elements.title.value = project.title;
-            form.elements.category.value = project.category;
+            form.querySelectorAll('[name="categories"]').forEach(checkbox => {
+    checkbox.checked = project.categories.includes(checkbox.value);
+});
             form.elements.description.value = project.description;
 
             document.querySelector('#form-title').textContent =
@@ -260,7 +262,9 @@ form.addEventListener('submit', event => {
         const project = validateProjects([{
             id: editing || crypto.randomUUID(),
             title: form.elements.title.value,
-            category: form.elements.category.value,
+           categories: [...form.querySelectorAll(
+    '[name="categories"]:checked'
+)].map(checkbox => checkbox.value),
             description: form.elements.description.value,
             image: cover,
             images: [...draftImages]
