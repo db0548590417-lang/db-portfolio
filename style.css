@@ -1083,3 +1083,182 @@ html {
         font-size: 14px;
     }
 }
+/* עמוד הפרויקט של הלקוח */
+.client-page {
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.client-card {
+    width: 100%;
+    max-width: 1000px;
+    margin: auto;
+    padding: 36px 48px 28px;
+    border-radius: 36px;
+    background: #F7F8F3;
+}
+
+/* לוגו למעלה מימין */
+.client-card__header {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.client-card__logo {
+    display: block;
+    width: clamp(100px, 15vw, 160px);
+    height: auto;
+    filter: drop-shadow(0 4px 6px rgb(24 48 54 / 20%));
+}
+
+/* כותרת וטקסט ממורכזים */
+.client-card__content {
+    padding: 24px 0 48px;
+    text-align: center;
+}
+
+.client-card__content h1 {
+    margin: 0 0 16px;
+    color: #103F46;
+    font-size: clamp(30px, 4vw, 48px);
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.client-card__intro {
+    max-width: 500px;
+    margin: auto;
+    color: #183036;
+    font-size: 19px;
+    line-height: 1.7;
+}
+
+/* אזור הכפתור והחץ */
+.client-card__button-area {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    margin-top: 16px;
+    padding-top: 64px;
+}
+
+/* כפתור ליים בסגנון בואו נדבר */
+.client-card .client-card__button {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 58px;
+    padding: 14px 34px;
+
+    background: #BFFF45;
+    color: #183036;
+    border: 2px solid #BFFF45;
+    border-radius: 40px;
+    box-shadow: 0 5px 16px rgb(24 48 54 / 18%);
+
+    font-family: inherit;
+    font-size: 23px;
+    font-weight: 700;
+    text-decoration: none;
+    text-align: center;
+
+    animation: client-button-pulse 2.8s ease-in-out infinite;
+}
+
+.client-card .client-card__button:hover,
+.client-card .client-card__button:focus-visible {
+    background: #103F46;
+    color: #BFFF45;
+    animation: none;
+}
+
+.client-card .client-card__button[hidden] {
+    display: none !important;
+}
+
+/* חץ משמאל שמצביע לכפתור */
+.client-card__arrow {
+    position: absolute;
+    top: 0;
+    left: calc(50% - 280px);
+    width: 180px;
+    height: 140px;
+    color: #BFFF45;
+    pointer-events: none;
+}
+
+.client-card__arrow path {
+    stroke: #BFFF45;
+}
+
+/* שתי שורות ההסבר בתחתית */
+.client-card__notes {
+    padding-top: 20px;
+    border-top: 1px solid #d5dfd8;
+    text-align: center;
+}
+
+.client-card__notes p {
+    margin: 6px 0;
+    color: #52665d;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+@keyframes client-button-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgb(191 255 69 / 30%);
+    }
+
+    50% {
+        box-shadow: 0 0 0 12px rgb(191 255 69 / 0%);
+    }
+}
+
+/* התאמה לנייד */
+@media (max-width: 600px) {
+    .client-page {
+        padding: 20px 12px;
+    }
+
+    .client-card {
+        padding: 24px 20px;
+        border-radius: 26px;
+    }
+
+    .client-card__content {
+        padding-bottom: 28px;
+    }
+
+    .client-card__intro {
+        font-size: 17px;
+    }
+
+    .client-card__button-area {
+        min-height: 180px;
+        padding-top: 80px;
+    }
+
+    .client-card .client-card__button {
+        max-width: 100%;
+        padding: 12px 20px;
+        font-size: 18px;
+    }
+
+    .client-card__arrow {
+        top: 0;
+        left: calc(50% - 145px);
+        width: 125px;
+        height: 100px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .client-card .client-card__button {
+        animation: none;
+    }
+}
