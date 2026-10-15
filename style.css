@@ -1322,3 +1322,36 @@ html {
         height: 100px;
     }
 }
+/* חץ מעל הכפתור — בשורה נפרדת */
+.client-page .client-card .client-card__button-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 0;
+    margin-top: 28px;
+    padding: 0;
+}
+
+.client-page .client-card .client-card__arrow {
+    position: static;
+    inset: auto;
+    transform: none;
+    display: block;
+    width: 150px;
+    height: 110px;
+    margin: 0;
+    flex-shrink: 0;
+    color: #103F46;
+}
+
+.client-page .client-card .client-card__arrow path {
+    stroke: #103F46;
+}
+
+.client-page .client-card .client-card__button {
+    position: relative;
+    margin: 0;
+    max-width: 100%;
+}
