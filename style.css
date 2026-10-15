@@ -946,3 +946,71 @@ html {
         animation: none;
     }
 }
+/* גלריית תמונות של פרויקט */
+.project-album {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin: 24px 0;
+}
+
+.viewer .project-album__item {
+    display: block;
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #c6d6d1;
+    border-radius: 14px;
+    background: #e9eeea;
+    cursor: zoom-in;
+}
+
+.project-album__item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform .3s ease;
+}
+
+.viewer .album-back {
+    margin-top: 20px;
+    background: #43D6CB;
+    color: #183036;
+}
+
+/* הסתרת אזורים שלא מוצגים כרגע */
+.viewer [hidden] {
+    display: none !important;
+}
+
+.viewer__description {
+    white-space: pre-wrap;
+    line-height: 1.8;
+}
+
+.viewer__description:empty {
+    display: none;
+}
+
+@media (hover: hover) {
+    .project-album__item:hover img {
+        transform: scale(1.03);
+    }
+}
+
+@media (max-width: 600px) {
+    .project-album {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .project-album__item img {
+        transition: none;
+    }
+
+    .project-album__item:hover img {
+        transform: none;
+    }
+}
