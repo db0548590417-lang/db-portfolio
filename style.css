@@ -1282,7 +1282,7 @@ html {
     position: absolute;
     top: 0;
     right: 48px;
-    transform: translateY(-50%);
+    transform: translateY(-75%);
 }
 
 @media (max-width: 600px) {
