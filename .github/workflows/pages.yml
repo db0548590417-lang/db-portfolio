@@ -1,0 +1,179 @@
+name: Publish portfolio
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Prepare website and extract images
+        shell: bash
+        run: |
+          python3 <<'PY'
+          import base64
+          import hashlib
+          import json
+          from pathlib import Path
+          import re
+          import shutil
+
+          site = Path('_site')
+          site.mkdir(exist_ok=True)
+
+          for pattern in ('*.html', '*.css', '*.js'):
+              for source in Path('.').glob(pattern):
+                  shutil.copy2(source, site / source.name)
+
+          shutil.copytree(
+              'assets',
+              site / 'assets',
+              dirs_exist_ok=True
+          )
+
+          images_dir = site / 'assets' / 'projects'
+          images_dir.mkdir(parents=True, exist_ok=True)
+
+          original = Path('projects.json').read_text(
+              encoding='utf-8-sig'
+          )
+
+          projects = json.loads(original)
+
+          if not isinstance(projects, list):
+              raise ValueError(
+                  'projects.json must contain an array'
+              )
+
+          # Preserve the editable version for the preparation page.
+          (site / 'projects-source.json').write_text(
+              original,
+              encoding='utf-8'
+          )
+
+          def image_file(value):
+              if not isinstance(value, str):
+                  raise ValueError('Invalid image')
+
+              if value.startswith('assets/'):
+                  path = (site / value).resolve()
+                  assets = (site / 'assets').resolve()
+
+                  if (
+                      not path.is_relative_to(assets)
+                      or not path.is_file()
+                  ):
+                      raise ValueError(
+                          'Missing image file: ' + value
+                      )
+
+                  return value
+
+              match = re.fullmatch(
+                  r'data:image/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)',
+                  value
+              )
+
+              if not match:
+                  raise ValueError(
+                      'Expected a PNG, JPEG or WebP image'
+                  )
+
+              kind, encoded = match.groups()
+              data = base64.b64decode(
+                  encoded,
+                  validate=True
+              )
+
+              valid = (
+                  (
+                      kind == 'png'
+                      and data.startswith(b'\x89PNG\r\n\x1a\n')
+                  )
+                  or (
+                      kind == 'jpeg'
+                      and data.startswith(b'\xff\xd8\xff')
+                  )
+                  or (
+                      kind == 'webp'
+                      and data.startswith(b'RIFF')
+                      and data[8:12] == b'WEBP'
+                  )
+              )
+
+              if not valid:
+                  raise ValueError(
+                      'Image format does not match its contents'
+                  )
+
+              extension = 'jpg' if kind == 'jpeg' else kind
+              name = (
+                  hashlib.sha256(data).hexdigest()
+                  + '.'
+                  + extension
+              )
+
+              (images_dir / name).write_bytes(data)
+
+              return 'assets/projects/' + name
+
+          for project in projects:
+              if project.get('image'):
+                  project['image'] = image_file(
+                      project['image']
+                  )
+
+              if 'images' in project:
+                  project['images'] = [
+                      image_file(image)
+                      for image in project['images']
+                  ]
+
+          (site / 'projects.json').write_text(
+              json.dumps(projects, ensure_ascii=False),
+              encoding='utf-8'
+          )
+
+          (site / '.nojekyll').touch()
+
+          print('Projects:', len(projects))
+          print(
+              'Image files:',
+              len(list(images_dir.iterdir()))
+          )
+          PY
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Publish website
+        id: deployment
+        uses: actions/deploy-pages@v4
