@@ -375,9 +375,15 @@ form.hidden = true;
 
 (async () => {
     try {
-        const response = await fetch('projects.json', {
-            cache: 'no-store'
-        });
+       let response = await fetch('projects-source.json', {
+    cache: 'no-store'
+});
+
+if (response.status === 404) {
+    response = await fetch('projects.json', {
+        cache: 'no-store'
+    });
+}
 
         if (!response.ok) throw Error();
 
