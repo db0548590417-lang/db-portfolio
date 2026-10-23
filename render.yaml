@@ -15,8 +15,14 @@ services:
         sync: false
       - key: APP_SESSION_SECRET
         generateValue: true
-      # Existing services: add these in Environment when Google OAuth is ready.
-      - key: GOOGLE_CLIENT_ID
-        sync: false
-      - key: GOOGLE_CLIENT_SECRET
-        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dekel-ai-accounts
+          property: connectionString
+
+databases:
+  - name: dekel-ai-accounts
+    plan: free
+    databaseName: dekel_ai
+    user: dekel_ai
+    ipAllowList: []

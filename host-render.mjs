@@ -1,7 +1,8 @@
 import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import worker from './dist/server/index.js';
-import { createGoogleAuth, readCookie } from './google-auth.mjs';
+import { createPasswordAuth, readCookie } from './password-auth.mjs';
+import { createPostgresAccountStore, createSqliteAccountStore } from './account-store.mjs';
 import { encryptConfig, decryptConfig } from './session-crypto.mjs';
 export { encryptConfig, decryptConfig } from './session-crypto.mjs';
 
@@ -15,10 +16,13 @@ export function createRenderServer(options = {}) {
   if (!secret || secret.length < 32)
     throw new Error('Set APP_SESSION_SECRET (32+ characters) in the hosting dashboard.');
   if (password && password.length < 12) throw new Error('APP_ACCESS_PASSWORD must contain at least 12 characters.');
-  const auth = createGoogleAuth({ secret, ownerPassword: password,
-    oauthFactory: options.oauthFactory,
-    clientId: options.clientId ?? process.env.GOOGLE_CLIENT_ID,
-    clientSecret: options.clientSecret ?? process.env.GOOGLE_CLIENT_SECRET });
+  const databaseUrl = options.databaseUrl || process.env.DATABASE_URL;
+  const sqlitePath = options.sqlitePath || process.env.ACCOUNTS_SQLITE_PATH;
+  const storePromise = (options.accountStore ? Promise.resolve(options.accountStore)
+    : databaseUrl ? createPostgresAccountStore(databaseUrl)
+    : sqlitePath && !isHosted ? createSqliteAccountStore(sqlitePath)
+    : Promise.resolve(null)).catch(() => { console.error('Account database is unavailable. Check DATABASE_URL in the hosting dashboard.'); return null; });
+  const auth = createPasswordAuth({ secret, ownerPassword: password, storePromise });
   const cache = new Map();
   const failures = new Map();
   return http.createServer(async (incoming, outgoing) => {
@@ -43,7 +47,7 @@ export function createRenderServer(options = {}) {
       if (!['GET', 'HEAD'].includes(incoming.method) && incoming.headers.origin !== origin) {
         outgoing.writeHead(403).end('Invalid request origin'); return;
       }
-      if (pathname === '/api/auth/owner' || pathname === '/auth/google') {
+      if (['/api/auth/owner', '/api/auth/register', '/api/auth/login'].includes(pathname)) {
         if (failures.size > 10000) failures.clear();
         failures.set(address, { count: failure && Date.now() - failure.at < 60000 ? failure.count + 1 : 1, at: Date.now() });
       }

@@ -2,42 +2,36 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import logo from '../../dekel-ai-logo.svg';
 import { setStorageUser } from '../../data/accountStorage';
 
-type User = { id: string; email: string; googleName?: string; username: string; provider: string };
+type User = { id: string; email: string; username: string; provider: string };
 const AccountContext = createContext<User | null>(null);
 export const useAccount = () => useContext(AccountContext);
 
 export function AccountGate({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [googleEnabled, setGoogleEnabled] = useState(false);
+  const [registrationEnabled, setRegistrationEnabled] = useState(false);
   const [ownerEnabled, setOwnerEnabled] = useState(false);
-  const [ownerForm, setOwnerForm] = useState(false);
+  const [mode, setMode] = useState<'login' | 'register' | 'owner'>('login');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const acceptUser = (value: User) => { setStorageUser(value.id); setUser(value); };
   useEffect(() => {
     fetch('/api/auth/session').then(async response => {
-      if (!response.ok) throw new Error('לא ניתן לבדוק את החיבור. נסה שוב בעוד רגע.');
+      if (!response.ok) throw new Error('לא ניתן לבדוק את החיבור. נסה לרענן את העמוד.');
       const session = await response.json();
-      setGoogleEnabled(session.googleEnabled); setOwnerEnabled(session.ownerLoginEnabled);
-      if (session.user) { acceptUser(session.user); setUsername(session.user.username || session.user.googleName || ''); }
-      const params = new URLSearchParams(location.search);
-      if (params.has('auth_error')) {
-        setError(params.get('auth_error') === 'not_configured' ? 'חיבור Google עדיין אינו מוגדר.' : 'ההתחברות לא הושלמה. נסה שוב עם Google.');
-        history.replaceState({}, '', location.pathname);
-      }
+      setRegistrationEnabled(session.registrationEnabled); setOwnerEnabled(session.ownerLoginEnabled);
+      if (session.user) acceptUser(session.user);
     }).catch(error => setError(error.message)).finally(() => setLoading(false));
   }, []);
   useEffect(() => {
     if (!user) return;
     const previous = window.fetch.bind(window);
     const checkAccount = async () => {
-      try {
-        const response = await previous('/api/auth/session');
-        if (response.ok && (await response.json()).user?.id !== user.id) location.reload();
-      } catch { /* Keep the workspace on a temporary network failure. */ }
+      try { const response = await previous('/api/auth/session'); if (response.ok && (await response.json()).user?.id !== user.id) location.reload(); }
+      catch { /* Keep the workspace on a temporary network failure. */ }
     };
     window.addEventListener('focus', checkAccount);
     window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -51,13 +45,16 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
     }) as typeof fetch;
     return () => { window.fetch = previous; window.removeEventListener('focus', checkAccount); };
   }, [user?.id]);
-  async function submit(event: React.FormEvent, path: string, body: unknown) {
-    event.preventDefault(); setBusy(true); setError('');
+  function changeMode(next: typeof mode) { setMode(next); setError(''); setPassword(''); setConfirmPassword(''); }
+  async function submit(event: React.FormEvent) {
+    event.preventDefault(); setError('');
+    if (mode === 'register' && password !== confirmPassword) { setError('הסיסמאות אינן זהות'); return; }
+    setBusy(true);
     try {
-      const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const response = await fetch('/api/auth/' + mode, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'לא ניתן להשלים את הפעולה');
-      setPassword(''); acceptUser(result.user);
+      setPassword(''); setConfirmPassword(''); acceptUser(result.user);
     } catch (error: any) { setError(error.message); }
     finally { setBusy(false); }
   }
@@ -72,22 +69,22 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
         <p className="mt-10 text-xs">דקל AI · סטודיו למעצבים</p>
       </div>
       <div className="flex flex-col justify-center p-8 md:p-12">
-        {loading ? <p role="status">טוען את הסטודיו שלך…</p> : user ? <>
-          <p className="mb-2 text-sm text-[#43D6CB]">נעים להכיר, {user.googleName || user.email}</p>
-          <h2 className="mb-3 text-2xl font-bold">איך נקרא לך בסטודיו?</h2>
-          <p className="mb-6 text-sm leading-7 text-zinc-300">בחר שם משתמש שיוצג בחשבון שלך.</p>
-          <form onSubmit={event => submit(event, '/api/auth/profile', { username })} className="space-y-4">
-            <label className="block text-sm" htmlFor="account-name">שם משתמש</label>
-            <input id="account-name" autoComplete="nickname" minLength={2} maxLength={32} required value={username} onChange={event => setUsername(event.target.value)} className="w-full rounded-xl border border-white/20 bg-[#183036] p-3 outline-none focus:border-[#43D6CB]" />
-            <button disabled={busy} className="w-full rounded-xl bg-[#43D6CB] p-3 font-bold text-[#183036] disabled:opacity-50">{busy ? 'שומר…' : 'נכנסים לסטודיו'}</button>
-          </form>
-        </> : <>
+        {loading ? <p role="status">טוען את הסטודיו שלך…</p> : <>
           <p className="mb-2 text-sm text-[#43D6CB]">ברוכים הבאים לסטודיו</p>
-          <h2 className="mb-3 text-3xl font-bold">המקום שלך לקריאייטיב</h2>
-          <p className="mb-8 text-sm leading-7 text-zinc-300">נכנסים עם Google, בוחרים שם משתמש ומתחילים ליצור. הכניסה הראשונה יוצרת חשבון.</p>
-          {googleEnabled ? <a href="/auth/google" target="_top" className="flex items-center justify-center gap-3 rounded-xl bg-white p-3.5 font-bold text-[#183036]"><svg aria-hidden="true" viewBox="0 0 48 48" className="h-5 w-5"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.7-.4-4H24v7.6h11c-.5 2.5-1.9 4.6-4.1 6v5h6.6c3.9-3.6 6.1-8.6 6.1-14.6Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5c-1.8 1.2-4.1 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.2C9.2 39.4 16.1 44 24 44Z"/><path fill="#FBBC05" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.2H5.8a20 20 0 0 0 0 17.6l6.8-5.2Z"/><path fill="#EA4335" d="M24 12c3 0 5.6 1 7.7 3l5.8-5.8A19.3 19.3 0 0 0 24 4C16.1 4 9.2 8.6 5.8 15.2l6.8 5.2C14.2 15.6 18.7 12 24 12Z"/></svg>המשך עם Google</a>
-          : <div className="rounded-xl border border-[#43D6CB]/25 bg-[#183036] p-4 text-sm leading-7 text-zinc-200">ההרשמה עם Google תיפתח אחרי שבעל האתר ישלים את הגדרת החיבור.</div>}
-          {ownerEnabled && <div className="mt-5"><button onClick={() => setOwnerForm(!ownerForm)} className="text-xs text-[#43D6CB] underline">כניסת בעל הסטודיו</button>{ownerForm && <form onSubmit={event => submit(event, '/api/auth/owner', { password })} className="mt-4 space-y-3"><label htmlFor="owner-password" className="block text-sm">סיסמת הסטודיו הקיימת</label><input id="owner-password" type="password" autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)} className="w-full rounded-xl border border-white/20 bg-[#183036] p-3" /><button disabled={busy} className="w-full rounded-xl bg-[#43D6CB] p-3 font-bold text-[#183036] disabled:opacity-50">{busy ? 'מתחבר…' : 'כניסה לסטודיו'}</button></form>}</div>}
+          <h2 className="mb-3 text-3xl font-bold">{mode === 'register' ? 'יוצרים חשבון חדש' : mode === 'owner' ? 'כניסת בעל הסטודיו' : 'המקום שלך לקריאייטיב'}</h2>
+          <p className="mb-6 text-sm leading-7 text-zinc-300">{mode === 'register' ? 'בוחרים שם משתמש וסיסמה ומתחילים ליצור.' : mode === 'owner' ? 'הזן את סיסמת הסטודיו הקיימת שלך.' : 'התחבר לחשבון שלך והמשך מהמקום שבו עצרת.'}</p>
+          {mode !== 'owner' && <div className="mb-6 flex gap-2 rounded-xl bg-[#183036] p-1" aria-label="בחירת כניסה או הרשמה">
+            <button onClick={() => changeMode('login')} className={`flex-1 rounded-lg p-2 text-sm ${mode === 'login' ? 'bg-[#43D6CB] font-bold text-[#183036]' : 'text-zinc-300'}`}>כניסה</button>
+            <button onClick={() => changeMode('register')} className={`flex-1 rounded-lg p-2 text-sm ${mode === 'register' ? 'bg-[#43D6CB] font-bold text-[#183036]' : 'text-zinc-300'}`}>הרשמה</button>
+          </div>}
+          {!registrationEnabled && mode !== 'owner' && <p role="status" className="mb-4 rounded-lg border border-[#43D6CB]/25 p-3 text-sm leading-7 text-zinc-300">מסד החשבונות עדיין מתחבר. נסה לרענן בעוד רגע. בעל הסטודיו יכול להיכנס עם הסיסמה הקיימת.</p>}
+          <form onSubmit={submit} className="space-y-4">
+            {mode !== 'owner' && <div><label htmlFor="account-username" className="mb-2 block text-sm">שם משתמש</label><input id="account-username" autoComplete="username" minLength={3} maxLength={32} required value={username} onChange={event => setUsername(event.target.value)} className="w-full rounded-xl border border-white/20 bg-[#183036] p-3 outline-none focus:border-[#43D6CB]" /></div>}
+            <div><label htmlFor="account-password" className="mb-2 block text-sm">סיסמה</label><input id="account-password" type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} minLength={12} maxLength={128} required value={password} onChange={event => setPassword(event.target.value)} className="w-full rounded-xl border border-white/20 bg-[#183036] p-3 outline-none focus:border-[#43D6CB]" /></div>
+            {mode === 'register' && <div><label htmlFor="account-confirm" className="mb-2 block text-sm">אימות סיסמה</label><input id="account-confirm" type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} className="w-full rounded-xl border border-white/20 bg-[#183036] p-3 outline-none focus:border-[#43D6CB]" /><p className="mt-2 text-xs text-zinc-400">לפחות 12 תווים. שם המשתמש יכול לכלול אותיות בעברית או באנגלית, מספרים, נקודה, קו וקו תחתון.</p></div>}
+            <button disabled={busy || (!registrationEnabled && mode !== 'owner')} className="w-full rounded-xl bg-[#43D6CB] p-3 font-bold text-[#183036] disabled:opacity-50">{busy ? 'רק רגע…' : mode === 'register' ? 'יצירת חשבון' : 'כניסה לסטודיו'}</button>
+          </form>
+          {ownerEnabled && <button onClick={() => changeMode(mode === 'owner' ? 'login' : 'owner')} className="mt-5 self-start text-xs text-[#43D6CB] underline">{mode === 'owner' ? 'חזרה לכניסה הרגילה' : 'כניסת בעל הסטודיו'}</button>}
           <p className="mt-7 text-xs leading-6 text-zinc-400">כל משתמש מחבר מפתח Gemini משלו. הפרויקטים נשמרים בדפדפן בנפרד לכל חשבון; אין כרגע סנכרון בין מחשבים.</p>
         </>}
         {error && <p role="alert" className="mt-5 text-sm text-red-300">{error}</p>}
