@@ -56,7 +56,7 @@ export function createPasswordAuth({ secret, ownerPassword, storePromise }) {
       try { input = await readJson(request); } catch { send(response, { error: 'הבקשה אינה תקינה' }, 400); return true; }
       const username = typeof input.username === 'string' ? input.username.normalize('NFKC').trim() : '';
       const password = typeof input.password === 'string' ? input.password : '';
-      if (pathname === '/api/auth/owner') {
+      if (pathname === '/api/auth/owner' || (pathname === '/api/auth/login' && userKey(username) === 'dekel')) {
         if (!ownerPassword) { send(response, { error: 'הכניסה אינה זמינה' }, 403); return true; }
         const supplied = createHash('sha256').update(password).digest();
         if (!timingSafeEqual(supplied, createHash('sha256').update(ownerPassword).digest())) { send(response, { error: 'הסיסמה אינה נכונה' }, 401); return true; }

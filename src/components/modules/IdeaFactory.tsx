@@ -130,7 +130,7 @@ export const IdeaFactory: React.FC = () => {
             <span>מודול #3 — מעבדת רעיונות והברקות</span>
           </div>
           <h1 className="text-2xl font-black text-white">מעבדת חשיבה ופירוק קונספטים</h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[#C1D1D5]">
             12 מתודולוגיות קריאייטיב, בקרת אינטנסיביות (1-5) ופעולות שבירת פרדיגמות מהירות.
           </p>
         </div>
@@ -151,10 +151,10 @@ export const IdeaFactory: React.FC = () => {
             />
           </div>
 
-          <div className="text-[11px] text-zinc-300 bg-[#183036] border border-[#43D6CB]/20 rounded-xl p-3 space-y-1">
+          <div className="text-[13px] text-zinc-300 bg-[#183036] border border-[#43D6CB]/20 rounded-xl p-3 space-y-1">
             <div className="font-bold text-[#43D6CB]">הקשר הפרויקט נטען אוטומטית</div>
             <div className="line-clamp-3 whitespace-pre-line leading-relaxed">{buildBrandContext(activeProject) || 'לא הוגדרו עדיין נתוני פרויקט. אפשר לערוך בפאנל מאפיינים והקשר כלי.'}</div>
-            <div className="text-zinc-400">הגדרות המעבדה נשמרות אוטומטית לכל פרויקט, גם בלי Gemini.</div>
+            <div className="text-[#C1D1D5]">הגדרות המעבדה נשמרות אוטומטית לכל פרויקט, גם בלי Gemini.</div>
           </div>
           {/* Intensity Slider */}
           <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl space-y-2">
@@ -170,7 +170,7 @@ export const IdeaFactory: React.FC = () => {
               onChange={(e) => setSettings({intensity: Number(e.target.value)})}
               className="w-full accent-[#43D6CB] h-1.5"
             />
-            <div className="flex justify-between text-[10px] text-zinc-500">
+            <div className="flex justify-between text-[12px] text-[#C1D1D5]">
               <span>1: סולידי ומסורתי</span>
               <span>3: מאוזן ומפתיע</span>
               <span>5: מהפכני וקיצוני</span>
@@ -192,7 +192,7 @@ export const IdeaFactory: React.FC = () => {
                   }`}
                 >
                   <div className="text-xs">{m.name}</div>
-                  <div className="text-[10px] text-zinc-500 line-clamp-1">{m.desc}</div>
+                  <div className="text-[12px] text-[#C1D1D5] line-clamp-1">{m.desc}</div>
                 </button>
               ))}
             </div>
@@ -207,7 +207,7 @@ export const IdeaFactory: React.FC = () => {
                   key={act.id}
                   onClick={() => handleRunIdea(act.id)}
                   disabled={isLoading}
-                  className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-500 rounded-lg text-[11px] font-bold text-white transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-500 rounded-lg text-[13px] font-bold text-white transition flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   <Icon name={act.icon} className={`w-3.5 h-3.5 ${act.color}`} />
                   <span>{act.label}</span>
@@ -223,7 +223,7 @@ export const IdeaFactory: React.FC = () => {
             <div className="p-12 text-center bg-[#103F46] border border-zinc-800 rounded-2xl space-y-3">
               <Icon name="RefreshCw" className="w-8 h-8 text-[#43D6CB] mx-auto animate-spin" />
               <p className="text-zinc-300 text-sm font-bold">מעבדת הרעיונות מנתחת את האובייקט ומייצרת הברקות...</p>
-              <p className="text-xs text-zinc-500">שיטה: {selectedMethod} • אינטנסיביות {intensity}/5</p>
+              <p className="text-xs text-[#C1D1D5]">שיטה: {selectedMethod} • אינטנסיביות {intensity}/5</p>
             </div>
           )}
 
@@ -231,7 +231,7 @@ export const IdeaFactory: React.FC = () => {
             <div className="p-12 text-center bg-[#103F46] border border-zinc-800 rounded-2xl space-y-3">
               <Icon name="Lightbulb" className="w-8 h-8 text-amber-400 mx-auto opacity-70" />
               <h3 className="font-bold text-white text-base">מוכן לחשיבה מחוץ לקופסה</h3>
-              <p className="text-zinc-400 text-xs max-w-md mx-auto">
+              <p className="text-[#C1D1D5] text-xs max-w-md mx-auto">
                 בחר שיטה ולחץ על אחת מפעולות ההברקה ("תן הברקה", "עוד יותר מפתיע", "שבור את הקונספט", "יותר גשטאלט" או "10 כיוונים").
               </p>
             </div>
@@ -242,12 +242,12 @@ export const IdeaFactory: React.FC = () => {
               {/* Summary Banner */}
               <div className="p-4 bg-gradient-to-r from-[#43D6CB]/10 to-transparent border border-[#43D6CB]/30 rounded-2xl flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-[#43D6CB] font-bold uppercase tracking-wider block">
+                  <span className="text-[12px] text-[#43D6CB] font-bold uppercase tracking-wider block">
                     {resultData.action} • {resultData.method} (רמה {resultData.intensity}/5)
                   </span>
                   <h3 className="text-sm font-bold text-white mt-0.5">{resultData.headlineSummary}</h3>
                 </div>
-                <span className="text-xs font-bold text-zinc-400 bg-black/40 px-2.5 py-1 rounded-lg">
+                <span className="text-xs font-bold text-[#C1D1D5] bg-black/40 px-2.5 py-1 rounded-lg">
                   {resultData.ideas?.length} רעיונות הופקו
                 </span>
               </div>
@@ -255,7 +255,7 @@ export const IdeaFactory: React.FC = () => {
               {selectedCompare.length >= 2 && <div className="rounded-xl border border-[#43D6CB]/40 p-4 bg-[#183036] space-y-3">
                 <h4 className="font-bold text-white text-sm">השוואת רעיונות ({selectedCompare.length})</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">{(resultData.ideas || []).filter((idea, idx) => selectedCompare.includes(String(idea.id || idx))).map((idea, idx) =>
-                  <div key={idx} className="p-3 rounded-lg bg-[#103F46] text-xs space-y-2"><strong className="text-[#43D6CB]">{idea.title}</strong><p className="text-zinc-200">{idea.visualHook}</p><p className="text-zinc-400">{idea.mechanism}</p></div>)}</div>
+                  <div key={idx} className="p-3 rounded-lg bg-[#103F46] text-xs space-y-2"><strong className="text-[#43D6CB]">{idea.title}</strong><p className="text-zinc-200">{idea.visualHook}</p><p className="text-[#C1D1D5]">{idea.mechanism}</p></div>)}</div>
               </div>}
               {/* Ideas Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -267,25 +267,25 @@ export const IdeaFactory: React.FC = () => {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-black text-white">{idea.title}</span>
-                        <span className="text-[10px] font-mono text-[#43D6CB] font-bold bg-[#43D6CB]/10 px-1.5 py-0.5 rounded">
+                        <span className="text-[12px] font-mono text-[#43D6CB] font-bold bg-[#43D6CB]/10 px-1.5 py-0.5 rounded">
                           #{idx + 1}
                         </span>
                       </div>
 
                       <div className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg mb-2">
-                        <span className="text-[10px] text-amber-400 font-bold block mb-0.5">ההברקה הוויזואלית:</span>
+                        <span className="text-[12px] text-amber-400 font-bold block mb-0.5">ההברקה הוויזואלית:</span>
                         <p className="text-xs text-zinc-200 leading-snug">{idea.visualHook}</p>
                       </div>
 
                       <div className="space-y-1.5 text-xs">
-                        <p className="text-zinc-400 text-[11px] leading-relaxed">
+                        <p className="text-[#C1D1D5] text-[13px] leading-relaxed">
                           <strong>המנגנון:</strong> {idea.mechanism}
                         </p>
-                        <p className="text-emerald-400 text-[11px] leading-relaxed">
+                        <p className="text-emerald-400 text-[13px] leading-relaxed">
                           <strong>טיפ לביצוע:</strong> {idea.executionTip}
                         </p>
                         {idea.suggestedCopy && (
-                          <p className="text-[#43D6CB] text-[11px] font-bold">
+                          <p className="text-[#43D6CB] text-[13px] font-bold">
                             סלוגן: "{idea.suggestedCopy}"
                           </p>
                         )}

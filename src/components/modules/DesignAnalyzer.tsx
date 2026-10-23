@@ -106,7 +106,7 @@ export const DesignAnalyzer: React.FC = () => {
             <span>מודול #9 — מבקר עיצוב גרפי מעשי</span>
           </div>
           <h1 className="text-2xl font-black text-white">ביקורת קריאות, היררכיה וצ׳קליסט לשיפור</h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[#C1D1D5]">
             הערכת מוקד משיכה, מרווחי נשימה, ניגודיות טיפוגרפית וצ׳קליסט מעשי שניתן לסמן כהושלם.
           </p>
         </div>
@@ -160,12 +160,12 @@ export const DesignAnalyzer: React.FC = () => {
           </div>
 
           <div>
-            <span className="text-zinc-400 font-bold block mb-1">תצוגת העיצוב:</span>
+            <span className="text-[#C1D1D5] font-bold block mb-1">תצוגת העיצוב:</span>
             <div className="aspect-[4/3] bg-zinc-950 rounded-xl overflow-hidden border border-zinc-800 flex items-center justify-center">
               {imageUrl ? (
                 <img src={imageUrl} alt="Design to critique" className="w-full h-full object-contain" />
               ) : (
-                <span className="text-zinc-600 text-xs">לא הועלתה תמונה</span>
+                <span className="text-[#C1D1D5] text-xs">לא הועלתה תמונה</span>
               )}
             </div>
           </div>
@@ -177,7 +177,7 @@ export const DesignAnalyzer: React.FC = () => {
             <div className="p-12 text-center bg-[#103F46] border border-zinc-800 rounded-2xl space-y-3">
               <Icon name="CheckCircle2" className="w-8 h-8 text-[#43D6CB] mx-auto opacity-70" />
               <h3 className="font-bold text-white text-sm">הארט דירקטור מוכן לבדיקה</h3>
-              <p className="text-xs text-zinc-400 max-w-md mx-auto">
+              <p className="text-xs text-[#C1D1D5] max-w-md mx-auto">
                 לחץ על "הפעל ביקורת עיצוב" כדי לקבל ניתוח מקצועי של קריאות, היררכיה, מרווחי נשימה וצ׳קליסט מעשי.
               </p>
             </div>
@@ -201,7 +201,7 @@ export const DesignAnalyzer: React.FC = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
                     {Object.entries(critiqueResult.scores).map(([metric, score]: any) => (
                       <div key={metric} className="bg-zinc-900 p-2 rounded-lg border border-zinc-800 text-center">
-                        <span className="text-[10px] text-zinc-400 block truncate">{metric}</span>
+                        <span className="text-[12px] text-[#C1D1D5] block truncate">{metric}</span>
                         <span className="text-xs font-bold text-[#43D6CB] font-mono">{score}/10</span>
                       </div>
                     ))}
@@ -217,7 +217,7 @@ export const DesignAnalyzer: React.FC = () => {
                       <Icon name="CheckCircle2" className="w-4 h-4 text-emerald-400" />
                       <span>צ׳קליסט מעשי לשיפור (סמן כהושלם):</span>
                     </h4>
-                    <span className="text-[10px] text-zinc-400 font-mono">
+                    <span className="text-[12px] text-[#C1D1D5] font-mono">
                       {checklist.filter((c) => c.status === 'completed').length} / {checklist.length} בוצעו
                     </span>
                   </div>
@@ -229,7 +229,7 @@ export const DesignAnalyzer: React.FC = () => {
                         onClick={() => toggleChecklistItem(item.id)}
                         className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition ${
                           item.status === 'completed'
-                            ? 'bg-emerald-500/10 border-emerald-500/30 line-through text-zinc-400'
+                            ? 'bg-emerald-500/10 border-emerald-500/30 line-through text-[#C1D1D5]'
                             : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-200'
                         }`}
                       >
@@ -245,7 +245,7 @@ export const DesignAnalyzer: React.FC = () => {
 
                         {item.priority && (
                           <span
-                            className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${
+                            className={`text-[12px] px-2 py-0.5 rounded font-bold uppercase ${
                               item.priority === 'high'
                                 ? 'bg-red-500/20 text-red-400'
                                 : 'bg-amber-500/20 text-amber-400'

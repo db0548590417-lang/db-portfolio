@@ -74,7 +74,7 @@ body {font-family: 'Heebo', 'Assistant', system-ui, sans-serif;}
 .dekel-app main { min-width: 0; }
 .dekel-app .studio-grid { background-image: linear-gradient(to right,rgba(67,214,203,.035) 1px,transparent 1px),linear-gradient(to bottom,rgba(67,214,203,.035) 1px,transparent 1px); }
 
-.dekel-app [class*="bg-[#43D6CB]"] { color: var(--dekel-ink); }
+.dekel-app [class~="bg-[#43D6CB]"] { color: var(--dekel-ink); }
 .dekel-app ::selection { background: var(--dekel-aqua);color:var(--dekel-ink); }
 @media(max-width:950px) { .dekel-brand-caption{display:none;} .dekel-logo-frame {width:85px;} }
 
@@ -82,3 +82,47 @@ body {font-family: 'Heebo', 'Assistant', system-ui, sans-serif;}
 .dekel-app .dekel-lime-microcopy { color: var(--dekel-lime); font-size: 11px; font-weight: 600; }
 .dekel-app :is(button, a) { -webkit-tap-highlight-color: transparent; }
 .dekel-app :is(button, input, select, textarea):focus-visible { outline-color: var(--dekel-aqua); }
+
+/* Interface typography. Artwork and generated exports retain their own sizes. */
+:is(.dekel-app, .dekel-account, .studio-dialog) {
+  font-family: 'Heebo', 'Assistant', system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+:is(.dekel-app, .dekel-account, .studio-dialog) :is(button, label, input, select, textarea) {
+  font-size: max(.875rem, 1em);
+}
+:is(.dekel-app, .dekel-account, .studio-dialog) :is(input, textarea)::placeholder {
+  color: #a9bec3;
+  opacity: 1;
+}
+:is(.dekel-app, .dekel-account, .studio-dialog) :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid #43D6CB;
+  outline-offset: 3px;
+}
+.dekel-app :is(label, .studio-copy) { line-height: 1.7; }
+.dekel-app :is(button, a)[class~="bg-[#43D6CB]"] { color: #183036; }
+.dekel-app :is(button, a)[class~="from-[#43D6CB]"][class~="to-[#43D6CB]"] { color: #183036; }
+.dekel-app :is(button, a)[class~="bg-teal-500"] { color: #183036; }
+.dekel-app :is(input, select, textarea) { border-color: #5b777e; }
+.dekel-app select option { background: #183036; color: #f7f8f3; }
+.studio-dialog button { min-height: 44px; }
+.studio-dialog p { line-height: 1.75; }
+.studio-dialog { font-family: 'Heebo', sans-serif; }
+.dekel-app header { flex-shrink: 0; }
+.dekel-app header button { min-height: 36px; }
+.dekel-app aside button { min-height: 42px; }
+@media (max-width: 767px) {
+  .dekel-app header { height: auto; min-height: 64px; flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+  .dekel-app header > div { min-width: 0; }
+  .dekel-app :is(input, select, textarea), .dekel-account input { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.dekel-app, .dekel-account, .studio-dialog) *,
+  :is(.dekel-app, .dekel-account, .studio-dialog) *::before,
+  :is(.dekel-app, .dekel-account, .studio-dialog) *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

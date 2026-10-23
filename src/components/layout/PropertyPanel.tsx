@@ -46,14 +46,14 @@ export const PropertyPanel: React.FC = () => {
     updateActiveProject(prev=>({...prev,savedInspirations:prev.savedInspirations.filter(x=>x.id!==id)}));
     setRefPreviews(prev=>{const next={...prev};delete next[id];return next;});
   };
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   if (isCollapsed) {
     return (
       <div className="hidden lg:flex flex-col items-center justify-start py-4 px-1.5 bg-[#183036] border-r border-[#31535A] z-20">
         <button
           onClick={() => setIsCollapsed(false)}
-          className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+          className="p-1.5 rounded-lg hover:bg-zinc-800 text-[#C1D1D5] hover:text-white transition"
           title="הרחב פאנל מאפיינים (Properties)"
         >
           <Icon name="Sliders" className="w-4 h-4" />
@@ -63,7 +63,7 @@ export const PropertyPanel: React.FC = () => {
   }
 
   return (
-    <aside className="hidden lg:flex flex-col w-80 bg-[#183036] border-r border-[#31535A] h-[calc(100vh-3.5rem)] select-none text-right z-20">
+    <aside className="hidden h-full min-h-0 w-80 shrink-0 flex-col bg-[#183036] border-r border-[#31535A] select-none text-right z-20 lg:flex">
       {/* Header */}
       <div className="p-3 border-b border-[#31535A] flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-300">
@@ -72,7 +72,7 @@ export const PropertyPanel: React.FC = () => {
         </div>
         <button
           onClick={() => setIsCollapsed(true)}
-          className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+          className="p-1 rounded hover:bg-zinc-800 text-[#C1D1D5] hover:text-white transition"
           title="כווץ פאנל"
         >
           <Icon name="ChevronLeft" className="w-3.5 h-3.5" />
@@ -85,9 +85,9 @@ export const PropertyPanel: React.FC = () => {
         <section className="space-y-3" dir="rtl">
           <div className="flex items-center justify-between gap-2">
             <strong className="text-sm text-white">תיק הפרויקט</strong>
-            <span className="text-[10px] text-[#43D6CB]">שמירה אוטומטית</span>
+            <span className="text-[12px] text-[#43D6CB]">שמירה אוטומטית</span>
           </div>
-          <p className="text-[11px] text-zinc-400">כל שינוי נשמר בפרויקט הפעיל ומשמש כמידע רקע לפקודות AI.</p>
+          <p className="text-[13px] text-[#C1D1D5]">כל שינוי נשמר בפרויקט הפעיל ומשמש כמידע רקע לפקודות AI.</p>
           {([
             ['פרויקט ולקוחות', [
               ['name', 'שם הפרויקט'], ['clientName', 'הלקוח המזמין'],
@@ -115,7 +115,7 @@ export const PropertyPanel: React.FC = () => {
                   const [group,field] = key.includes('.') ? key.split('.') : ['',key];
                   const value = String(group ? ((activeProject as any)[group]?.[field] ?? '') : ((activeProject as any)[field] ?? ''));
                   return <label key={key} className="block space-y-1">
-                    <span className="text-[11px] text-zinc-300">{label}</span>
+                    <span className="text-[13px] text-zinc-300">{label}</span>
                     <textarea rows={['brand.brandDescription','brief.creativeRestrictions','creativeWorkspace.approvedCopy','creativeWorkspace.visualDirection','creativeWorkspace.notes'].includes(key) ? 3 : 1}
                       value={value} placeholder="טרם הוגדר" dir="auto"
                       onChange={e => updateActiveProject(prev => group
@@ -129,7 +129,7 @@ export const PropertyPanel: React.FC = () => {
           ))}
           <details className="rounded-xl border border-[#31535A] bg-[#103F46] p-3">
             <summary className="cursor-pointer font-bold text-white">העיצובים שלי ({activeProject.designAssets?.length || 0})</summary>
-            <div className="mt-3 space-y-2 text-[11px] text-zinc-300">
+            <div className="mt-3 space-y-2 text-[13px] text-zinc-300">
               <p>עיצובים וגרסאות נשמרים בנפרד לכל פרויקט.</p>
               {(activeProject.designAssets || []).map(asset => <button key={asset.id} className="block w-full rounded-lg bg-[#183036] px-2 py-2 text-right hover:bg-zinc-800" onClick={() => {sessionStorage.setItem(userStorageKey(`dekel-design-${activeProject.id}`),asset.id);setActiveModule('creative_analyzer');window.dispatchEvent(new CustomEvent('dekel-open-design', {detail:{id:asset.id,projectId:activeProject.id}}));}}>{asset.name} · גרסה {asset.version}</button>)}
               {!activeProject.designAssets?.length && <p>טרם הועלו עיצובים לפרויקט.</p>}
@@ -139,7 +139,7 @@ export const PropertyPanel: React.FC = () => {
             <summary className="cursor-pointer font-bold text-white">הגדרות קריאייטיב</summary>
             <div className="space-y-2 mt-3">
               {([['lockedCopy','קופירייטינג מאושר — אין לשנות'],['lockedVisual','ויזואל מאושר — אין לשנות'],['directorMode','מנהל קריאייטיב ביקורתי']] as const).map(([key,label]) =>
-                <label key={key} className="flex items-center gap-2 text-[11px] text-zinc-200">
+                <label key={key} className="flex items-center gap-2 text-[13px] text-zinc-200">
                   <input className="accent-[#43D6CB]" type="checkbox" checked={!!activeProject.creativeWorkspace?.[key]}
                     onChange={e => updateActiveProject(prev => ({...prev, creativeWorkspace: {...{
                       mode:'full' as const, approvedCopy:'', visualDirection:'', visualReferenceUrl:'', notes:'',
@@ -162,15 +162,15 @@ export const PropertyPanel: React.FC = () => {
           </div>
           <details className="rounded-xl border border-[#31535A] bg-[#103F46] p-3">
             <summary className="cursor-pointer font-bold text-white">רפרנסים והשראות שמורות ({activeProject.savedInspirations.length})</summary>
-            <p className="mt-2 text-[10px] text-zinc-300">העלה תמונות מהמחשב או שמור השראות מצייד ההשראות. תמונות מקומיות זמינות במחולל הוויזואלי.</p>
+            <p className="mt-2 text-[12px] text-zinc-300">העלה תמונות מהמחשב או שמור השראות מצייד ההשראות. תמונות מקומיות זמינות במחולל הוויזואלי.</p>
              <input ref={uploadRef} type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={e=>void uploadReferences(e.target.files)} />
              <button type="button" disabled={uploadingRefs} onClick={()=>uploadRef.current?.click()} className="mt-3 w-full rounded-lg bg-[#43D6CB] text-[#103036] font-bold px-3 py-2 hover:bg-[#69E1D7] disabled:opacity-50">{uploadingRefs?'שומר תמונות...':'＋ העלה רפרנסים מהמחשב'}</button>
-             <p className="text-[10px] text-zinc-300 mt-1">PNG, JPG, WebP · עד 8MB לקובץ · שמירה מקומית במחשב זה</p>
+             <p className="text-[12px] text-zinc-300 mt-1">PNG, JPG, WebP · עד 8MB לקובץ · שמירה מקומית במחשב זה</p>
             <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
-              {activeProject.savedInspirations.length === 0 && <p className="text-zinc-400">אין רפרנסים. פתח את צייד ההשראות ושמור השראה לפרויקט.</p>}
+              {activeProject.savedInspirations.length === 0 && <p className="text-[#C1D1D5]">אין רפרנסים. פתח את צייד ההשראות ושמור השראה לפרויקט.</p>}
               {activeProject.savedInspirations.map(item => <div key={item.id} className="flex gap-2 items-center rounded-lg p-2 border border-[#31535A] bg-[#183036]">
-                {refPreviews[item.id] || item.thumbUrl || item.url ? <img src={refPreviews[item.id] || item.thumbUrl || item.url} alt="" loading="lazy" className="w-12 h-12 object-cover rounded-md" /> : <div className="w-12 h-12 rounded-md bg-zinc-800 flex items-center justify-center text-zinc-400"><Icon name="Image" className="w-5 h-5" /></div>}
-                <div className="min-w-0 flex-1"><p className="truncate text-zinc-100 font-semibold">{item.title}</p><p className="truncate text-[10px] text-zinc-400">{item.source}</p></div>
+                {refPreviews[item.id] || item.thumbUrl || item.url ? <img src={refPreviews[item.id] || item.thumbUrl || item.url} alt="" loading="lazy" className="w-12 h-12 object-cover rounded-md" /> : <div className="w-12 h-12 rounded-md bg-zinc-800 flex items-center justify-center text-[#C1D1D5]"><Icon name="Image" className="w-5 h-5" /></div>}
+                <div className="min-w-0 flex-1"><p className="truncate text-zinc-100 font-semibold">{item.title}</p><p className="truncate text-[12px] text-[#C1D1D5]">{item.source}</p></div>
                 <button type="button" title="הסר רפרנס מהפרויקט" onClick={() => void removeReference(item.id)} className="text-rose-300 hover:text-rose-200 p-1"><Icon name="Trash2" className="w-4 h-4" /></button>
               </div>)}
             </div>
@@ -182,12 +182,12 @@ export const PropertyPanel: React.FC = () => {
           <div className="space-y-3">
             <span className="font-bold text-zinc-300 block">פלטות צבעים בפרויקט ({activeProject.colorPalettes.length}):</span>
             {activeProject.colorPalettes.length === 0 ? (
-              <p className="text-[11px] text-zinc-500">שמור פלטה ממעבדת הצבע כדי לראותה כאן.</p>
+              <p className="text-[13px] text-[#C1D1D5]">שמור פלטה ממעבדת הצבע כדי לראותה כאן.</p>
             ) : (
               <div className="space-y-2">
                 {activeProject.colorPalettes.map((pal) => (
                   <div key={pal.id} className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg">
-                    <span className="text-[11px] font-bold text-zinc-200 block truncate mb-1">{pal.name}</span>
+                    <span className="text-[13px] font-bold text-zinc-200 block truncate mb-1">{pal.name}</span>
                     <div className="flex gap-1 h-5">
                       {pal.colors.map((c, i) => (
                         <div key={i} className="flex-1 rounded" style={{ backgroundColor: c }} title={c} />
@@ -203,7 +203,7 @@ export const PropertyPanel: React.FC = () => {
         {activeModule === 'typography_playground' && (
           <div className="space-y-3">
             <span className="font-bold text-zinc-300 block">קיצורי דרך לטיפוגרפיה:</span>
-            <div className="space-y-2 text-zinc-400 text-[11px]">
+            <div className="space-y-2 text-[#C1D1D5] text-[13px]">
               <div className="p-2 bg-zinc-900 rounded-lg border border-zinc-800">
                 <span className="text-white font-bold block mb-0.5">עיקול SVG:</span>
                 הפעל מצב קשת (Curved Path) לעיצוב כותרות מעגליות בסגנון מדליות עבריות.
@@ -224,9 +224,9 @@ export const PropertyPanel: React.FC = () => {
                 <div key={c.id} className="p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg space-y-1">
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-white text-xs">{c.conceptName}</span>
-                    <span className="text-[9px] text-[#43D6CB] font-mono">#{c.suggestedDesignTechnique}</span>
+                    <span className="text-[12px] text-[#43D6CB] font-mono">#{c.suggestedDesignTechnique}</span>
                   </div>
-                  <p className="text-[10px] text-zinc-400 line-clamp-2">"{c.suggestedHeadline}"</p>
+                  <p className="text-[12px] text-[#C1D1D5] line-clamp-2">"{c.suggestedHeadline}"</p>
                 </div>
               ))}
             </div>
@@ -236,7 +236,7 @@ export const PropertyPanel: React.FC = () => {
         {activeModule === 'mockup_master' && (
           <div className="space-y-3">
             <span className="font-bold text-zinc-300 block">מאסטר מוקאפים — טיפים:</span>
-            <div className="p-3 bg-zinc-900 rounded-xl border border-zinc-800 space-y-2 text-[11px] text-zinc-400">
+            <div className="p-3 bg-zinc-900 rounded-xl border border-zinc-800 space-y-2 text-[13px] text-[#C1D1D5]">
               <p>
                 • <strong>שלטים:</strong> השתמש במצב <em>Multiply</em> עבור התמזגות טבעית עם טקסטורת הבטון או הנייר.
               </p>
@@ -250,7 +250,7 @@ export const PropertyPanel: React.FC = () => {
         {activeModule === 'shadow_master' && (
           <div className="space-y-3">
             <span className="font-bold text-zinc-300 block">מעבדת שקיפות וצללים — הנחיות:</span>
-            <div className="p-3 bg-zinc-900 rounded-xl border border-zinc-800 space-y-2 text-[11px] text-zinc-400">
+            <div className="p-3 bg-zinc-900 rounded-xl border border-zinc-800 space-y-2 text-[13px] text-[#C1D1D5]">
               <p>
                 • <strong>מקור אור וצל:</strong> הזזת מקור האור בגלגל 360° מעדכנת את כיוון הצל הנגדי (180°) באופן אוטומטי.
               </p>
@@ -266,15 +266,15 @@ export const PropertyPanel: React.FC = () => {
 
         {/* Global profile badge */}
         <div className="pt-3 border-t border-zinc-800 space-y-2">
-          <span className="text-[10px] font-bold text-zinc-500 uppercase">הגדרות קריאייטיב:</span>
+          <span className="text-[12px] font-bold text-[#C1D1D5] uppercase">הגדרות קריאייטיב:</span>
           <div className="p-2.5 bg-zinc-900/60 rounded-lg border border-zinc-800/80 space-y-1">
-            <div className="flex justify-between text-[11px]">
-              <span className="text-zinc-400">סגנון פעיל:</span>
+            <div className="flex justify-between text-[13px]">
+              <span className="text-[#C1D1D5]">סגנון פעיל:</span>
               <span className="text-zinc-200 font-bold">{(activeProject.creativeProfile || globalPrefs.creativeProfile)}</span>
             </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-zinc-400">ללא אנשים:</span>
-              <span className={globalPrefs.excludePeople ? 'text-emerald-400 font-bold' : 'text-zinc-500'}>
+            <div className="flex justify-between text-[13px]">
+              <span className="text-[#C1D1D5]">ללא אנשים:</span>
+              <span className={globalPrefs.excludePeople ? 'text-emerald-400 font-bold' : 'text-[#C1D1D5]'}>
                 {globalPrefs.excludePeople ? 'מופעל' : 'כבוי'}
               </span>
             </div>

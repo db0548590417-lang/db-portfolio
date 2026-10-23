@@ -7,9 +7,10 @@ import { ProjectEditor } from './ProjectEditor';
 
 interface NavbarProps {
   onOpenSettings: () => void;
+  onOpenTour: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings, onOpenTour }) => {
   const {
     activeProject,
     projects,
@@ -61,8 +62,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
           >
             <Icon name="FolderOpen" className="w-4 h-4 text-[#43D6CB]" />
             <span className="font-semibold max-w-[140px] truncate">{activeProject.name}</span>
-            <span className="text-xs text-zinc-500 hidden sm:inline">({activeProject.clientName || 'ללא לקוח'})</span>
-            <Icon name="ChevronRight" className="w-3.5 h-3.5 text-zinc-400 rotate-90" />
+            <span className="text-xs text-[#C1D1D5] hidden sm:inline">({activeProject.clientName || 'ללא לקוח'})</span>
+            <Icon name="ChevronRight" className="w-3.5 h-3.5 text-[#C1D1D5] rotate-90" />
           </button>
 
           {isProjectDropdownOpen && (
@@ -70,9 +71,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
               className="absolute right-0 mt-2 w-72 bg-[#103F46] border border-zinc-700/80 rounded-xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2"
               onMouseLeave={() => setIsProjectDropdownOpen(false)}
             >
-              <div className="text-xs font-bold text-zinc-400 px-2 py-1.5 mb-1 flex items-center justify-between">
+              <div className="text-xs font-bold text-[#C1D1D5] px-2 py-1.5 mb-1 flex items-center justify-between">
                 <span>פרויקטים שמורים</span>
-                <span className="text-[10px] bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">
+                <span className="text-[12px] bg-zinc-800 px-1.5 py-0.5 rounded text-[#C1D1D5]">
                   {projects.length} פרויקטים
                 </span>
               </div>
@@ -93,7 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
                   >
                     <div className="truncate">
                       <p className="truncate font-semibold">{proj.name}</p>
-                      <p className="text-[10px] text-zinc-500">{proj.clientName || 'לקוח כללי'}</p>
+                      <p className="text-[12px] text-[#C1D1D5]">{proj.clientName || 'לקוח כללי'}</p>
                     </div>
                     {proj.id === activeProject.id && <Icon name="Check" className="w-3.5 h-3.5 text-[#43D6CB]" />}
                   </button>
@@ -127,7 +128,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
                     <button
                       type="button"
                       onClick={() => setIsCreatingProject(false)}
-                      className="py-1 px-2 text-xs bg-zinc-800 text-zinc-400 rounded-lg hover:bg-zinc-700 cursor-pointer"
+                      className="py-1 px-2 text-xs bg-zinc-800 text-[#C1D1D5] rounded-lg hover:bg-zinc-700 cursor-pointer"
                     >
                       ביטול
                     </button>
@@ -136,7 +137,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
               ) : (
                 <button
                   onClick={() => setIsCreatingProject(true)}
-                  className="w-full flex items-center justify-center gap-1.5 py-1.5 border border-dashed border-zinc-700 hover:border-zinc-500 rounded-lg text-xs text-zinc-400 hover:text-white transition"
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 border border-dashed border-zinc-700 hover:border-zinc-500 rounded-lg text-xs text-[#C1D1D5] hover:text-white transition"
                 >
                   <Icon name="Plus" className="w-3.5 h-3.5" />
                   <span>יצירת פרויקט חדש</span>
@@ -151,12 +152,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
       {/* Center: Quick navigation / current mode badge */}
       <div className="hidden lg:flex items-center gap-2">
         {globalPrefs.excludePeople && (
-          <span className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+          <span className="flex items-center gap-1 text-[13px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
             פילטר ללא אנשים פעיל
           </span>
         )}
-        <span className="text-xs text-zinc-400 bg-[#103F46] px-2.5 py-1 rounded-md border border-zinc-800">
+        <span className="text-xs text-[#C1D1D5] bg-[#103F46] px-2.5 py-1 rounded-md border border-zinc-800">
           פרופיל עיצוב: <strong className="text-zinc-200">
             {(activeProject.creativeProfile || globalPrefs.creativeProfile) === 'hasidic_traditional' ? 'מסורתי / מלכותי' :
              (activeProject.creativeProfile || globalPrefs.creativeProfile) === 'modern_luxury' ? 'יוקרה בינלאומית' :
@@ -170,16 +171,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
         <AccountButton />
         <button onClick={()=>setIsProjectEditorOpen(true)} className="flex items-center gap-1 px-3 py-2 rounded-lg bg-[#43D6CB] text-[#183036] font-bold text-xs">עריכת פרויקט</button>
         <button
-          onClick={() => setActiveModule('system_health')}
+          onClick={onOpenTour}
           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
             activeModule === 'system_health'
               ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
               : 'bg-[#103F46] text-zinc-200 hover:bg-[#103F46] border border-zinc-800'
           }`}
-          title="בדיקת תקינות המערכת ומוכנות לפריסה"
+          title="סיור בכלים"
+          aria-label="סיור בכלים"
         >
-          <Icon name="ShieldCheck" className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="hidden sm:inline">בדיקת תקינות</span>
+          <Icon name="Compass" className="w-4 h-4 text-[#43D6CB]" />
+          <span className="hidden sm:inline">סיור בכלים</span>
         </button>
 
         <button
@@ -197,7 +199,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
         <button
           onClick={onOpenSettings}
           className="p-2 bg-[#103F46] hover:bg-[#103F46] text-zinc-300 hover:text-white border border-zinc-800 rounded-lg transition-colors"
-          title="הגדרות קריאייטיב וחיבורי API"
+          title="הגדרות"
+          aria-label="הגדרות"
         >
           <Icon name="Settings" className="w-4 h-4" />
         </button>

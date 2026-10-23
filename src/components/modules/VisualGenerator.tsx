@@ -310,14 +310,14 @@ export const VisualGenerator: React.FC = () => {
             <span>מודול #7 — מחולל ויזואלי AI</span>
           </div>
           <h1 className="text-2xl font-black text-white">הדמיית קונספטים ויזואלית</h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[#C1D1D5]">
             יצירת תמונות לפרויקט עם שליטה בסגנון, ברזולוציה ובקומפוזיציה.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {globalPrefs.excludePeople && (
-            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-full font-bold">
+            <span className="text-[12px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-full font-bold">
               סינון אנשים פעיל בפרומפט
             </span>
           )}
@@ -332,7 +332,7 @@ export const VisualGenerator: React.FC = () => {
             <button
               onClick={handleEnhancePrompt}
               disabled={isEnhancing || !prompt.trim()}
-              className="text-[11px] text-[#43D6CB] hover:underline font-bold flex items-center gap-1 disabled:opacity-50"
+              className="text-[13px] text-[#43D6CB] hover:underline font-bold flex items-center gap-1 disabled:opacity-50"
             >
               <Icon name="Sparkles" className="w-3 h-3" />
               <span>{isEnhancing ? 'משדרג...' : 'שדרג פרומפט לארט דירקטור'}</span>
@@ -358,7 +358,7 @@ export const VisualGenerator: React.FC = () => {
                   className={`w-full text-right p-2 rounded-lg border transition ${
                     selectedStyle === style.id
                       ? 'border-[#43D6CB] bg-[#43D6CB]/10 text-white font-bold'
-                      : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-700'
+                      : 'border-zinc-800 bg-zinc-900 text-[#C1D1D5] hover:border-zinc-700'
                   }`}
                 >
                   <span className="block text-xs">{style.label}</span>
@@ -376,7 +376,7 @@ export const VisualGenerator: React.FC = () => {
             </select>
             <label className="block font-bold text-white">רזולוציית יצירה (לפי תמיכת המודל)</label>
             <div className="flex gap-2">{(['1K','2K','4K'] as const).map(q => <button key={q} disabled={model==='gemini-3.1-flash-lite-image' && q!=='1K'} onClick={()=>setQuality(q)} className={`flex-1 rounded-lg py-2 font-bold border disabled:opacity-30 ${quality===q?'border-[#43D6CB] bg-[#43D6CB]/20 text-[#43D6CB]':'border-zinc-700 bg-zinc-900 text-zinc-300'}`}>{q}</button>)}</div>
-            <p className="text-zinc-400 text-[10px]">בחירת איכות גבוהה עשויה לעלות יותר. הגודל בפועל נקבע על ידי Gemini; </p>
+            <p className="text-[#C1D1D5] text-[12px]">בחירת איכות גבוהה עשויה לעלות יותר. הגודל בפועל נקבע על ידי Gemini; </p>
           </div>
 
           {/* Aspect Ratio */}
@@ -390,7 +390,7 @@ export const VisualGenerator: React.FC = () => {
                   className={`flex-1 py-1.5 text-xs font-mono font-bold rounded-lg border transition ${
                     aspectRatio === r
                       ? 'border-[#43D6CB] bg-[#43D6CB] text-white'
-                      : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white'
+                      : 'border-zinc-800 bg-zinc-900 text-[#C1D1D5] hover:text-white'
                   }`}
                 >
                   {r}
@@ -403,7 +403,7 @@ export const VisualGenerator: React.FC = () => {
           <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-between">
             <div>
               <span className="font-bold text-zinc-200 block">רקע מבודד (Studio Isolated):</span>
-              <p className="text-[10px] text-zinc-400 mt-0.5">
+              <p className="text-[12px] text-[#C1D1D5] mt-0.5">
                 מדריך את המודל לבודד את האובייקט על רקע אחיד לצורך שילוב נקי במוקאפ.
               </p>
             </div>
@@ -417,13 +417,13 @@ export const VisualGenerator: React.FC = () => {
 
           <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-3 space-y-2">
             <label className="flex justify-between items-center text-white font-bold gap-2">PNG שקוף אמיתי (Alpha) <input type="checkbox" checked={removeBg} onChange={e=>{setRemoveBg(e.target.checked);if(e.target.checked)setTransparentPref(true);}} className="accent-[#43D6CB] w-4 h-4" /></label>
-            <label className="text-zinc-300 block text-[11px]">מנגנון הסרת רקע</label>
+            <label className="text-zinc-300 block text-[13px]">מנגנון הסרת רקע</label>
             <select className="w-full bg-[#183036] border border-zinc-700 text-white p-2 rounded" value={removalChoice} onChange={e=>setRemovalChoice(e.target.value as 'local'|'advanced')}>
               <option value="local">מקומי — רקע אחיד (בחינם)</option>
               <option value="advanced">מתקדם — שירות חיצוני (עשוי להיות בתשלום)</option>
             </select>
             {removeBg && <><label className="text-zinc-300 block">סוג חיתוך</label><select className="w-full bg-[#183036] border border-zinc-700 text-white p-2 rounded" value={cutoutMode} onChange={e=>setCutoutMode(e.target.value as 'clean'|'soft')}><option value="clean">נקי — קצוות ברורים</option><option value="soft">רך — שימור קצוות וצללים בהירים ככל האפשר</option></select></>}
-            <p className="text-[10px] text-amber-200">להסרת רקע מורכב ניתן לבחור בשירות חיצוני. התמונה תישלח רק לאחר אישורך; ייתכן חיוב נפרד.</p>
+            <p className="text-[12px] text-amber-200">להסרת רקע מורכב ניתן לבחור בשירות חיצוני. התמונה תישלח רק לאחר אישורך; ייתכן חיוב נפרד.</p>
           </div>
 
           <section className="space-y-2 border border-[#31535A] bg-[#183036] rounded-xl p-3">
@@ -465,7 +465,7 @@ export const VisualGenerator: React.FC = () => {
                 <input type="range" min="1" max="5" step="1" value={referenceStrength} onChange={e=>setReferenceStrength(Number(e.target.value))} className="w-full accent-[#43D6CB]" />
               </label>
               <label className="flex items-start gap-2 text-white"><input type="checkbox" checked={preserveOwnSubject} onChange={e=>setPreserveOwnSubject(e.target.checked)} className="mt-0.5 accent-[#43D6CB]"/><span>שמור על הנושא שלי — למד מהרפרנס רק את הסגנון או המאפיינים שבחרתי</span></label>
-              <p className="text-[10px] text-zinc-300 leading-relaxed">הבחירות נשלחות כהנחיות ביחד עם הרפרנס בפעולת היצירה הרגילה. אין חיוב נוסף על ניתוח נפרד; עוצמת ההשפעה היא הנחיה ולא מדד מדויק.</p>
+              <p className="text-[12px] text-zinc-300 leading-relaxed">הבחירות נשלחות כהנחיות ביחד עם הרפרנס בפעולת היצירה הרגילה. אין חיוב נוסף על ניתוח נפרד; עוצמת ההשפעה היא הנחיה ולא מדד מדויק.</p>
             </div>}
 
           </section>
@@ -521,7 +521,7 @@ export const VisualGenerator: React.FC = () => {
                 <div className="text-center space-y-2 p-6 rounded-xl bg-[#102B31]/95 border border-[#43D6CB]/40 shadow-2xl">
                   <Icon name="RefreshCw" className="w-8 h-8 text-[#43D6CB] mx-auto animate-spin" />
                   <p className="text-white text-xs font-bold">התמונה שלך נוצרת...</p>
-                  <p className="text-zinc-200 text-[10px]">מכין את התמונה שלך</p>
+                  <p className="text-zinc-200 text-[12px]">מכין את התמונה שלך</p>
                 </div>
               ) : selectedImage ? (
                 <img
@@ -530,7 +530,7 @@ export const VisualGenerator: React.FC = () => {
                   className="w-full h-full object-contain"
                 />
               ) : (
-                <div className="text-center text-zinc-500 text-xs">
+                <div className="text-center text-[#C1D1D5] text-xs">
                   <Icon name="Image" className="w-8 h-8 mx-auto opacity-50 mb-1" />
                   עדיין לא הופקו תמונות. הזן פרומפט ולחץ על "הפק הדמיה עכשיו".
                 </div>
@@ -541,7 +541,7 @@ export const VisualGenerator: React.FC = () => {
           {/* History Gallery */}
           {generatedImages.length > 0 && (
             <div className="space-y-2">
-              <span className="text-xs font-bold text-zinc-400">היסטוריית הדמיות שנוצרו בפרויקט:</span>
+              <span className="text-xs font-bold text-[#C1D1D5]">היסטוריית הדמיות שנוצרו בפרויקט:</span>
               <div className="grid grid-cols-4 gap-2">
                 {generatedImages.map((img) => (
                   <button

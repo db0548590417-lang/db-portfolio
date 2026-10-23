@@ -96,7 +96,7 @@ export const InspirationMixer: React.FC = () => {
             <span>מודול #8 — מיקסר השראות וסינתזה</span>
           </div>
           <h1 className="text-2xl font-black text-white">מיזוג עקרונות חזותיים ללא העתקה</h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[#C1D1D5]">
             בחר 2 עד 5 רפרנסים שונים. Gemini יחלץ את מנגנוני הקומפוזיציה, המטאפורה והצבע ויחשל מהם כיוון חדש לחלוטין.
           </p>
         </div>
@@ -122,7 +122,7 @@ export const InspirationMixer: React.FC = () => {
           <span className="font-bold text-white">
             בחר 2–5 השראות למיזוג (נבחרו {selectedIds.length}/5):
           </span>
-          <span className="text-zinc-500 text-[11px]">לחץ על תמונה לבחירה או הסרה</span>
+          <span className="text-[#C1D1D5] text-[13px]">לחץ על תמונה לבחירה או הסרה</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
@@ -146,7 +146,7 @@ export const InspirationMixer: React.FC = () => {
                     </span>
                   </div>
                 )}
-                <div className="absolute bottom-0 inset-x-0 p-1 bg-black/70 text-[9px] text-white truncate text-center">
+                <div className="absolute bottom-0 inset-x-0 p-1 bg-black/70 text-[12px] text-white truncate text-center">
                   {item.title}
                 </div>
               </button>
@@ -160,7 +160,7 @@ export const InspirationMixer: React.FC = () => {
         <div className="p-12 text-center bg-[#103F46] border border-zinc-800 rounded-2xl space-y-3">
           <Icon name="RefreshCw" className="w-8 h-8 text-[#43D6CB] mx-auto animate-spin" />
           <h3 className="font-bold text-white text-sm">מחלץ מנגנונים ומסנתז כיוון חדש...</h3>
-          <p className="text-xs text-zinc-500">מיזוג של {selectedIds.length} השראות ללא העתקה ישירה</p>
+          <p className="text-xs text-[#C1D1D5]">מיזוג של {selectedIds.length} השראות ללא העתקה ישירה</p>
         </div>
       )}
 
@@ -176,13 +176,13 @@ export const InspirationMixer: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-base font-black text-white">{concept.title}</h4>
-                    <span className="text-[10px] font-mono text-[#43D6CB] bg-[#43D6CB]/10 px-2 py-0.5 rounded font-bold">
+                    <span className="text-[12px] font-mono text-[#43D6CB] bg-[#43D6CB]/10 px-2 py-0.5 rounded font-bold">
                       מיזוג #{idx + 1}
                     </span>
                   </div>
 
                   <div className="p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl mb-3">
-                    <span className="text-[10px] text-zinc-500 block">כותרת מומלצת:</span>
+                    <span className="text-[12px] text-[#C1D1D5] block">כותרת מומלצת:</span>
                     <p className="font-bold text-[#43D6CB] text-xs">"{concept.headline}"</p>
                   </div>
 
@@ -193,9 +193,9 @@ export const InspirationMixer: React.FC = () => {
                     </div>
                     <div>
                       <strong className="text-white block">ביצוע ויזואלי:</strong>
-                      <p className="leading-relaxed text-zinc-400">{concept.visualExecution}</p>
+                      <p className="leading-relaxed text-[#C1D1D5]">{concept.visualExecution}</p>
                     </div>
-                    <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-300 text-[11px]">
+                    <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-300 text-[13px]">
                       <strong>מדוע זו יצירה מקורית:</strong> {concept.howItAvoidsDirectCopying}
                     </div>
                   </div>

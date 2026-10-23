@@ -75,6 +75,9 @@ try {
   const owner = await post('/api/auth/owner', { password });
   assert.equal(owner.status, 200);
   assert.equal((await owner.json()).user.id, 'owner');
+  const ownerViaLogin = await post('/api/auth/login', { username: 'dekel', password });
+  assert.equal(ownerViaLogin.status, 200);
+  assert.equal((await ownerViaLogin.json()).user.id, 'owner');
   await new Promise(resolve => server.close(resolve)); server = null;
   await store.close();
   store = await createSqliteAccountStore(filename);

@@ -409,7 +409,7 @@ export const InspirationHunter: React.FC = () => {
             <span>מודול #1 — צייד השראות</span>
           </div>
           <h1 className="text-2xl font-black text-white">מנוע גילוי השראות ורפרנסים</h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[#C1D1D5]">
             כתוב בריף חופשי. המערכת מזהה תחום, סגנון ומילות חיפוש רלוונטיות; מקורות חרדיים בעדיפות.
           </p>
         </div>
@@ -423,7 +423,7 @@ export const InspirationHunter: React.FC = () => {
           <label className="text-xs font-bold text-white block">
             מה תרצה לעצב? תאר בקצרה את הפרויקט:
           </label>
-          <span className="text-[10px] text-zinc-500">פענוח ראשוני ללא צורך במפתח AI</span>
+          
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
@@ -472,8 +472,8 @@ export const InspirationHunter: React.FC = () => {
           <div className="rounded-xl border border-teal-500/30 bg-teal-500/5 p-4 space-y-3">
             <div className="flex gap-2 items-center text-teal-300 text-xs font-bold"><Icon name="Sparkles" className="w-4 h-4" /> כך פירשתי את הבריף שלך</div>
             <p className="text-xs text-zinc-200">{interpreted.explanation}</p>
-            <div className="flex flex-wrap gap-2">{interpreted.hebrewTerms.map(term => <span key={term} className="rounded-lg border border-zinc-700 px-2 py-1 text-[11px] text-zinc-300">{term}</span>)}</div>
-            <p className="text-[11px] text-zinc-500">זיהוי ראשוני לפי כללים מקומיים; אינו ניתוח AI מלא.</p>
+            <div className="flex flex-wrap gap-2">{interpreted.hebrewTerms.map(term => <span key={term} className="rounded-lg border border-zinc-700 px-2 py-1 text-[13px] text-zinc-300">{term}</span>)}</div>
+            <p className="text-[13px] text-[#C1D1D5]">תצוגה ראשונית</p>
           </div>
         )}
         {sourceMode === 'haredi' && siteReports.length > 0 && <div className="rounded-xl bg-[#183036] border border-[#45656A] p-3 text-xs text-zinc-200">
@@ -484,7 +484,7 @@ export const InspirationHunter: React.FC = () => {
         </div>}
         {/* Quick Search Preset Tags */}
         <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-          <span className="text-[11px] text-zinc-400 font-bold ml-1">חיפושים מהירים:</span>
+          <span className="text-[13px] text-[#C1D1D5] font-bold ml-1">חיפושים מהירים:</span>
           {quickSearchPresets.map((preset) => (
             <button
               key={preset.query}
@@ -492,10 +492,10 @@ export const InspirationHunter: React.FC = () => {
                 setSearchQuery(preset.query);
                 handleSmartSearch(preset.query);
               }}
-              className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-[#43D6CB] rounded-lg text-[11px] text-zinc-300 transition flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-[#43D6CB] rounded-lg text-[13px] text-zinc-300 transition flex items-center gap-1 cursor-pointer"
             >
               <span>{preset.label}</span>
-              <span className="text-[10px] text-zinc-500 font-mono">({preset.query})</span>
+              <span className="text-[12px] text-[#C1D1D5] font-mono">({preset.query})</span>
             </button>
           ))}
         </div>
@@ -509,7 +509,7 @@ export const InspirationHunter: React.FC = () => {
             className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${isAiToolsOpen ? 'border-[#43D6CB] bg-[#103F46] text-[#F7F8F3]' : 'border-[#43D6CB]/35 bg-[#183036] text-[#F7F8F3] hover:border-[#43D6CB]'}`}>
             <Icon name="Sparkles" className="h-4 w-4 text-[#43D6CB]" />
             <span>כלי AI</span>
-            <span aria-hidden="true" className="text-zinc-400">{isAiToolsOpen ? '▴' : '▾'}</span>
+            <span aria-hidden="true" className="text-[#C1D1D5]">{isAiToolsOpen ? '▴' : '▾'}</span>
           </button>
         </div>
         {sourceMode === 'haredi' && portfolioCandidates.length > 0 && (
@@ -526,8 +526,8 @@ export const InspirationHunter: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <strong className="text-amber-300">ניסוי: AI שמבין את התמונות עצמן</strong>
-                <p className="mt-1 text-zinc-400">הפסקת פרסומות · {visionStatus ? `${visionStatus.indexed} מתוך ${visionStatus.limit} עבודות נלמדו` : 'בודק את המאגר...'} · {sourceCandidates.length} מועמדות מהחיפוש הנוכחי</p>
-                <p className="mt-1 text-zinc-500">מוצגות עבודות אמיתיות ממקור האתר. עבודות שטרם נותחו מסומנות במפורש, והתאמתן לחיפוש אינה מאומתת.</p>
+                <p className="mt-1 text-[#C1D1D5]">הפסקת פרסומות · {visionStatus ? `${visionStatus.indexed} מתוך ${visionStatus.limit} עבודות נלמדו` : 'בודק את המאגר...'} · {sourceCandidates.length} מועמדות מהחיפוש הנוכחי</p>
+                <p className="mt-1 text-[#C1D1D5]">מוצגות עבודות אמיתיות ממקור האתר. עבודות שטרם נותחו מסומנות במפורש, והתאמתן לחיפוש אינה מאומתת.</p>
               </div>
               <button
                 onClick={handleVisualLearning}
@@ -537,10 +537,10 @@ export const InspirationHunter: React.FC = () => {
                 {isLearning ? 'מנתח עד 6 עבודות ב-AI…' : 'נתח עד 6 עבודות מהמאגר עם AI'}
               </button>
             </div>
-            {!visionStatus?.aiConfigured && <p className="text-amber-300">כדי להפעיל ניתוח תמונות אמיתי יש להגדיר GEMINI_API_KEY בשרת המקומי. ללא מפתח אפשר להמשיך בחיפוש הבינלאומי.</p>}
+            {!visionStatus?.aiConfigured && <p className="text-amber-200">ניתוח תמונות זמין אחרי חיבור AI בהגדרות.</p>}
             {learningNotice && <p className="p-2 rounded-lg bg-zinc-900/70 text-zinc-300 break-words">{learningNotice}</p>}
             {visionRanking === 'ai' && !!searchResults.length && <p className="text-emerald-400">התוצאות מדורגות באמצעות AI לפי התיאור החזותי שלהן.</p>}
-            {visionRanking === 'descriptions' && !!searchResults.length && <p className="text-zinc-400">הדירוג הזמני לפי התיאורים שנלמדו. הדירוג הסמנטי מחייב חיבור AI פעיל.</p>}
+            {visionRanking === 'descriptions' && !!searchResults.length && <p className="text-[#C1D1D5]">הדירוג הזמני לפי התיאורים שנלמדו. הדירוג הסמנטי מחייב חיבור AI פעיל.</p>}
           </div>
         )}
       {/* Secondary & Optional: AI Creative Brief Expansion (Separated Panel) */}
@@ -554,16 +554,16 @@ export const InspirationHunter: React.FC = () => {
             <Icon name="Sparkles" className="w-4 h-4 text-amber-400" />
             <div>
               <h3 className="text-xs font-bold text-zinc-200">הרחבת קונספט יצירתי ב-AI (אופציונלי)</h3>
-              <p className="text-[10px] text-zinc-500">פירוק בריף בעברית למונחי עיצוב בינלאומיים והצעות גשטאלט</p>
+              <p className="text-[12px] text-[#C1D1D5]">פירוק בריף בעברית למונחי עיצוב בינלאומיים והצעות גשטאלט</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {isAiQuotaExhausted && (
-              <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold">
+              <span className="text-[12px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold">
                 מכסת AI מוצתה — חיפוש התמונות פעיל
               </span>
             )}
-            <span className="text-xs text-zinc-400">{isAiSectionOpen ? '▲ סגור' : '▼ פתח'}</span>
+            <span className="text-xs text-[#C1D1D5]">{isAiSectionOpen ? '▲ סגור' : '▼ פתח'}</span>
           </div>
         </div>
 
@@ -609,7 +609,7 @@ export const InspirationHunter: React.FC = () => {
             {/* Optional Creative Filters */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-zinc-800/80 text-xs">
               <div>
-                <label className="text-[11px] text-zinc-400 block mb-1">סגנון ויזואלי:</label>
+                <label className="text-[13px] text-[#C1D1D5] block mb-1">סגנון ויזואלי:</label>
                 <select
                   value={styleFilter}
                   onChange={(e) => setStyleFilter(e.target.value)}
@@ -625,7 +625,7 @@ export const InspirationHunter: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[11px] text-zinc-400 block mb-1">תעשייה / תחום:</label>
+                <label className="text-[13px] text-[#C1D1D5] block mb-1">תעשייה / תחום:</label>
                 <select
                   value={industryFilter}
                   onChange={(e) => setIndustryFilter(e.target.value)}
@@ -641,7 +641,7 @@ export const InspirationHunter: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[11px] text-zinc-400 block mb-1">טכניקה יצירתית:</label>
+                <label className="text-[13px] text-[#C1D1D5] block mb-1">טכניקה יצירתית:</label>
                 <select
                   value={techniqueFilter}
                   onChange={(e) => setTechniqueFilter(e.target.value)}
@@ -664,12 +664,12 @@ export const InspirationHunter: React.FC = () => {
                     <Icon name="Lightbulb" className="w-3.5 h-3.5 text-amber-400" />
                     <h4 className="font-bold text-white text-xs">מונחי חיפוש וקונספט שהופקו:</h4>
                   </div>
-                  <span className="text-[10px] text-amber-400">לחץ על מונח לחיפוש מיידי ב-Openverse</span>
+                  <span className="text-[12px] text-amber-400">לחץ על מונח לחיפוש מיידי ב-Openverse</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <div className="space-y-1.5">
-                    <span className="text-zinc-400 font-bold block text-[11px]">מילות חיפוש מומלצות:</span>
+                    <span className="text-[#C1D1D5] font-bold block text-[13px]">מילות חיפוש מומלצות:</span>
                     <div className="flex flex-wrap gap-1.5">
                       {expandedData.englishKeywords?.map((kw, i) => (
                         <button
@@ -679,7 +679,7 @@ export const InspirationHunter: React.FC = () => {
                             setSourceMode('international');
                             handleSmartSearch(kw, 'international');
                           }}
-                          className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-[#43D6CB] rounded-md text-[11px] font-mono text-zinc-200 transition cursor-pointer flex items-center gap-1"
+                          className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-[#43D6CB] rounded-md text-[13px] font-mono text-zinc-200 transition cursor-pointer flex items-center gap-1"
                           title="חפש מונח זה ב-Openverse"
                         >
                           <Icon name="Search" className="w-3 h-3 text-[#43D6CB]" />
@@ -689,7 +689,7 @@ export const InspirationHunter: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-1 text-[11px] text-zinc-400">
+                  <div className="space-y-1 text-[13px] text-[#C1D1D5]">
                     <span className="text-zinc-300 font-bold block">הנחיות קונספט:</span>
                     {expandedData.gestaltApproach && (
                       <p>
@@ -716,7 +716,7 @@ export const InspirationHunter: React.FC = () => {
             <Icon name="AlertTriangle" className="w-4 h-4 text-red-400 flex-shrink-0" />
             <div>
               <strong className="block font-bold">הודעת מערכת:</strong>
-              <p className="text-[11px] text-red-300/90">{searchError}</p>
+              <p className="text-[13px] text-red-300/90">{searchError}</p>
             </div>
           </div>
           <button
@@ -732,7 +732,7 @@ export const InspirationHunter: React.FC = () => {
       <>
       {/* Gallery Header & Layout Switcher */}
       <div className="flex items-center justify-between">
-        <div className="text-xs text-zinc-400">
+        <div className="text-xs text-[#C1D1D5]">
           {isSearching ? (
             <span className="text-zinc-300 flex items-center gap-2">
               <Icon name="RefreshCw" className="w-3.5 h-3.5 animate-spin text-[#43D6CB]" />
@@ -741,7 +741,7 @@ export const InspirationHunter: React.FC = () => {
           ) : (
             <>
               נמצאו <strong className="text-white font-bold">{searchResults.length}</strong> {sourceMode === 'haredi' ? 'השראות עם תמונה ותאימות ראשונית לבריף' : 'עבודות אמיתיות'}
-              <span className="text-zinc-500 mr-1.5">עבור &ldquo;{lastQuery}&rdquo;</span>
+              <span className="text-[#C1D1D5] mr-1.5">עבור &ldquo;{lastQuery}&rdquo;</span>
               {selectedItemIds.length > 0 && (
                 <span className="text-[#43D6CB] mr-2">
                   ({selectedItemIds.length} נבחרו)
@@ -757,7 +757,7 @@ export const InspirationHunter: React.FC = () => {
             className={`p-1.5 rounded-lg border transition cursor-pointer ${
               layoutMode === 'grid'
                 ? 'border-[#43D6CB] bg-[#43D6CB]/20 text-[#43D6CB]'
-                : 'border-zinc-800 bg-zinc-900 text-zinc-400'
+                : 'border-zinc-800 bg-zinc-900 text-[#C1D1D5]'
             }`}
             title="תצוגת גריד"
           >
@@ -769,9 +769,9 @@ export const InspirationHunter: React.FC = () => {
       {/* Empty State */}
       {!isSearching && !searchError && searchResults.length === 0 && (
         <div className="text-center py-16 bg-[#103F46] border border-zinc-800 rounded-2xl p-8 space-y-3">
-          <Icon name="Search" className="w-10 h-10 text-zinc-600 mx-auto" />
+          <Icon name="Search" className="w-10 h-10 text-[#C1D1D5] mx-auto" />
           <h3 className="text-white font-bold text-sm">לא נמצאו עבודות להצגה</h3>
-          <p className="text-xs text-zinc-400 max-w-md mx-auto">
+          <p className="text-xs text-[#C1D1D5] max-w-md mx-auto">
             {sourceMode === 'haredi' ? 'לא נמצאו עבודות במקור עבור החיפוש. נסה מילות מפתח אחרות.' : <>לא נמצאו תוצאות עבור &ldquo;{lastQuery}&rdquo;. נסה מילות מפתח ממוקדות יותר.</>}
           </p>
         </div>
@@ -815,7 +815,7 @@ export const InspirationHunter: React.FC = () => {
                       target.src = item.url;
                     }
                   }}
-                /> : <div className="h-full w-full flex flex-col items-center justify-center gap-2 text-center p-4 bg-[#102B31] text-white"><Icon name="ExternalLink" className="w-7 h-7 text-[#43D6CB]"/><span className="text-xs font-bold">{item.title}</span><span className="text-[10px] text-zinc-300">העיצוב זמין באתר המקור</span></div>}
+                /> : <div className="h-full w-full flex flex-col items-center justify-center gap-2 text-center p-4 bg-[#102B31] text-white"><Icon name="ExternalLink" className="w-7 h-7 text-[#43D6CB]"/><span className="text-xs font-bold">{item.title}</span><span className="text-[12px] text-zinc-300">העיצוב זמין באתר המקור</span></div>}
 
                 {/* Preview hover overlay hint */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
@@ -830,11 +830,11 @@ export const InspirationHunter: React.FC = () => {
                   className="absolute top-2 right-2 flex items-center gap-1.5 z-10"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <span className="text-[10px] font-bold bg-black/75 backdrop-blur-sm text-zinc-300 px-2 py-0.5 rounded-md border border-white/10 uppercase">
+                  <span className="text-[12px] font-bold bg-black/75 backdrop-blur-sm text-zinc-300 px-2 py-0.5 rounded-md border border-white/10 uppercase">
                     {item.source}
                   </span>
                   {sourceMode === 'haredi' && (
-                    <span className="text-[10px] font-bold bg-[#183036]/95 text-[#F7F8F3] px-2 py-0.5 rounded-md border border-[#43D6CB]/30">
+                    <span className="text-[12px] font-bold bg-[#183036]/95 text-[#F7F8F3] px-2 py-0.5 rounded-md border border-[#43D6CB]/30">
                       {!item.url ? 'קישור לעבודה' : ((item as any).visuallyReviewed || reviewedSourceUrls.includes(item.sourceUrl)) ? 'נותחה ב־AI' : 'טרם נותחה ב־AI'}
                     </span>
                   )}
@@ -858,9 +858,9 @@ export const InspirationHunter: React.FC = () => {
                 </button>
 
                 {/* Source attribution bar */}
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-2 flex items-center justify-between text-[10px] text-zinc-300 z-10">
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-2 flex items-center justify-between text-[12px] text-zinc-300 z-10">
                   <span className="truncate max-w-[120px] font-medium">{item.source}</span>
-                  {item.author && <span className="text-zinc-400 truncate max-w-[110px]">© {item.author}</span>}
+                  {item.author && <span className="text-[#C1D1D5] truncate max-w-[110px]">© {item.author}</span>}
                 </div>
               </div>
 
@@ -876,7 +876,7 @@ export const InspirationHunter: React.FC = () => {
                   </h4>
 
                   {/* Working link to original source */}
-                  <div className="mt-1.5 flex items-center justify-between text-[11px]">
+                  <div className="mt-1.5 flex items-center justify-between text-[13px]">
                     <a
                       href={item.sourceUrl}
                       target="_blank"
@@ -890,7 +890,7 @@ export const InspirationHunter: React.FC = () => {
                     </a>
 
                     {item.author && (
-                      <span className="text-[10px] text-zinc-500 truncate max-w-[120px]">
+                      <span className="text-[12px] text-[#C1D1D5] truncate max-w-[120px]">
                         {item.author}
                       </span>
                     )}
@@ -898,14 +898,14 @@ export const InspirationHunter: React.FC = () => {
                 </div>
 
                 {/* Action buttons */}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800/80 text-[11px]">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800/80 text-[13px]">
                   <button
                     disabled={!item.url}
                     title={!item.url ? 'זהו קישור לעמוד; שמירת תמונת רפרנס תהיה זמינה כשהמקור יספק תמונה' : undefined}
                     onClick={() => saveToProject(item)}
                     className={`py-1.5 px-2 rounded-lg font-bold transition flex items-center justify-center gap-1 disabled:opacity-40 cursor-pointer ${
                       isSavedInProject
-                        ? 'bg-zinc-800 text-zinc-400'
+                        ? 'bg-zinc-800 text-[#C1D1D5]'
                         : 'bg-[#43D6CB]/15 hover:bg-[#43D6CB]/25 text-[#43D6CB] border border-[#43D6CB]/30'
                     }`}
                   >
@@ -950,7 +950,7 @@ export const InspirationHunter: React.FC = () => {
               </div>
               <button
                 onClick={() => setPreviewItem(null)}
-                className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 transition flex-shrink-0 mr-2 cursor-pointer"
+                className="text-[#C1D1D5] hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 transition flex-shrink-0 mr-2 cursor-pointer"
                 title="סגור תצוגה מקדימה"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -973,17 +973,17 @@ export const InspirationHunter: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div className="space-y-1">
                   <div className="text-zinc-300">
-                    <span className="text-zinc-500">מקור: </span>
+                    <span className="text-[#C1D1D5]">מקור: </span>
                     <span className="font-bold text-white capitalize">{previewItem.source}</span>
                     {previewItem.author && (
                       <span className="mr-3">
-                        <span className="text-zinc-500">יוצר: </span>
+                        <span className="text-[#C1D1D5]">יוצר: </span>
                         <span className="text-zinc-200">{previewItem.author}</span>
                       </span>
                     )}
                   </div>
                   {previewItem.style && (
-                    <span className="text-[11px] text-zinc-400 block">{previewItem.style}</span>
+                    <span className="text-[13px] text-[#C1D1D5] block">{previewItem.style}</span>
                   )}
                 </div>
 

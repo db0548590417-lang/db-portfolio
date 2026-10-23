@@ -497,7 +497,7 @@ export const ColorLaboratory: React.FC = () => {
             <span>מודול #5 — מעבדת צבע אינטראקטיבית</span>
           </div>
           <h1 className="text-2xl font-black text-white">מעבדת צבע, הרמוניות וגרדיאנטים</h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[#C1D1D5]">
             דיוק גוונים מקומי, חישובי HSL מתמטיים, דגימת צבעים מתמונה ופלטות יוקרה מוכנות.
           </p>
         </div>
@@ -515,7 +515,7 @@ export const ColorLaboratory: React.FC = () => {
       <section className="bg-[#103F46] border border-zinc-800 rounded-2xl p-5 space-y-5" dir="rtl">
         <div>
           <h2 className="font-bold text-white text-base">פלטות לפי אווירה והשראות הפרויקט</h2>
-          <p className="text-xs text-zinc-400 mt-1">כללי צבע מקומיים ודגימת פיקסלים בלבד — ללא Gemini. </p>
+          <p className="text-xs text-[#C1D1D5] mt-1">כללי צבע מקומיים ודגימת פיקסלים בלבד — ללא Gemini. </p>
         </div>
         <div className="flex flex-col md:flex-row gap-2">
           <input className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[#43D6CB]" value={moodText} onChange={e=>setMoodText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')buildMoodPalettes();}} placeholder="איזו אווירה תרצה? למשל: שמחה חסידית יוקרתית, לא צבעונית מדי" aria-label="תיאור אווירה חופשי" />
@@ -531,13 +531,13 @@ export const ColorLaboratory: React.FC = () => {
             <input type="range" min="0" max="100" value={control.value} onChange={e=>control.set(Number(e.target.value))} className="w-full accent-[#43D6CB]"/>
           </label>)}
         </div>
-        <p className="text-[11px] text-zinc-500">לאחר שינוי הסליידרים, לחץ שוב על ״צור פלטות לפי אווירה״ כדי לעדכן את ההצעות.</p>
+        <p className="text-[13px] text-[#C1D1D5]">לאחר שינוי הסליידרים, לחץ שוב על ״צור פלטות לפי אווירה״ כדי לעדכן את ההצעות.</p>
         {moodNote&&<p className="rounded-lg bg-[#183036] px-3 py-2 text-xs text-zinc-200" role="status">{moodNote}</p>}
         {!!moodPalettes.length && <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {moodPalettes.map((pal,i)=><div key={i} className="bg-zinc-900/80 border border-zinc-700 rounded-xl p-3 space-y-2">
             <div className="flex items-center justify-between gap-2"><strong className="text-xs text-white">{pal.name}</strong><button onClick={()=>savePaletteToProject(pal.name,pal.colors)} className="text-xs text-[#43D6CB]">שמור בפרויקט</button></div>
             <div className="flex gap-1">{pal.colors.map((c,j)=><button key={j} onClick={()=>{handleHexChange(c);copyToClipboard(c,`HEX ${c} הועתק`);}} title={`העתק ${c}`} className="flex-1 h-14 rounded-md border border-white/10" style={{backgroundColor:c}} />)}</div>
-            <div className="flex flex-wrap gap-1">{pal.colors.map((c,j)=><button key={j} className="font-mono text-[10px] bg-[#183036] text-white rounded px-1.5 py-1 hover:text-[#43D6CB]" onClick={()=>copyToClipboard(c,`HEX ${c} הועתק`)}>{c}</button>)}</div>
+            <div className="flex flex-wrap gap-1">{pal.colors.map((c,j)=><button key={j} className="font-mono text-[12px] bg-[#183036] text-white rounded px-1.5 py-1 hover:text-[#43D6CB]" onClick={()=>copyToClipboard(c,`HEX ${c} הועתק`)}>{c}</button>)}</div>
           </div>)}
         </div>}
         <div className="border-t border-zinc-700 pt-4 space-y-3">
@@ -546,14 +546,14 @@ export const ColorLaboratory: React.FC = () => {
             <button disabled={referenceBusy || !inspirations.length} onClick={extractProjectReferences} className="px-4 py-2 rounded-lg text-xs font-bold bg-zinc-900 text-[#43D6CB] border border-[#43D6CB]/40 disabled:opacity-40">{referenceBusy?'מחלץ צבעים...':'חלץ צבעים מהרפרנסים'}</button>
           </div>
           <div className="flex gap-2 text-xs">
-            <button onClick={()=>setPaletteMode('original')} className={`rounded-lg px-3 py-2 border ${paletteMode==='original'?'bg-[#43D6CB]/15 border-[#43D6CB] text-white':'border-zinc-700 text-zinc-400'}`}>צבעים מקוריים</button>
-            <button onClick={()=>setPaletteMode('adapted')} className={`rounded-lg px-3 py-2 border ${paletteMode==='adapted'?'bg-[#43D6CB]/15 border-[#43D6CB] text-white':'border-zinc-700 text-zinc-400'}`}>פלטה הרמונית מעובדת</button>
+            <button onClick={()=>setPaletteMode('original')} className={`rounded-lg px-3 py-2 border ${paletteMode==='original'?'bg-[#43D6CB]/15 border-[#43D6CB] text-white':'border-zinc-700 text-[#C1D1D5]'}`}>צבעים מקוריים</button>
+            <button onClick={()=>setPaletteMode('adapted')} className={`rounded-lg px-3 py-2 border ${paletteMode==='adapted'?'bg-[#43D6CB]/15 border-[#43D6CB] text-white':'border-zinc-700 text-[#C1D1D5]'}`}>פלטה הרמונית מעובדת</button>
           </div>
           {referenceMessage&&<p className="text-xs text-amber-200">{referenceMessage}</p>}
           {!!referenceColorSets.length&&<div className="grid grid-cols-1 md:grid-cols-2 gap-3">{referenceColorSets.map((p,i)=><div key={i} className="bg-zinc-900 border border-zinc-700 rounded-xl p-3 space-y-2">
             <div className="flex justify-between items-center gap-2"><span className="text-xs text-[#43D6CB] truncate">{p.source ? <a href={p.source} target="_blank" rel="noreferrer">{p.name} ↗</a> : `${p.name} · עיצוב שלי`}</span><button onClick={()=>savePaletteToProject(p.name,p.colors)} className="text-xs text-white">שמור</button></div>
             <div className="flex gap-1">{p.colors.map((hex,j)=><button key={j} style={{backgroundColor:hex}} className="flex-1 h-12 rounded-md border border-white/10" onClick={()=>{handleHexChange(hex);copyToClipboard(hex,`HEX ${hex} הועתק`);}} title={`העתק ${hex}`}/>)}</div>
-            <div className="flex gap-1 flex-wrap">{p.colors.map((hex,j)=><button key={j} className="text-[10px] text-white font-mono bg-[#183036] px-1.5 py-1 rounded" onClick={()=>copyToClipboard(hex,`HEX ${hex} הועתק`)}>{hex}</button>)}</div>
+            <div className="flex gap-1 flex-wrap">{p.colors.map((hex,j)=><button key={j} className="text-[12px] text-white font-mono bg-[#183036] px-1.5 py-1 rounded" onClick={()=>copyToClipboard(hex,`HEX ${hex} הועתק`)}>{hex}</button>)}</div>
           </div>)}</div>}
         </div>
       </section>
@@ -566,7 +566,7 @@ export const ColorLaboratory: React.FC = () => {
             <h3 className="font-bold text-white text-sm">בחירת צבע בסיס</h3>
             <button
               onClick={() => copyToClipboard(baseColor, `HEX ${baseColor} הועתק`)}
-              className="text-[11px] text-[#43D6CB] hover:underline font-mono"
+              className="text-[13px] text-[#43D6CB] hover:underline font-mono"
             >
               העתק HEX
             </button>
@@ -591,7 +591,7 @@ export const ColorLaboratory: React.FC = () => {
           {/* Inputs */}
           <div className="space-y-3">
             <div>
-              <label className="text-xs text-zinc-400 block mb-1">HEX Code:</label>
+              <label className="text-xs text-[#C1D1D5] block mb-1">HEX Code:</label>
               <input
                 type="text"
                 value={baseColor}
@@ -602,11 +602,11 @@ export const ColorLaboratory: React.FC = () => {
 
             {/* RGB Sliders */}
             <div className="space-y-1.5">
-              <label className="text-xs text-zinc-400 block">ערכי RGB:</label>
+              <label className="text-xs text-[#C1D1D5] block">ערכי RGB:</label>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 {(['r', 'g', 'b'] as const).map((ch) => (
                   <div key={ch} className="bg-zinc-900 p-2 rounded-lg border border-zinc-800">
-                    <div className="flex justify-between text-[10px] text-zinc-500 mb-1">
+                    <div className="flex justify-between text-[12px] text-[#C1D1D5] mb-1">
                       <span className="uppercase">{ch}</span>
                       <span className="font-mono text-zinc-300">{rgb[ch]}</span>
                     </div>
@@ -625,10 +625,10 @@ export const ColorLaboratory: React.FC = () => {
 
             {/* HSL Sliders */}
             <div className="space-y-1.5">
-              <label className="text-xs text-zinc-400 block">ערכי HSL (גוון, רוויה, בהירות):</label>
+              <label className="text-xs text-[#C1D1D5] block">ערכי HSL (גוון, רוויה, בהירות):</label>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div className="bg-zinc-900 p-2 rounded-lg border border-zinc-800">
-                  <div className="flex justify-between text-[10px] text-zinc-500 mb-1">
+                  <div className="flex justify-between text-[12px] text-[#C1D1D5] mb-1">
                     <span>Hue</span>
                     <span className="font-mono text-zinc-300">{hsl.h}°</span>
                   </div>
@@ -642,7 +642,7 @@ export const ColorLaboratory: React.FC = () => {
                   />
                 </div>
                 <div className="bg-zinc-900 p-2 rounded-lg border border-zinc-800">
-                  <div className="flex justify-between text-[10px] text-zinc-500 mb-1">
+                  <div className="flex justify-between text-[12px] text-[#C1D1D5] mb-1">
                     <span>Sat</span>
                     <span className="font-mono text-zinc-300">{hsl.s}%</span>
                   </div>
@@ -656,7 +656,7 @@ export const ColorLaboratory: React.FC = () => {
                   />
                 </div>
                 <div className="bg-zinc-900 p-2 rounded-lg border border-zinc-800">
-                  <div className="flex justify-between text-[10px] text-zinc-500 mb-1">
+                  <div className="flex justify-between text-[12px] text-[#C1D1D5] mb-1">
                     <span>Light</span>
                     <span className="font-mono text-zinc-300">{hsl.l}%</span>
                   </div>
@@ -686,13 +686,13 @@ export const ColorLaboratory: React.FC = () => {
               onClick={() => imageUploadRef.current?.click()}
               className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-xl text-xs font-bold text-zinc-200 transition flex items-center justify-center gap-2"
             >
-              <Icon name="Upload" className="w-3.5 h-3.5 text-zinc-400" />
+              <Icon name="Upload" className="w-3.5 h-3.5 text-[#C1D1D5]" />
               דגום צבעים מתמונת רפרנס
             </button>
 
             {extractedColors.length > 0 && (
               <div className="mt-2.5">
-                <span className="text-[10px] text-zinc-400 block mb-1">צבעים שחולצו:</span>
+                <span className="text-[12px] text-[#C1D1D5] block mb-1">צבעים שחולצו:</span>
                 <div className="flex gap-1.5">
                   {extractedColors.map((hex) => (
                     <button
@@ -713,7 +713,7 @@ export const ColorLaboratory: React.FC = () => {
         <div className="lg:col-span-2 bg-[#103F46] border border-zinc-800 rounded-2xl p-5 space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-white text-sm">הרמוניות צבע מבוססות גלגל הצבעים</h3>
-            <span className="text-xs text-zinc-500">חישוב מתמטי מדויק</span>
+            <span className="text-xs text-[#C1D1D5]">חישוב מתמטי מדויק</span>
           </div>
 
           {/* Harmonies list */}
@@ -730,14 +730,14 @@ export const ColorLaboratory: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => exportPaletteSvg(harm.label, harm.colors)}
-                      className="text-[10px] text-zinc-400 hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition"
+                      className="text-[12px] text-[#C1D1D5] hover:text-white px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 transition"
                       title="ייצוא קובץ SVG וקטורי של הפלטה"
                     >
                       ייצוא SVG
                     </button>
                     <button
                       onClick={() => savePaletteToProject(harm.label, harm.colors)}
-                      className="text-[10px] text-[#43D6CB] hover:text-teal-300 font-bold px-2 py-0.5 rounded bg-[#43D6CB]/10 border border-[#43D6CB]/30 transition"
+                      className="text-[12px] text-[#43D6CB] hover:text-teal-300 font-bold px-2 py-0.5 rounded bg-[#43D6CB]/10 border border-[#43D6CB]/30 transition"
                     >
                       שמור לפרויקט
                     </button>
@@ -756,7 +756,7 @@ export const ColorLaboratory: React.FC = () => {
                       style={{ backgroundColor: c }}
                       title={`בחר והעתק ${c}`}
                     >
-                      <span className="text-[10px] font-mono font-bold bg-black/60 text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">
+                      <span className="text-[12px] font-mono font-bold bg-black/60 text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">
                         {c}
                       </span>
                     </button>
@@ -775,7 +775,7 @@ export const ColorLaboratory: React.FC = () => {
             <Icon name="Sparkles" className="w-4 h-4 text-amber-400" />
             <h3 className="font-bold text-white text-sm">פלטות יוקרה וספרי קודש (Luxury & Traditional Presets)</h3>
           </div>
-          <span className="text-xs text-zinc-500">זהב, ברונזה, כסף, ארגמן ואמרלד פרימיום</span>
+          <span className="text-xs text-[#C1D1D5]">זהב, ברונזה, כסף, ארגמן ואמרלד פרימיום</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -785,7 +785,7 @@ export const ColorLaboratory: React.FC = () => {
                 <span className="text-xs font-bold text-zinc-200 truncate">{preset.name}</span>
                 <button
                   onClick={() => savePaletteToProject(preset.name, preset.colors)}
-                  className="text-[10px] text-[#43D6CB] hover:underline"
+                  className="text-[12px] text-[#43D6CB] hover:underline"
                 >
                   שמור
                 </button>
@@ -802,7 +802,7 @@ export const ColorLaboratory: React.FC = () => {
                     className="relative h-14 rounded-md border border-white/10 transition hover:scale-105 overflow-hidden"
                     style={{ backgroundColor: hex }}
                     title={hex}
-                  ><span className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[9px] font-mono">{hex}</span></button>
+                  ><span className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[12px] font-mono">{hex}</span></button>
                 ))}
               </div>
             </div>
@@ -815,7 +815,7 @@ export const ColorLaboratory: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="font-bold text-white text-sm">בונה גרדיאנטים חי (Interactive Gradient Builder)</h3>
-            <p className="text-xs text-zinc-400">תמיכה בנקודות עצירה מרובות, זווית, מעגלי/ליניארי ותצוגה חיה</p>
+            <p className="text-xs text-[#C1D1D5]">תמיכה בנקודות עצירה מרובות, זווית, מעגלי/ליניארי ותצוגה חיה</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -838,7 +838,7 @@ export const ColorLaboratory: React.FC = () => {
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg border transition ${
                   gradientType === 'linear'
                     ? 'border-[#43D6CB] bg-[#43D6CB]/10 text-[#43D6CB]'
-                    : 'border-zinc-800 bg-zinc-900 text-zinc-400'
+                    : 'border-zinc-800 bg-zinc-900 text-[#C1D1D5]'
                 }`}
               >
                 ליניארי (Linear)
@@ -848,7 +848,7 @@ export const ColorLaboratory: React.FC = () => {
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg border transition ${
                   gradientType === 'radial'
                     ? 'border-[#43D6CB] bg-[#43D6CB]/10 text-[#43D6CB]'
-                    : 'border-zinc-800 bg-zinc-900 text-zinc-400'
+                    : 'border-zinc-800 bg-zinc-900 text-[#C1D1D5]'
                 }`}
               >
                 מעגלי (Radial)
@@ -857,7 +857,7 @@ export const ColorLaboratory: React.FC = () => {
 
             {gradientType === 'linear' && (
               <div>
-                <div className="flex justify-between text-xs text-zinc-400 mb-1">
+                <div className="flex justify-between text-xs text-[#C1D1D5] mb-1">
                   <span>זווית מעלות:</span>
                   <span className="font-mono text-zinc-200">{gradientAngle}°</span>
                 </div>
@@ -874,7 +874,7 @@ export const ColorLaboratory: React.FC = () => {
 
             {/* Gradient Stops */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-zinc-400">
+              <div className="flex items-center justify-between text-xs text-[#C1D1D5]">
                 <span>נקודות עצירה (Stops):</span>
                 {gradientStops.length < 5 && (
                   <button
@@ -884,7 +884,7 @@ export const ColorLaboratory: React.FC = () => {
                         { color: baseColor, offset: Math.min(100, gradientStops[gradientStops.length - 1].offset + 20) },
                       ])
                     }
-                    className="text-[#43D6CB] hover:underline text-[11px]"
+                    className="text-[#43D6CB] hover:underline text-[13px]"
                   >
                     + הוסף נקודה
                   </button>
@@ -915,11 +915,11 @@ export const ColorLaboratory: React.FC = () => {
                     }}
                     className="flex-1 accent-[#43D6CB] h-1"
                   />
-                  <span className="text-[10px] font-mono text-zinc-400 w-8 text-left">{stop.offset}%</span>
+                  <span className="text-[12px] font-mono text-[#C1D1D5] w-8 text-left">{stop.offset}%</span>
                   {gradientStops.length > 2 && (
                     <button
                       onClick={() => setGradientStops(gradientStops.filter((_, i) => i !== idx))}
-                      className="text-zinc-600 hover:text-red-400 text-xs px-1"
+                      className="text-[#C1D1D5] hover:text-red-400 text-xs px-1"
                       title="הסר נקודה"
                     >
                       ✕
@@ -941,7 +941,7 @@ export const ColorLaboratory: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] font-mono text-zinc-400 break-all select-all">
+            <div className="p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[13px] font-mono text-[#C1D1D5] break-all select-all">
               {cssGradient}
             </div>
           </div>

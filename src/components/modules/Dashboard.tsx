@@ -55,7 +55,7 @@ export const Dashboard: React.FC = () => {
           איזה פרויקט מתחילים היום?
         </h1>
 
-        <p className="text-base lg:text-lg text-zinc-400 font-normal max-w-2xl mx-auto leading-relaxed">
+        <p className="text-base lg:text-lg text-[#C1D1D5] font-normal max-w-2xl mx-auto leading-relaxed">
           ההשראה, הקריאייטיב וכלי העיצוב שלך — במקום אחד.
         </p>
 
@@ -76,11 +76,11 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 pt-3 px-1 border-t border-zinc-800/80 mt-2">
-            <div className="text-[11px] text-zinc-500 hidden sm:block">
+            <div className="text-[13px] text-[#C1D1D5] hidden sm:block">
               פרויקט פעיל: <strong className="text-zinc-300">{activeProject.name}</strong>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
               <button
                 onClick={handleConceptDirector}
                 className="flex-1 sm:flex-none px-4 py-2 bg-[#22252A] hover:bg-[#2A2E35] border border-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5"
@@ -114,10 +114,10 @@ export const Dashboard: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-bold text-white text-sm group-hover:text-[#43D6CB] transition">מעבדת צבע אינטראקטיבית</h3>
-                <p className="text-xs text-zinc-400">הרמוניות, גרדיאנטים חיים, זהב מלכותי ודגימת צבע מתמונה</p>
+                <p className="text-xs text-[#C1D1D5]">הרמוניות, גרדיאנטים חיים, זהב מלכותי ודגימת צבע מתמונה</p>
               </div>
             </div>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
+            <span className="text-[12px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
               זמין תמיד
             </span>
           </div>
@@ -142,10 +142,10 @@ export const Dashboard: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-bold text-white text-sm group-hover:text-amber-400 transition">מגרש טיפוגרפיה עברית</h3>
-                <p className="text-xs text-zinc-400">עורך קנבס חי, טקסט עקמומי לאורך נתיב, צלליות ואוטליין</p>
+                <p className="text-xs text-[#C1D1D5]">עורך קנבס חי, טקסט עקמומי לאורך נתיב, צלליות ואוטליין</p>
               </div>
             </div>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
+            <span className="text-[12px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
               זמין תמיד
             </span>
           </div>
@@ -164,7 +164,7 @@ export const Dashboard: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon name="Grid" className="w-4 h-4 text-[#43D6CB]" />
-            <h2 className="text-base font-bold text-white">11 מודולי העבודה של דקל AI</h2>
+            <h2 className="text-lg font-bold text-white">הכלים שלך</h2>
           </div>
           
         </div>
@@ -180,23 +180,13 @@ export const Dashboard: React.FC = () => {
                 <div className="w-8 h-8 rounded-xl bg-zinc-800/80 border border-zinc-700 group-hover:border-[#43D6CB]/40 flex items-center justify-center text-zinc-300 group-hover:text-[#43D6CB] transition">
                   <Icon name={module.iconName} className="w-4 h-4" />
                 </div>
-                <div className="flex items-center gap-1.5">
-                  {module.badge && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                      {module.badge}
-                    </span>
-                  )}
-                  <span className="text-[11px] font-black text-zinc-600 group-hover:text-zinc-400">
-                    #{module.number}
-                  </span>
-                </div>
               </div>
 
               <div>
                 <h4 className="text-sm font-bold text-white group-hover:text-[#43D6CB] transition">
                   {module.titleHebrew}
                 </h4>
-                <p className="text-[11px] text-zinc-400 line-clamp-2 mt-0.5 leading-relaxed">
+                <p className="text-[13px] text-[#C1D1D5] line-clamp-2 mt-0.5 leading-relaxed">
                   {module.subtitleHebrew}
                 </p>
               </div>
@@ -211,7 +201,7 @@ export const Dashboard: React.FC = () => {
       <div className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon name="FolderOpen" className="w-4 h-4 text-zinc-400" />
+            <Icon name="FolderOpen" className="w-4 h-4 text-[#C1D1D5]" />
             <h2 className="text-base font-bold text-white">פרויקטים שמורים ועבודות אחרונות</h2>
           </div>
           <button
@@ -246,7 +236,7 @@ export const Dashboard: React.FC = () => {
             </button>
             <button
               onClick={() => setIsCreatingNew(false)}
-              className="px-3 py-2 bg-zinc-800 text-zinc-400 text-xs rounded-lg hover:bg-zinc-700"
+              className="px-3 py-2 bg-zinc-800 text-[#C1D1D5] text-xs rounded-lg hover:bg-zinc-700"
             >
               ביטול
             </button>
@@ -267,13 +257,13 @@ export const Dashboard: React.FC = () => {
               <div className="flex items-start justify-between mb-2">
                 <span className="font-bold text-white text-sm">{proj.name}</span>
                 {proj.id === activeProject.id && (
-                  <span className="text-[10px] bg-[#43D6CB]/20 text-[#43D6CB] px-2 py-0.5 rounded font-bold">
+                  <span className="text-[12px] bg-[#43D6CB]/20 text-[#43D6CB] px-2 py-0.5 rounded font-bold">
                     נוכחי
                   </span>
                 )}
               </div>
-              <p className="text-xs text-zinc-400 mb-3 truncate">לקוח: {proj.clientName || 'כללי'}</p>
-              <div className="flex items-center gap-3 text-[11px] text-zinc-500 border-t border-zinc-800/80 pt-2">
+              <p className="text-xs text-[#C1D1D5] mb-3 truncate">לקוח: {proj.clientName || 'כללי'}</p>
+              <div className="flex items-center gap-3 text-[13px] text-[#C1D1D5] border-t border-zinc-800/80 pt-2">
                 <span>{proj.concepts.length} קונספטים</span>
                 <span>•</span>
                 <span>{proj.savedInspirations.length} השראות</span>

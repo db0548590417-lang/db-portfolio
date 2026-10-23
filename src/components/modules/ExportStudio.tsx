@@ -185,7 +185,7 @@ export const ExportStudio: React.FC = () => {
             <span>מודול #10 — סטודיו ייצוא מקצועי</span>
           </div>
           <h1 className="text-2xl font-black text-white">ייצוא נכסים, וקטורים, PDF וגיבוי מלא</h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[#C1D1D5]">
             שליטה מלאה בקנה מידה (1x, 2x, 4x), הבחנה בין רזולוציית פיקסלים ל-DPI, ייצוא וקטורי אמיתי וקובצי PDF.
           </p>
         </div>
@@ -220,11 +220,11 @@ export const ExportStudio: React.FC = () => {
                   className={`p-2.5 rounded-xl border text-center transition ${
                     exportFormat === fmt.id
                       ? 'border-[#43D6CB] bg-[#43D6CB]/10 text-white font-bold'
-                      : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white'
+                      : 'border-zinc-800 bg-zinc-900 text-[#C1D1D5] hover:text-white'
                   }`}
                 >
                   <span className="block text-xs uppercase font-mono">{fmt.id}</span>
-                  <span className="text-[9px] text-zinc-500 block mt-0.5">{fmt.label}</span>
+                  <span className="text-[12px] text-[#C1D1D5] block mt-0.5">{fmt.label}</span>
                 </button>
               ))}
             </div>
@@ -253,7 +253,7 @@ export const ExportStudio: React.FC = () => {
                     className={`py-2 rounded-lg border font-mono font-bold text-xs transition ${
                       scale === s
                         ? 'border-[#43D6CB] bg-[#43D6CB] text-white'
-                        : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white'
+                        : 'border-zinc-800 bg-zinc-900 text-[#C1D1D5] hover:text-white'
                     }`}
                   >
                     {s}x {s === 4 ? '(Ultra HD 4K)' : s === 2 ? '(Retina 2x)' : '(1x Standard)'}
@@ -266,7 +266,7 @@ export const ExportStudio: React.FC = () => {
           {/* Dimensions */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-zinc-400 block mb-1">רוחב בסיס (Width px):</label>
+              <label className="text-[#C1D1D5] block mb-1">רוחב בסיס (Width px):</label>
               <input
                 type="number"
                 value={baseWidth}
@@ -275,7 +275,7 @@ export const ExportStudio: React.FC = () => {
               />
             </div>
             <div>
-              <label className="text-zinc-400 block mb-1">גובה בסיס (Height px):</label>
+              <label className="text-[#C1D1D5] block mb-1">גובה בסיס (Height px):</label>
               <input
                 type="number"
                 value={baseHeight}
@@ -290,7 +290,7 @@ export const ExportStudio: React.FC = () => {
             <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-between">
               <div>
                 <span className="font-bold text-zinc-200 block">כלול רקע כהה:</span>
-                <span className="text-[10px] text-zinc-500">בטל סימון לשמירה עם שקיפות (Transparent PNG/SVG)</span>
+                <span className="text-[12px] text-[#C1D1D5]">בטל סימון לשמירה עם שקיפות (Transparent PNG/SVG)</span>
               </div>
               <input
                 type="checkbox"
@@ -313,28 +313,28 @@ export const ExportStudio: React.FC = () => {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
               <div className="bg-zinc-900 p-2.5 rounded-xl border border-zinc-800">
-                <span className="text-[10px] text-zinc-500 block">פורמט קובץ</span>
+                <span className="text-[12px] text-[#C1D1D5] block">פורמט קובץ</span>
                 <span className="font-mono font-bold text-white uppercase text-sm">
                   .{exportFormat}
                 </span>
               </div>
 
               <div className="bg-zinc-900 p-2.5 rounded-xl border border-zinc-800">
-                <span className="text-[10px] text-zinc-500 block">מימדים בפועל (Actual Pixels)</span>
+                <span className="text-[12px] text-[#C1D1D5] block">מימדים בפועל (Actual Pixels)</span>
                 <span className="font-mono font-bold text-[#43D6CB] text-sm">
                   {finalWidth} × {finalHeight}
                 </span>
               </div>
 
               <div className="bg-zinc-900 p-2.5 rounded-xl border border-zinc-800">
-                <span className="text-[10px] text-zinc-500 block">צפיפות מומלצת (DPI)</span>
+                <span className="text-[12px] text-[#C1D1D5] block">צפיפות מומלצת (DPI)</span>
                 <span className="font-mono font-bold text-zinc-300 text-sm">
                   {scale >= 2 ? '300 DPI (דפוס פרימיום)' : '72 DPI (מסכים)'}
                 </span>
               </div>
             </div>
 
-            <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-xl text-[11px] text-zinc-400 space-y-1">
+            <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-xl text-[13px] text-[#C1D1D5] space-y-1">
               <strong className="text-zinc-200 block">דיוק הנדסי ומקצועיות:</strong>
               <p>
                 {exportFormat === 'svg'
@@ -357,13 +357,13 @@ export const ExportStudio: React.FC = () => {
               }`}
             >
               <div className="bg-black/60 backdrop-blur-md p-6 rounded-2xl border border-white/10 max-w-md space-y-2">
-                <span className="text-[10px] uppercase tracking-widest text-[#43D6CB] font-bold">
+                <span className="text-[12px] uppercase tracking-widest text-[#43D6CB] font-bold">
                   {activeProject.clientName || 'INSPIRA STUDIO'}
                 </span>
                 <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-teal-300 to-amber-100">
                   {activeProject.typographyDesigns[0]?.text || activeProject.brief.productOrService}
                 </h3>
-                <p className="text-[11px] text-zinc-400">
+                <p className="text-[13px] text-[#C1D1D5]">
                   {activeProject.name} — ייצוא מוכן
                 </p>
               </div>

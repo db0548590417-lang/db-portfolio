@@ -198,7 +198,7 @@ export const CreativeAnalyzer: React.FC = () => {
             <span>מודול #4 — מנתח קריאייטיב מולטימודלי</span>
           </div>
           <h1 className="text-2xl font-black text-white">ניתוח רפרנסים ופיענוח מנגנונים</h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[#C1D1D5]">
             הערכת 11 מדדי איכות חזותיים, חשיפת המנגנון הקוגניטיבי הנסתר והפקת 5 רעיונות יישומיים לפרויקט שלך.
           </p>
         </div>
@@ -251,15 +251,15 @@ export const CreativeAnalyzer: React.FC = () => {
             {imageUrl ? (
               <img src={imageUrl} alt="לחץ להגדלת העיצוב" role="button" tabIndex={0} onClick={() => setLightboxOpen(true)} onKeyDown={e => { if (e.key === 'Enter') setLightboxOpen(true); }} className="w-full h-full object-contain cursor-zoom-in" />
             ) : (
-              <span className="text-zinc-600 text-xs">לא נבחרה תמונה</span>
+              <span className="text-[#C1D1D5] text-xs">לא נבחרה תמונה</span>
             )}
           </div>
 
           <div className="space-y-2 rounded-xl border border-[#31535A] p-3 bg-[#183036]">
             <h4 className="font-bold text-white text-xs">העיצובים שלי — גרסאות ({assets.length})</h4>
-            <p className="text-[10px] text-zinc-400">העיצובים שלך זמינים בפרויקט במחשב הזה.</p>
+            <p className="text-[12px] text-[#C1D1D5]">העיצובים שלך זמינים בפרויקט במחשב הזה.</p>
             <div className="max-h-48 overflow-auto space-y-1">
-              {assets.map(asset => <div key={asset.id} className="flex gap-1 items-center text-[11px]">
+              {assets.map(asset => <div key={asset.id} className="flex gap-1 items-center text-[13px]">
                 <button className="flex-1 truncate text-right rounded bg-zinc-900 hover:bg-zinc-800 p-2 text-zinc-200" onClick={() => openAsset(asset)}>{asset.name} · גרסה {asset.version}</button>
                 <button className="text-red-300 rounded p-2 hover:bg-zinc-700" onClick={() => void removeAsset(asset)} title="מחק גרסה">✕</button>
               </div>)}
@@ -267,9 +267,9 @@ export const CreativeAnalyzer: React.FC = () => {
             {activeAssetId && <button className="w-full rounded bg-[#43D6CB]/15 border border-[#43D6CB]/30 p-2 text-[#43D6CB] font-bold text-xs" onClick={useAsReference}>הוסף עיצוב נבחר לרפרנסים</button>}
           </div>
           <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs space-y-1">
-            <span className="text-zinc-500 text-[10px] block">הקשר פרויקט פעיל:</span>
+            <span className="text-[#C1D1D5] text-[12px] block">הקשר פרויקט פעיל:</span>
             <p className="font-bold text-zinc-200">{activeProject.name}</p>
-            <p className="text-[11px] text-zinc-400">{activeProject.brief.productOrService}</p>
+            <p className="text-[13px] text-[#C1D1D5]">{activeProject.brief.productOrService}</p>
           </div>
         </div>
 
@@ -279,7 +279,7 @@ export const CreativeAnalyzer: React.FC = () => {
             <div className="p-12 text-center bg-[#103F46] border border-zinc-800 rounded-2xl space-y-3">
               <Icon name="ScanEye" className="w-8 h-8 text-[#43D6CB] mx-auto opacity-70" />
               <h3 className="font-bold text-white text-sm">לחץ על "הפעל ניתוח מולטימודלי"</h3>
-              <p className="text-xs text-zinc-400 max-w-md mx-auto">
+              <p className="text-xs text-[#C1D1D5] max-w-md mx-auto">
                 Gemini יסרוק את הרפרנס, יפרק את המטאפורה הוויזואלית, יעריך 11 ממדים ויפיק 5 רעיונות תואמים לפרויקט הנוכחי.
               </p>
             </div>
@@ -289,7 +289,7 @@ export const CreativeAnalyzer: React.FC = () => {
             <div className="p-12 text-center bg-[#103F46] border border-zinc-800 rounded-2xl space-y-3">
               <Icon name="RefreshCw" className="w-8 h-8 text-[#43D6CB] mx-auto animate-spin" />
               <h3 className="font-bold text-white text-sm">מפענח עקרונות גשטאלט וקומפוזיציה...</h3>
-              <p className="text-xs text-zinc-500">הפרדה בין עובדות נצפות לפרשנות קונספטואלית</p>
+              <p className="text-xs text-[#C1D1D5]">הפרדה בין עובדות נצפות לפרשנות קונספטואלית</p>
             </div>
           )}
 
@@ -316,7 +316,7 @@ export const CreativeAnalyzer: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div className="p-4 bg-[#103F46] border border-zinc-800 rounded-xl space-y-2">
                   <span className="text-emerald-400 font-bold block">1. עובדות ויזואליות נצפות:</span>
-                  <ul className="space-y-1 text-zinc-300 list-disc list-inside text-[11px]">
+                  <ul className="space-y-1 text-zinc-300 list-disc list-inside text-[13px]">
                     {analysisResult.observableElements?.map((el: string, i: number) => (
                       <li key={i}>{el}</li>
                     ))}
@@ -325,7 +325,7 @@ export const CreativeAnalyzer: React.FC = () => {
 
                 <div className="p-4 bg-[#103F46] border border-zinc-800 rounded-xl space-y-2">
                   <span className="text-[#43D6CB] font-bold block">2. פרשנות קונספטואלית ותובנה:</span>
-                  <p className="text-zinc-300 text-[11px] leading-relaxed">
+                  <p className="text-zinc-300 text-[13px] leading-relaxed">
                     {analysisResult.conceptualInterpretation}
                   </p>
                 </div>
@@ -339,12 +339,12 @@ export const CreativeAnalyzer: React.FC = () => {
                     Object.entries(analysisResult.criteriaAnalysis).map(([key, val]: any) => (
                       <div key={key} className="bg-zinc-900 p-2.5 rounded-xl border border-zinc-800">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-[11px] font-bold text-zinc-300 truncate">{key}</span>
-                          <span className="text-[10px] font-mono text-[#43D6CB] font-bold">
+                          <span className="text-[13px] font-bold text-zinc-300 truncate">{key}</span>
+                          <span className="text-[12px] font-mono text-[#43D6CB] font-bold">
                             {val.score}/10
                           </span>
                         </div>
-                        <p className="text-[10px] text-zinc-400 line-clamp-2 leading-relaxed">
+                        <p className="text-[12px] text-[#C1D1D5] line-clamp-2 leading-relaxed">
                           {val.analysis}
                         </p>
                       </div>
@@ -355,7 +355,7 @@ export const CreativeAnalyzer: React.FC = () => {
               {/* Constructive Criticism */}
               <div className="p-4 bg-zinc-900/90 border border-zinc-800 rounded-xl text-xs space-y-1">
                 <span className="text-amber-400 font-bold block">ביקורת בונה מקצועית:</span>
-                <p className="text-zinc-300 text-[11px] leading-relaxed">
+                <p className="text-zinc-300 text-[13px] leading-relaxed">
                   {analysisResult.constructiveCriticism}
                 </p>
               </div>
@@ -376,17 +376,17 @@ export const CreativeAnalyzer: React.FC = () => {
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-bold text-white">{idea.title}</span>
-                          <span className="text-[10px] text-[#43D6CB] font-mono">#{idx + 1}</span>
+                          <span className="text-[12px] text-[#43D6CB] font-mono">#{idx + 1}</span>
                         </div>
-                        <p className="text-[11px] text-zinc-300 leading-relaxed mb-1.5">{idea.description}</p>
-                        <p className="text-[10px] text-emerald-400 leading-relaxed">
+                        <p className="text-[13px] text-zinc-300 leading-relaxed mb-1.5">{idea.description}</p>
+                        <p className="text-[12px] text-emerald-400 leading-relaxed">
                           <strong>איך ליישם:</strong> {idea.howToApply}
                         </p>
                       </div>
 
                       <button
                         onClick={() => saveIdeaToProject(idea)}
-                        className="py-1 px-2 bg-[#43D6CB]/15 hover:bg-[#43D6CB]/25 text-[#43D6CB] rounded-lg font-bold text-[11px] transition flex items-center justify-center gap-1 border border-[#43D6CB]/30"
+                        className="py-1 px-2 bg-[#43D6CB]/15 hover:bg-[#43D6CB]/25 text-[#43D6CB] rounded-lg font-bold text-[13px] transition flex items-center justify-center gap-1 border border-[#43D6CB]/30"
                       >
                         <Icon name="Plus" className="w-3 h-3" />
                         שמור כקונספט לפרויקט

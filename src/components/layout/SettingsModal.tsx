@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { Icon } from '../common/Icon';
-import { SystemHealthDashboard } from '../modules/SystemHealthDashboard';
+import { GeminiSetup } from './GeminiSetup';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -18,7 +18,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     updateActiveProject,
   } = useProject();
 
-  const [activeTab, setActiveTab] = useState<'creative' | 'search_provider' | 'backup' | 'diagnostics'>('creative');
+  const [activeTab, setActiveTab] = useState<'creative' | 'search_provider' | 'backup' | 'connection'>('creative');
   const [unsplashKey, setUnsplashKey] = useState(globalPrefs.unsplashApiKey || '');
   const [pexelsKey, setPexelsKey] = useState(globalPrefs.pexelsApiKey || '');
 
@@ -47,53 +47,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-      <div className="w-full max-w-6xl bg-[#103F46] border border-zinc-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col text-right">
+      <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="max-h-[calc(100dvh-2rem)] w-full max-w-5xl bg-[#103F46] border border-zinc-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col text-right">
         {/* Header */}
         <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon name="Settings" className="w-5 h-5 text-[#43D6CB]" />
-            <h2 className="text-base font-bold text-white">הגדרות קריאייטיב וחיבורים מקצועיים</h2>
+            <h2 id="settings-title" className="text-xl font-bold text-white">הגדרות</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+            className="p-1 rounded-lg hover:bg-zinc-800 text-[#C1D1D5] hover:text-white transition"
           >
             ✕
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-zinc-800 px-6 gap-4 text-xs font-bold">
+        <div className="flex shrink-0 overflow-x-auto whitespace-nowrap border-b border-zinc-800 px-6 gap-4 text-sm font-bold">
           <button
             onClick={() => setActiveTab('creative')}
             className={`py-3 border-b-2 transition ${
               activeTab === 'creative'
                 ? 'border-[#43D6CB] text-[#43D6CB]'
-                : 'border-transparent text-zinc-400 hover:text-white'
+                : 'border-transparent text-[#C1D1D5] hover:text-white'
             }`}
           >
-            פרופיל קריאייטיב גלובלי
+            סגנון עבודה
           </button>
           <button
             onClick={() => setActiveTab('search_provider')}
             className={`py-3 border-b-2 transition ${
               activeTab === 'search_provider'
                 ? 'border-[#43D6CB] text-[#43D6CB]'
-                : 'border-transparent text-zinc-400 hover:text-white'
+                : 'border-transparent text-[#C1D1D5] hover:text-white'
             }`}
           >
-            ספקי חיפוש השראות
+            מקורות השראה
           </button>
-          <button onClick={() => setActiveTab('diagnostics')} className={`py-3 border-b-2 transition ${activeTab === 'diagnostics' ? 'border-[#43D6CB] text-[#43D6CB]' : 'border-transparent text-zinc-400 hover:text-white'}`}>בדיקות מודלים ומערכת</button>
+          <button onClick={() => setActiveTab('connection')} className={`py-3 border-b-2 transition ${activeTab === 'connection' ? 'border-[#43D6CB] text-[#43D6CB]' : 'border-transparent text-[#C1D1D5] hover:text-white'}`}>חיבור AI</button>
           <button
             onClick={() => setActiveTab('backup')}
             className={`py-3 border-b-2 transition ${
               activeTab === 'backup'
                 ? 'border-[#43D6CB] text-[#43D6CB]'
-                : 'border-transparent text-zinc-400 hover:text-white'
+                : 'border-transparent text-[#C1D1D5] hover:text-white'
             }`}
           >
-            גיבוי וייבוא פרויקטים
+            גיבוי וייבוא
           </button>
         </div>
 
@@ -123,7 +123,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       }`}
                     >
                       <div className="font-bold">{p.label}</div>
-                      <div className="text-[10px] text-zinc-500 mt-0.5">{p.desc}</div>
+                      <div className="text-[12px] text-[#C1D1D5] mt-0.5">{p.desc}</div>
                     </button>
                   ))}
                 </div>
@@ -134,11 +134,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <div>
                   <div className="font-bold text-white flex items-center gap-1.5">
                     <span>סינון דמויות אנושיות (ללא אנשים)</span>
-                    <span className="text-[10px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 rounded">
+                    <span className="text-[12px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 rounded">
                       מומלץ למגזר הדתי/חרדי
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                  <p className="text-[13px] text-[#C1D1D5] mt-0.5">
                     מחייב את מחוללי ה-AI ומנועי החיפוש להתמקד במוצרים, חפצים, טיפוגרפיה ומרחב שלילי בלבד.
                   </p>
                 </div>
@@ -162,7 +162,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       className={`px-3 py-1.5 rounded-lg border font-mono text-xs transition ${
                         globalPrefs.preferredAspectRatio === ratio
                           ? 'border-[#43D6CB] bg-[#43D6CB] text-white font-bold'
-                          : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white'
+                          : 'border-zinc-800 bg-zinc-900 text-[#C1D1D5] hover:text-white'
                       }`}
                     >
                       {ratio}
@@ -175,9 +175,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {activeTab === 'search_provider' && (
             <form onSubmit={handleSaveApiKeys} className="space-y-4">
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 text-[11px]">
-                <strong>שקיפות ואמינות מקצועית:</strong> דקל AI לעולם אינה מייצרת תוצאות חיפוש מזויפות. כברירת מחדל פעיל מאגר דגימות מקצועי ומאומת. לחיפוש תמונות חי מול שירותים חיצוניים, ניתן להגדיר מפתח חינמי של Unsplash או Pexels.
-              </div>
 
               <div className="space-y-3">
                 <div>
@@ -227,9 +224,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </form>
           )}
 
-          {activeTab === 'diagnostics' && (
-            <div className="h-[62vh] -mx-4"><SystemHealthDashboard /></div>
-          )}
+          {activeTab === 'connection' && <GeminiSetup />}
           {activeTab === 'backup' && (
             <div className="space-y-4">
               <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3">
@@ -237,8 +232,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   <Icon name="Download" className="w-4 h-4 text-[#43D6CB]" />
                   <span>ייצוא גיבוי מלא של כל הפרויקטים</span>
                 </div>
-                <p className="text-zinc-400 text-[11px]">
-                  מוריד קובץ JSON מאובטח המכיל את כל הבריפים, הקונספטים שנשמרו, ההשראות, פלטות הצבעים ועיצובי הטיפוגרפיה.
+                <p className="text-[#C1D1D5] text-[13px]">
+                  שמירת הפרויקטים בקובץ גיבוי.
                 </p>
                 <button
                   onClick={exportProjectBackup}
@@ -254,7 +249,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   <Icon name="Upload" className="w-4 h-4 text-emerald-400" />
                   <span>ייבוא פרויקטים מקובץ גיבוי</span>
                 </div>
-                <p className="text-zinc-400 text-[11px]">
+                <p className="text-[#C1D1D5] text-[13px]">
                   העלה קובץ גיבוי JSON שיוצא בעבר כדי לשחזר את כל הנתונים.
                 </p>
                 <label className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold rounded-lg cursor-pointer transition">

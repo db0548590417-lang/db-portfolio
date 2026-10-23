@@ -90,7 +90,7 @@ export const GestaltLab: React.FC = () => {
             <span>מודול #6 — מעבדת גשטאלט ומרחב שלילי</span>
           </div>
           <h1 className="text-2xl font-black text-white">מחולל קונספטים מבוסס פסיכולוגיית גשטאלט</h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[#C1D1D5]">
             סגירות, קרבה, צורה-רקע, מרחב שלילי ואבות טיפוס וקטוריים מיידיים.
           </p>
         </div>
@@ -139,14 +139,14 @@ export const GestaltLab: React.FC = () => {
                     className={`w-full text-right p-2.5 rounded-xl border transition ${
                       isChecked
                         ? 'border-[#43D6CB] bg-[#43D6CB]/10 text-white'
-                        : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-zinc-700'
+                        : 'border-zinc-800 bg-zinc-900 text-[#C1D1D5] hover:border-zinc-700'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-xs">{gp.name}</span>
-                      <span className="text-[10px] font-mono">{isChecked ? '✓' : '+'}</span>
+                      <span className="text-[12px] font-mono">{isChecked ? '✓' : '+'}</span>
                     </div>
-                    <span className="text-[10px] text-zinc-500 block mt-0.5">{gp.desc}</span>
+                    <span className="text-[12px] text-[#C1D1D5] block mt-0.5">{gp.desc}</span>
                   </button>
                 );
               })}
@@ -160,7 +160,7 @@ export const GestaltLab: React.FC = () => {
             <div className="p-12 text-center bg-[#103F46] border border-zinc-800 rounded-2xl space-y-3">
               <Icon name="Shapes" className="w-8 h-8 text-[#43D6CB] mx-auto opacity-70" />
               <h3 className="font-bold text-white text-sm">מעבדת הגשטאלט ממתינה למוצר שלך</h3>
-              <p className="text-xs text-zinc-400 max-w-md mx-auto">
+              <p className="text-xs text-[#C1D1D5] max-w-md mx-auto">
                 בחר את העקרונות שמעניינים אותך (Figure-Ground, Negative Space, Closure) ולחץ על "הפק קונספטים גשטאלטיים".
               </p>
             </div>
@@ -173,7 +173,7 @@ export const GestaltLab: React.FC = () => {
             >
               <div className="flex items-start justify-between gap-2 border-b border-zinc-800 pb-3">
                 <div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#43D6CB]/15 text-[#43D6CB] border border-[#43D6CB]/30 mb-1 inline-block">
+                  <span className="text-[12px] font-bold px-2 py-0.5 rounded bg-[#43D6CB]/15 text-[#43D6CB] border border-[#43D6CB]/30 mb-1 inline-block">
                     עקרון: {concept.principle}
                   </span>
                   <h3 className="text-base font-black text-white">{concept.headline}</h3>
@@ -191,19 +191,19 @@ export const GestaltLab: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div>
-                    <span className="text-zinc-500 text-[11px] font-bold block">הרעיון הוויזואלי:</span>
+                    <span className="text-[#C1D1D5] text-[13px] font-bold block">הרעיון הוויזואלי:</span>
                     <p className="text-zinc-300 leading-relaxed">{concept.visualConcept}</p>
                   </div>
                   <div>
-                    <span className="text-zinc-500 text-[11px] font-bold block">הצעת ביצוע גרפית:</span>
-                    <p className="text-zinc-400 leading-relaxed text-[11px]">{concept.executionSuggestion}</p>
+                    <span className="text-[#C1D1D5] text-[13px] font-bold block">הצעת ביצוע גרפית:</span>
+                    <p className="text-[#C1D1D5] leading-relaxed text-[13px]">{concept.executionSuggestion}</p>
                   </div>
                 </div>
 
                 {/* SVG Visual Prototype Render */}
                 {concept.svgPrototypeCode && (
                   <div className="space-y-1.5">
-                    <span className="text-[10px] text-zinc-400 font-bold block">אב-טיפוס גאומטרי (SVG Prototype):</span>
+                    <span className="text-[12px] text-[#C1D1D5] font-bold block">אב-טיפוס גאומטרי (SVG Prototype):</span>
                     <div
                       className="w-full h-36 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center justify-center p-2 overflow-hidden shadow-inner"
                       dangerouslySetInnerHTML={{ __html: concept.svgPrototypeCode }}

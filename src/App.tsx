@@ -1,5 +1,6 @@
-import { GeminiSetup } from './components/layout/GeminiSetup';
+
 import React, { useState } from 'react';
+import { WelcomeTour } from './components/layout/WelcomeTour';
 import { AccountGate } from './components/layout/AccountGate';
 import { userStorageKey } from './data/accountStorage';
 import { ProjectProvider, useProject } from './context/ProjectContext';
@@ -26,8 +27,15 @@ import { Icon } from './components/common/Icon';
 
 const MainWorkspace: React.FC = () => {
   const { activeModule, toast } = useProject();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => window.innerWidth < 1024);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(() => {
+    try { return localStorage.getItem(userStorageKey('dekel-welcome-tour-v1')) !== 'done'; } catch { return true; }
+  });
+  const closeTour = () => {
+    try { localStorage.setItem(userStorageKey('dekel-welcome-tour-v1'), 'done'); } catch { /* The tour still closes if browser storage is full. */ }
+    setIsTourOpen(false);
+  };
 
   const renderActiveModule = () => {
     switch (activeModule) {
@@ -67,12 +75,12 @@ const MainWorkspace: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden dekel-app bg-[#183036] text-[#F7F8F3] font-['Heebo',sans-serif]">
-      <GeminiSetup />{/* Top Navigation */}
-      <Navbar onOpenSettings={() => setIsSettingsOpen(true)} />
+    <div className="flex h-dvh w-full flex-col overflow-hidden dekel-app bg-[#183036] text-[#F7F8F3] font-['Heebo',sans-serif]">
+      <Navbar onOpenSettings={() => setIsSettingsOpen(true)} onOpenTour={() => setIsTourOpen(true)} />
+      <WelcomeTour key={isTourOpen ? 'tour-open' : 'tour-closed'} open={isTourOpen} onClose={closeTour} />
 
       {/* Main Studio Body: Left (PropertyPanel) | Center (Workspace) | Right (RTL Sidebar) */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Left: Contextual Tool Properties */}
         <PropertyPanel />
 
