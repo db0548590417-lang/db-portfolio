@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "node build-web.mjs",
-    "dev": "vite --host 127.0.0.1"
+    "dev": "vite --host 127.0.0.1",
+    "start": "node host-render.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.30.0",
@@ -36,5 +37,5 @@
   "optionalDependencies": {
     "@rolldown/binding-win32-x64-msvc": "^1.2.14"
   },
-  "description": "DEKEL AI — Desktop Beta"
+  "description": "Dekel AI design studio web application"
 }

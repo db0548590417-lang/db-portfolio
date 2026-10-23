@@ -8,7 +8,7 @@ export const ai = { models: { generateContent(args: any) {
   if (!scope?.values.GEMINI_API_KEY) throw new Error('יש להגדיר מפתח Gemini בהגדרות האתר');
   const client = new GoogleGenAI({ apiKey: scope.values.GEMINI_API_KEY });
   return client.models.generateContent({ ...args,
-    model: args.model === 'gemini-3.8-flash' ? scope.values.INSPIRA_VISION_MODEL : args.model });
+    model: ['gemini-3.8-flash', 'gemini-2.5-flash'].includes(args.model) ? scope.values.INSPIRA_VISION_MODEL : args.model });
 } } };
 
 const storageKey = (file: string) => {

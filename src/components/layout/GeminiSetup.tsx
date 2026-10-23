@@ -44,7 +44,7 @@ export function GeminiSetup() {
           <h2 id="gemini-title" className="text-xl font-bold">חיבור Gemini לסטודיו שלך</h2>
           <button aria-label="סגירה" onClick={() => { setOpen(false); setKey(''); }} className="rounded-lg px-3 py-1 text-xl hover:bg-white/10">×</button>
         </div>
-        <p className="mb-5 text-sm leading-7 text-zinc-200">כדי להפעיל את כלי הבינה המלאכותית, הזן מפתח Gemini אישי. המפתח נשמר בצד השרת עבור החשבון שלך ואינו מוצג באתר.</p>
+        <p className="mb-5 text-sm leading-7 text-zinc-200">כדי להפעיל את כלי הבינה המלאכותית, הזן מפתח Gemini אישי. המפתח משמש בשרת ואינו נכלל בקוד האתר. באחסון Render הוא נשמר מוצפן בדפדפן למשך 30 יום, ויש להזין אותו בנפרד בכל מחשב.</p>
         {configured && <p className="mb-4 rounded-lg bg-emerald-900/40 p-3 text-sm text-emerald-200">כבר קיים מפתח שמור. אפשר להחליף אותו כאן.</p>}
         <form onSubmit={save}>
           <label htmlFor="gemini-key" className="mb-2 block text-sm font-bold">מפתח Gemini API</label>
