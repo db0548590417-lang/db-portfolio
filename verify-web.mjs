@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import worker from './dist/server/index.js';
+
+const store = new Map();
+const bucket = {
+  async get(key) {
+    const value = store.get(key);
+    return value === undefined ? null : { json: async () => JSON.parse(value), text: async () => value };
+  },
+  async put(key, value) { store.set(key, value); },
+};
+const env = { BUCKET: bucket };
+const origin = 'https://inspira.example';
+const call = (path, options = {}, user = 'user-one') => worker.fetch(new Request(origin + path, {
+  ...options, headers: { ...(user ? { 'oai-authenticated-user-id': user } : {}), ...options.headers },
+}), env);
+
+assert.equal((await call('/')).status, 200);
+assert.equal((await call('/api/health', {}, '')).status, 401);
+assert.equal((await (await call('/api/health')).json()).hasApiKey, false);
+assert.deepEqual(await (await call('/api/settings/gemini')).json(), { configured: false, model: null });
+assert.equal((await call('/api/settings/gemini', { method: 'POST', body: '{}' })).status, 403);
+assert.equal((await call('/api/settings/gemini', { method: 'POST', headers: { origin }, body: '{' })).status, 400);
+assert.equal((await call('/api/settings/gemini', { method: 'POST', headers: { origin }, body: JSON.stringify({ apiKey: 'bad' }) })).status, 400);
+
+const originalFetch = globalThis.fetch;
+globalThis.fetch = async () => Response.json({ models: [{ name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] }] });
+try {
+  const saved = await call('/api/settings/gemini', { method: 'POST', headers: { origin }, body: JSON.stringify({ apiKey: 'test_key_value_for_local_test_only' }) });
+  assert.equal(saved.status, 200);
+  const status = await (await call('/api/settings/gemini')).json();
+  assert.equal(status.configured, true);
+  assert.equal(status.apiKey, undefined);
+  assert.equal((await (await call('/api/health')).json()).hasApiKey, true);
+  assert.equal((await (await call('/api/health', {}, 'user-two')).json()).hasApiKey, false);
+  assert.equal((await (await call('/api/settings/gemini', {}, 'user-two')).json()).configured, false);
+} finally { globalThis.fetch = originalFetch; }
+assert.equal((await call('/api/unknown')).status, 404);
+assert.equal((await call('/api/inspiration/hafsakat/visual-search', { method: 'POST', body: '{}' })).status >= 400, true);
+console.log('PASS: static client, auth, key setup, CSRF, malformed input, health, user isolation, routing');

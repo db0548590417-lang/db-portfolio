@@ -1,0 +1,101 @@
+import { ModuleInfo } from '../types';
+
+// Visible navigation numbers are separate from stable internal module IDs.
+export const MODULES_LIST: ModuleInfo[] = [
+  {
+    id: 'dashboard',
+    number: 0,
+    titleHebrew: 'מסך הבית',
+    subtitleHebrew: 'סקירה כללית, פרויקטים והשראה ראשונית',
+    iconName: 'LayoutDashboard',
+    category: 'discover',
+  },
+  {
+    id: 'inspiration_hunter',
+    number: 1,
+    titleHebrew: 'צייד השראות',
+    subtitleHebrew: 'מנוע חיפוש השראות ויזואלי והרחבת שאילתות',
+    iconName: 'Compass',
+    badge: 'AI Search',
+    category: 'discover',
+  },
+  {
+    id: 'creative_director',
+    number: 2,
+    titleHebrew: 'במאי קריאייטיב AI',
+    subtitleHebrew: 'הפקת קונספטים פרסומיים ברמת ארט בכיר',
+    iconName: 'Sparkles',
+    badge: 'Pro Director',
+    category: 'ideate',
+  },
+  {
+    id: 'idea_factory',
+    number: 3,
+    titleHebrew: 'מעבדת רעיונות',
+    subtitleHebrew: '12 מתודולוגיות חשיבה, מטאפורות ופירוק קונספט',
+    iconName: 'Lightbulb',
+    category: 'ideate',
+  },
+  {
+    id: 'creative_analyzer',
+    number: 4,
+    titleHebrew: 'מנתח קריאייטיב',
+    subtitleHebrew: 'ניתוח רפרנסים מולטימודלי ב-11 קריטריונים',
+    iconName: 'ScanEye',
+    badge: 'Multimodal',
+    category: 'ideate',
+  },
+  {
+    id: 'color_lab',
+    number: 5,
+    titleHebrew: 'מעבדת צבע',
+    subtitleHebrew: 'הרמוניות, גרדיאנטים חיים, דגימת תמונה וזהב מלכותי',
+    iconName: 'Palette',
+    badge: 'Realtime',
+    category: 'craft',
+  },
+  {
+    id: 'gestalt_lab',
+    number: 6,
+    titleHebrew: 'מעבדת גשטאלט',
+    subtitleHebrew: 'ייצור עקרונות צורה-רקע, מרחב שלילי וסגירות',
+    iconName: 'Shapes',
+    category: 'refine',
+  },
+  {
+    id: 'visual_generator',
+    number: 7,
+    titleHebrew: 'מחולל ויזואלי AI',
+    subtitleHebrew: 'יצירת הדמיות קונספטואליות ושדרוג פרומפטים',
+    iconName: 'Wand2',
+    badge: 'Gemini Image',
+    category: 'craft',
+  },
+  {
+    id: 'inspiration_mixer',
+    number: 8,
+    titleHebrew: 'מיקסר השראות',
+    subtitleHebrew: 'מיזוג וסינתזה של 2-5 השראות לרעיון חדש',
+    iconName: 'Blend',
+    category: 'refine',
+  },
+  {
+    id: 'design_analyzer',
+    number: 9,
+    titleHebrew: 'מבקר עיצוב',
+    subtitleHebrew: 'ביקורת קריאות, היררכיה, מרווחים וצ׳קליסט מעשי',
+    iconName: 'CheckCircle2',
+    category: 'refine',
+  },
+  {
+    id: 'export_studio',
+    number: 10,
+    titleHebrew: 'סטודיו ייצוא מקצועי',
+    subtitleHebrew: 'ייצוא PNG, SVG, PDF, CSS גרדיאנטים וגיבוי JSON',
+    iconName: 'Download',
+    category: 'export',
+  },
+
+];
+
+// Code and IDs for hidden modules remain in App.tsx for future reactivation.

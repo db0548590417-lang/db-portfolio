@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+html, body, #root {
+  background-color: #183036;
+  color: #F7F8F3;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #383a42 #18191c;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #18191c;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #383a42;
+    border-radius: 3px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #43D6CB;
+  }
+}
+
+.canvas-checkerboard {
+  background-color: #1e2024;
+  background-image: 
+    linear-gradient(45deg, #18191c 25%, transparent 25%), 
+    linear-gradient(-45deg, #18191c 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, #18191c 75%), 
+    linear-gradient(-45deg, transparent 75%, #18191c 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+.studio-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+/* DEKEL AI — Figma-inspired visual system. No data or feature behavior changes. */
+:root {
+  --dekel-ink: #183036;
+  --dekel-petrol: #103F46;
+  --dekel-lime: #BFFF45;
+  --dekel-aqua: #43D6CB;
+  --dekel-paper: #F7F8F3;
+  --dekel-line: rgba(67,214,203,.17);
+}
+body {font-family: 'Heebo', 'Assistant', system-ui, sans-serif;}
+.dekel-app { background: var(--dekel-ink); color: var(--dekel-paper); }
+.dekel-app header { min-height: 64px; border-bottom-color: var(--dekel-line); }
+.dekel-app aside { border-left-color: var(--dekel-line); }
+.dekel-logo-frame { width: 110px; height: 48px; overflow: hidden; display: flex; align-items: center; flex-shrink: 0; }
+.dekel-logo { display:block; width: 100%; height: 100%; object-fit: contain; }
+.dekel-brand-caption { font-size: 11px; color: #C1D1D0; letter-spacing: .01em; }
+.dekel-app :is(button, input, select, textarea) { transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+.dekel-app :is(button, input, select, textarea):focus-visible { outline: 2px solid var(--dekel-aqua); outline-offset: 2px; }
+.dekel-app button { cursor: pointer; }
+.dekel-app button:disabled { cursor: not-allowed; }
+.dekel-app main { min-width: 0; }
+.dekel-app .studio-grid { background-image: linear-gradient(to right,rgba(67,214,203,.035) 1px,transparent 1px),linear-gradient(to bottom,rgba(67,214,203,.035) 1px,transparent 1px); }
+
+.dekel-app [class*="bg-[#43D6CB]"] { color: var(--dekel-ink); }
+.dekel-app ::selection { background: var(--dekel-aqua);color:var(--dekel-ink); }
+@media(max-width:950px) { .dekel-brand-caption{display:none;} .dekel-logo-frame {width:85px;} }
+
+/* Brand rule: lime is exclusively for microcopy on dark backgrounds. */
+.dekel-app .dekel-lime-microcopy { color: var(--dekel-lime); font-size: 11px; font-weight: 600; }
+.dekel-app :is(button, a) { -webkit-tap-highlight-color: transparent; }
+.dekel-app :is(button, input, select, textarea):focus-visible { outline-color: var(--dekel-aqua); }

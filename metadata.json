@@ -1,0 +1,8 @@
+{
+  "name": "Remix INSPIRA STUDIO",
+  "description": "סביבת העבודה והקריאייטיב למעצבים גרפיים: גילוי השראות, במאי קריאייטיב AI, גשטאלט, טיפוגרפיה, צבע ומוקאפים",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

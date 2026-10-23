@@ -1,129 +1,22 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#103F46">
-    <title>דקל | תיק עבודות</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-</head>
-<body>
-    <div class="portfolio">
-        <header class="brand" aria-label="דקל — תיק עבודות">
-            <img class="brand__logo" src="assets/logo.png" alt="דקל">
-            <div class="brand__actions">
-            <a class="brand__contact" href="#contact-title">
-    בואו נדבר
-</a>
-
-                </div>
-<svg
-    class="brand__arrow"
-    viewBox="0 0 260 130"
-    fill="none"
-    aria-hidden="true"
-    focusable="false"
->
-    <path
-        d="M245 25
-           C200 0 145 8 140 45
-           C135 85 195 90 185 50
-           C175 10 95 35 35 95
-           M38 67 L35 95 L65 91"
-        stroke="currentColor"
-        stroke-width="3.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-    />
-</svg>
-        </header>
-
-        <main class="gallery" aria-label="גלריית עבודות">
-            <div class="gallery__heading">
-                <div>
-                    <p class="gallery__eyebrow">תיק עבודות</p>
-                    <h1>גלריית עבודות<span aria-hidden="true">.</span></h1>
-                </div>
-                <p class="gallery__intro">מקום לרעיונות שקיבלו גובה.</p>
-            </div>
-
-            <nav class="filters" aria-label="סינון עבודות לפי קטגוריה"></nav>
-            <p class="gallery-status" role="status" aria-live="polite">טוען עבודות…</p>
-            <div class="projects" aria-label="גלריית העבודות"></div>
-            <footer class="gallery-footer">
-                <span>כל הזכויות שמורות לסטודיו - דקל 2026.</span>
-            </footer>
-        </main>
-    </div>
-
-    <dialog class="viewer" aria-labelledby="viewer-title">
-        <div class="viewer__top">
-            <h2 id="viewer-title"></h2>
-            <button class="viewer__close" type="button" aria-label="סגירת התצוגה">✕</button>
-        </div>
-        <div class="viewer__canvas">
-            <img class="viewer__image" alt="">
-        </div>
-        <p class="viewer__description"></p>
-        <div class="viewer__navigation">
-            <button type="button" class="viewer__previous">→ העבודה הקודמת</button>
-            <span class="viewer__count" aria-live="polite"></span>
-            <button type="button" class="viewer__next">העבודה הבאה ←</button>
-        </div>
-    </dialog>
-
-    <script src="content.js" defer></script>
-    <script src="gallery.js" defer></script>
-</body>
+<!doctype html>
+<html lang="he" dir="rtl" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>דקל AI</title>
+    <link rel="icon" type="image/svg+xml" href="/src/dekel-ai-logo.svg" />
+    <meta name="description" content="דקל AI — כל ההשראה. כל הכלים. כל ההברקות. במקום אחד. סביבת עבודה מקצועית למעצבים גרפיים ובמאי קריאייטיב." />
+    <meta property="og:title" content="דקל AI" />
+    <meta property="og:description" content="כל ההשראה. כל הכלים. כל ההברקות. במקום אחד." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@400;700;900&family=Heebo:wght@300;400;500;700;900&family=Rubik:wght@400;600;800;900&family=Secular+One&family=David+Libre:wght@400;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-[#121316] text-[#EDEDED] font-['Heebo',sans-serif] antialiased selection:bg-[#2563EB]/40 selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
-<section class="contact" aria-labelledby="contact-title">
-    <h2 id="contact-title">בואו ניצור משהו ביחד</h2>
-    <p>יש לכם רעיון? השאירו פרטים ואחזור אליכם.</p>
 
-    <form
-        class="contact-form"
-        action="https://formspree.io/f/xnpjoakr"
-        method="POST"
-        target="_blank"
-rel="noopener"
-    >
-        <label>
-            שם
-            <input
-                type="text"
-                name="name"
-                autocomplete="name"
-                maxlength="100"
-                required
-            >
-        </label>
-
-        <label>
-            כתובת מייל
-            <input
-                type="email"
-                name="email"
-                autocomplete="email"
-                dir="ltr"
-                required
-            >
-        </label>
-
-        <label>
-            במה אפשר לעזור?
-            <textarea
-                name="message"
-                rows="5"
-                maxlength="5000"
-                required
-            ></textarea>
-        </label>
-
-        <button class="action" type="submit">
-            שליחת הודעה
-        </button>
-
-        <p>הפרטים ישמשו לחזרה לפנייה ויישלחו באמצעות Formspree.</p>
-    </form>
-</section>
