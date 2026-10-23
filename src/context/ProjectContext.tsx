@@ -11,6 +11,7 @@ import {
   GestaltConcept,
 } from '../types';
 import { buildBrandContext } from '../data/brandContext';
+import { userStorageKey } from '../data/accountStorage';
 import { deleteDesignImage } from '../data/designAssetsDb';
 
 interface ProjectContextType {
@@ -130,7 +131,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Projects State with defensive sanitization
   const [projects, setProjects] = useState<Project[]>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY_PROJECTS);
+      const stored = localStorage.getItem(userStorageKey(STORAGE_KEY_PROJECTS));
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -144,14 +145,14 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   });
 
   const [activeProjectId, setActiveProjectIdState] = useState<string>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY_ACTIVE_ID);
+    const stored = localStorage.getItem(userStorageKey(STORAGE_KEY_ACTIVE_ID));
     return stored || projects[0]?.id || '';
   });
 
   // Preferences State
   const [globalPrefs, setGlobalPrefs] = useState<GlobalPreferences>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY_PREFS);
+      const stored = localStorage.getItem(userStorageKey(STORAGE_KEY_PREFS));
       if (stored) return { ...defaultPreferences, ...JSON.parse(stored) };
     } catch (e) {}
     return defaultPreferences;
@@ -176,7 +177,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Sync to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
+      localStorage.setItem(userStorageKey(STORAGE_KEY_PROJECTS), JSON.stringify(projects));
     } catch (e) {
       console.error('Failed to save projects to storage', e);
     }
@@ -184,12 +185,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   useEffect(() => {
     if (activeProjectId) {
-      localStorage.setItem(STORAGE_KEY_ACTIVE_ID, activeProjectId);
+      localStorage.setItem(userStorageKey(STORAGE_KEY_ACTIVE_ID), activeProjectId);
     }
   }, [activeProjectId]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFS, JSON.stringify(globalPrefs));
+    localStorage.setItem(userStorageKey(STORAGE_KEY_PREFS), JSON.stringify(globalPrefs));
   }, [globalPrefs]);
 
   // The active project is the single source of truth for all AI requests.

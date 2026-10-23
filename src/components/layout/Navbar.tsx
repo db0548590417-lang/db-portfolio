@@ -1,5 +1,6 @@
 import dekelLogo from '../../dekel-ai-logo.svg';
 import React, { useState } from 'react';
+import { AccountButton } from './AccountGate';
 import { useProject } from '../../context/ProjectContext';
 import { Icon } from '../common/Icon';
 import { ProjectEditor } from './ProjectEditor';
@@ -166,6 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
 
       {/* Left side in RTL: Quick tools & settings */}
       <div className="flex items-center gap-2">
+        <AccountButton />
         <button onClick={()=>setIsProjectEditorOpen(true)} className="flex items-center gap-1 px-3 py-2 rounded-lg bg-[#43D6CB] text-[#183036] font-bold text-xs">עריכת פרויקט</button>
         <button
           onClick={() => setActiveModule('system_health')}

@@ -1,46 +1,24 @@
 import http from 'node:http';
-import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import worker from './dist/server/index.js';
+import { createGoogleAuth, readCookie } from './google-auth.mjs';
+import { encryptConfig, decryptConfig } from './session-crypto.mjs';
+export { encryptConfig, decryptConfig } from './session-crypto.mjs';
 
 const COOKIE = '__Host-dekel-config';
-const CONFIG = 'users/owner/gemini-config.json';
 const MAX_BODY = 50 * 1024 * 1024;
-
-export function encryptConfig(config, secret) {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', createHash('sha256').update(secret).digest(), iv);
-  const encrypted = Buffer.concat([cipher.update(JSON.stringify({ config, expires: Date.now() + 30 * 86400000 })), cipher.final()]);
-  return Buffer.concat([iv, cipher.getAuthTag(), encrypted]).toString('base64url');
-}
-
-export function decryptConfig(value, secret) {
-  try {
-    if (!value || value.length > 3000) return null;
-    const data = Buffer.from(value, 'base64url');
-    if (data.length < 29) return null;
-    const decipher = createDecipheriv('aes-256-gcm', createHash('sha256').update(secret).digest(), data.subarray(0, 12));
-    decipher.setAuthTag(data.subarray(12, 28));
-    const parsed = JSON.parse(Buffer.concat([decipher.update(data.subarray(28)), decipher.final()]).toString());
-    return parsed.expires > Date.now() ? parsed.config : null;
-  } catch { return null; }
-}
-
-function authorized(header, password) {
-  if (!header?.startsWith('Basic ')) return false;
-  const pair = Buffer.from(header.slice(6), 'base64').toString('utf8');
-  const delimiter = pair.indexOf(':');
-  if (delimiter < 0 || pair.slice(0, delimiter) !== 'dekel') return false;
-  const supplied = createHash('sha256').update(pair.slice(delimiter + 1)).digest();
-  return timingSafeEqual(supplied, createHash('sha256').update(password).digest());
-}
 
 export function createRenderServer(options = {}) {
   const password = options.password || process.env.APP_ACCESS_PASSWORD;
   const secret = options.secret || process.env.APP_SESSION_SECRET;
   const isHosted = options.hosted ?? Boolean(process.env.RENDER);
-  if (!password || password.length < 12 || !secret || secret.length < 32)
-    throw new Error('Set APP_ACCESS_PASSWORD (12+ characters) and APP_SESSION_SECRET (32+ characters) in the hosting dashboard.');
+  if (!secret || secret.length < 32)
+    throw new Error('Set APP_SESSION_SECRET (32+ characters) in the hosting dashboard.');
+  if (password && password.length < 12) throw new Error('APP_ACCESS_PASSWORD must contain at least 12 characters.');
+  const auth = createGoogleAuth({ secret, ownerPassword: password,
+    oauthFactory: options.oauthFactory,
+    clientId: options.clientId ?? process.env.GOOGLE_CLIENT_ID,
+    clientSecret: options.clientSecret ?? process.env.GOOGLE_CLIENT_SECRET });
   const cache = new Map();
   const failures = new Map();
   return http.createServer(async (incoming, outgoing) => {
@@ -57,18 +35,30 @@ export function createRenderServer(options = {}) {
         outgoing.writeHead(429, { 'Retry-After': '60', 'Cache-Control': 'no-store' }).end('Please wait one minute before trying again.');
         return;
       }
-      if (!authorized(incoming.headers.authorization, password)) {
-        if (failures.size > 10000) failures.clear();
-        failures.set(address, { count: failure && Date.now() - failure.at < 60000 ? failure.count + 1 : 1, at: Date.now() });
-        outgoing.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Dekel AI - username: dekel", charset="UTF-8"', 'Cache-Control': 'no-store' }).end('Sign in with username dekel and your app password.');
-        return;
-      }
-      failures.delete(address);
       const host = incoming.headers.host;
       if (!host || !/^[a-zA-Z0-9.\-]+(?::\d+)?$/.test(host)) { outgoing.writeHead(400).end(); return; }
       const origin = `${isHosted ? 'https' : 'http'}://${host}`;
+      const expectedOrigin = options.publicOrigin || process.env.PUBLIC_ORIGIN || process.env.RENDER_EXTERNAL_URL;
+      if (expectedOrigin && new URL(expectedOrigin).origin !== origin) { outgoing.writeHead(400).end('Invalid host'); return; }
       if (!['GET', 'HEAD'].includes(incoming.method) && incoming.headers.origin !== origin) {
         outgoing.writeHead(403).end('Invalid request origin'); return;
+      }
+      if (pathname === '/api/auth/owner' || pathname === '/auth/google') {
+        if (failures.size > 10000) failures.clear();
+        failures.set(address, { count: failure && Date.now() - failure.at < 60000 ? failure.count + 1 : 1, at: Date.now() });
+      }
+      if (await auth.handle(incoming, outgoing, origin)) return;
+      const user = auth.readUser(incoming);
+      if (user && incoming.headers['x-dekel-user-id'] && incoming.headers['x-dekel-user-id'] !== user.id) {
+        outgoing.writeHead(409, { 'Cache-Control': 'no-store' }).end('Account changed. Reload the page.'); return;
+      }
+      if (pathname.startsWith('/api/') && !user) {
+        outgoing.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }).end(JSON.stringify({ error: 'נדרשת התחברות לחשבון שלך' }));
+        return;
+      }
+      if (pathname.startsWith('/api/') && !user.username && pathname !== '/api/health') {
+        outgoing.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }).end(JSON.stringify({ error: 'יש לבחור שם משתמש כדי להשלים הרשמה' }));
+        return;
       }
       const headers = new Headers();
       for (const [name, value] of Object.entries(incoming.headers)) {
@@ -76,18 +66,20 @@ export function createRenderServer(options = {}) {
           headers.set(name, Array.isArray(value) ? value.join(', ') : value);
       }
       // Only this authenticated adapter can establish the owner's worker identity.
-      headers.set('oai-authenticated-user-id', 'owner');
-      const cookie = String(incoming.headers.cookie || '').split(';').map(item => item.trim()).find(item => item.startsWith(COOKIE + '='))?.slice(COOKIE.length + 1);
-      const config = decryptConfig(cookie, secret);
+      if (user) headers.set('oai-authenticated-user-id', user.id);
+      const cookie = readCookie(incoming.headers.cookie, COOKIE);
+      const saved = decryptConfig(cookie, secret);
+      const config = user && saved?.userId === user.id ? saved.keyConfig : user?.provider === 'owner' && saved?.apiKey ? saved : null;
+      const configPath = `users/${encodeURIComponent(user?.id || '')}/gemini-config.json`;
       let updatedConfig;
       const bucket = {
         async get(key) {
-          const value = key === CONFIG ? config && JSON.stringify(config) : cache.get(key);
+          const value = key === configPath ? config && JSON.stringify(config) : cache.get(key);
           if (!value) return null;
           return { body: value, text: async () => value, json: async () => JSON.parse(value) };
         },
         async put(key, value) {
-          if (key === CONFIG) { updatedConfig = JSON.parse(value); return; }
+          if (key === configPath) { updatedConfig = JSON.parse(value); return; }
           if (cache.size >= 200 && !cache.has(key)) cache.delete(cache.keys().next().value);
           cache.set(key, value);
         },
@@ -107,7 +99,7 @@ export function createRenderServer(options = {}) {
       responseHeaders['Cache-Control'] = 'private, no-store';
       responseHeaders['X-Content-Type-Options'] = 'nosniff';
       responseHeaders['Referrer-Policy'] = 'same-origin';
-      if (updatedConfig) responseHeaders['Set-Cookie'] = `${COOKIE}=${encryptConfig(updatedConfig, secret)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000`;
+      if (updatedConfig) responseHeaders['Set-Cookie'] = `${COOKIE}=${encryptConfig({ userId: user.id, keyConfig: updatedConfig }, secret)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000`;
       outgoing.writeHead(response.status, responseHeaders);
       outgoing.end(Buffer.from(await response.arrayBuffer()));
     } catch { if (!outgoing.headersSent) outgoing.writeHead(500); outgoing.end('The request could not be completed.'); }

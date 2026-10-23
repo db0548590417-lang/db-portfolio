@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useProject } from '../../context/ProjectContext';
+import { userStorageKey } from '../../data/accountStorage';
 import { Icon } from '../common/Icon';
 import { loadDesignImage, saveDesignImage, deleteDesignImage } from '../../data/designAssetsDb';
 
@@ -130,7 +131,7 @@ export const PropertyPanel: React.FC = () => {
             <summary className="cursor-pointer font-bold text-white">העיצובים שלי ({activeProject.designAssets?.length || 0})</summary>
             <div className="mt-3 space-y-2 text-[11px] text-zinc-300">
               <p>עיצובים וגרסאות נשמרים בנפרד לכל פרויקט.</p>
-              {(activeProject.designAssets || []).map(asset => <button key={asset.id} className="block w-full rounded-lg bg-[#183036] px-2 py-2 text-right hover:bg-zinc-800" onClick={() => {sessionStorage.setItem(`dekel-design-${activeProject.id}`,asset.id);setActiveModule('creative_analyzer');window.dispatchEvent(new CustomEvent('dekel-open-design', {detail:{id:asset.id,projectId:activeProject.id}}));}}>{asset.name} · גרסה {asset.version}</button>)}
+              {(activeProject.designAssets || []).map(asset => <button key={asset.id} className="block w-full rounded-lg bg-[#183036] px-2 py-2 text-right hover:bg-zinc-800" onClick={() => {sessionStorage.setItem(userStorageKey(`dekel-design-${activeProject.id}`),asset.id);setActiveModule('creative_analyzer');window.dispatchEvent(new CustomEvent('dekel-open-design', {detail:{id:asset.id,projectId:activeProject.id}}));}}>{asset.name} · גרסה {asset.version}</button>)}
               {!activeProject.designAssets?.length && <p>טרם הועלו עיצובים לפרויקט.</p>}
             </div>
           </details>

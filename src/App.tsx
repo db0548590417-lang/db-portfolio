@@ -1,5 +1,7 @@
 import { GeminiSetup } from './components/layout/GeminiSetup';
 import React, { useState } from 'react';
+import { AccountGate } from './components/layout/AccountGate';
+import { userStorageKey } from './data/accountStorage';
 import { ProjectProvider, useProject } from './context/ProjectContext';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
@@ -140,8 +142,8 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, Er
 
   handleReset = () => {
     try {
-      localStorage.removeItem('inspira_studio_projects_v1');
-      localStorage.removeItem('inspira_studio_active_id_v1');
+      localStorage.removeItem(userStorageKey('inspira_studio_projects_v1'));
+      localStorage.removeItem(userStorageKey('inspira_studio_active_id_v1'));
     } catch (e) {}
     window.location.reload();
   };
@@ -191,9 +193,11 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, Er
 export default function App() {
   return (
     <AppErrorBoundary>
+      <AccountGate>
       <ProjectProvider>
         <MainWorkspace />
       </ProjectProvider>
+      </AccountGate>
     </AppErrorBoundary>
   );
 }

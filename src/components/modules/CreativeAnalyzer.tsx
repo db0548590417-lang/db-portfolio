@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useProject } from '../../context/ProjectContext';
+import { userStorageKey } from '../../data/accountStorage';
 import { Icon } from '../common/Icon';
 import type { DesignAsset } from '../../types';
 import { saveDesignImage, loadDesignImage, deleteDesignImage } from '../../data/designAssetsDb';
@@ -38,8 +39,8 @@ export const CreativeAnalyzer: React.FC = () => {
         const reader = new FileReader(); reader.onload = () => { if (!cancelled) setImageBase64(String(reader.result || '')); }; reader.readAsDataURL(blob);
       }).catch(() => { /* Cross-origin references may only be displayed, not analyzed. */ });
     } else {
-      const requestedId = sessionStorage.getItem(`dekel-design-${projectId}`);
-      sessionStorage.removeItem(`dekel-design-${projectId}`);
+      const requestedId = sessionStorage.getItem(userStorageKey(`dekel-design-${projectId}`));
+      sessionStorage.removeItem(userStorageKey(`dekel-design-${projectId}`));
       const asset = (activeProject.designAssets || []).find(a => a.id === requestedId) || (activeProject.designAssets || []).slice(-1)[0];
       if (asset) loadDesignImage(asset.id).then(img => {
         if (!cancelled && img) { setImageUrl(img); setImageBase64(img); setActiveAssetId(asset.id); setDesignKind(asset.kind); }

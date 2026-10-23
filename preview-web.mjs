@@ -25,6 +25,11 @@ const server = http.createServer(async (incoming, outgoing) => {
   try {
     // This local adapter is never deployed. Hosted identity comes from Sites.
     if (incoming.headers.host !== '127.0.0.1:3001') { outgoing.writeHead(403).end(); return; }
+    if (incoming.url === '/api/auth/session') {
+      outgoing.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+      outgoing.end(JSON.stringify({ user: { id: 'local-owner', username: 'תצוגה מקומית', provider: 'owner', email: '' }, googleEnabled: false, ownerLoginEnabled: false }));
+      return;
+    }
     const headers = new Headers();
     for (const [name, value] of Object.entries(incoming.headers)) if (value) headers.set(name, Array.isArray(value) ? value.join(', ') : value);
     headers.set('oai-authenticated-user-id', 'local-owner');
