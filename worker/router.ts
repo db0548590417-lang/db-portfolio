@@ -27,6 +27,7 @@ function express() {
       const res = {
         status(value: number) { status = value; return res; },
         json(value: any) { response = Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } }); return res; },
+        send(value: Response) { response = value; return res; },
       };
       const handlers = [...middleware.filter(item => url.pathname.startsWith(item.prefix)).map(item => item.handler), route.handler];
       async function dispatch(index: number): Promise<void> {

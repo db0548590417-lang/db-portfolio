@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { WelcomeTour } from './components/layout/WelcomeTour';
 import { AccountGate } from './components/layout/AccountGate';
 import { userStorageKey } from './data/accountStorage';
@@ -29,6 +29,8 @@ const MainWorkspace: React.FC = () => {
   const { activeModule, toast } = useProject();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => window.innerWidth < 1024);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsTab,setSettingsTab]=useState<'creative'|'connection'>('creative');
+  useEffect(()=>{const open=()=>{setSettingsTab('connection');setIsSettingsOpen(true);};window.addEventListener('dekel-open-settings',open);return()=>window.removeEventListener('dekel-open-settings',open);},[]);
   const [isTourOpen, setIsTourOpen] = useState(() => {
     try { return localStorage.getItem(userStorageKey('dekel-welcome-tour-v1')) !== 'done'; } catch { return true; }
   });
@@ -76,7 +78,7 @@ const MainWorkspace: React.FC = () => {
 
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden dekel-app bg-[#183036] text-[#F7F8F3] font-['Heebo',sans-serif]">
-      <Navbar onOpenSettings={() => setIsSettingsOpen(true)} onOpenTour={() => setIsTourOpen(true)} />
+      <Navbar onOpenSettings={() => {setSettingsTab('creative');setIsSettingsOpen(true);}} onOpenTour={() => setIsTourOpen(true)} />
       <WelcomeTour key={isTourOpen ? 'tour-open' : 'tour-closed'} open={isTourOpen} onClose={closeTour} />
 
       {/* Main Studio Body: Left (PropertyPanel) | Center (Workspace) | Right (RTL Sidebar) */}
@@ -97,7 +99,7 @@ const MainWorkspace: React.FC = () => {
       </div>
 
       {/* Settings & Integrations Modal */}
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <SettingsModal isOpen={isSettingsOpen} initialTab={settingsTab} onClose={() => setIsSettingsOpen(false)} />
 
       {/* Toast Notification Alert */}
       {toast && (

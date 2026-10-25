@@ -1,4 +1,5 @@
-import express from './worker/router';
+import { discoverProg, homepageGallery, fetchPublicPage, publicImageUrl, readPublicImage } from './inspiration-public.mjs';
+﻿import express from './worker/router';
 import { ai, getRuntimeEnv, visionFs } from './worker/runtime';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -477,56 +478,17 @@ app.post('/api/color-lab/reference-image', async (req, res) => {
 
 // V13.2: bounded public image read for references saved from approved inspiration sources.
 // No arbitrary URL proxy, redirects, cookies, authentication, or AI usage.
-const refApprovedHosts = new Set([
-  'hafsakat-ads.co.il', 'www.hafsakat-ads.co.il',
-  'yehudaheller.com', 'www.yehudaheller.com',
-  'm-blum.co.il', 'www.m-blum.co.il',
-  'signon7.com', 'www.signon7.com',
-  'marketingjuices.com', 'www.marketingjuices.com',
-  'vangus-cdn.com', 'cdn.vangus-cdn.com',
-  'live.staticflickr.com', 'staticflickr.com',
-  'images.unsplash.com', 'images.pexels.com',
-  'upload.wikimedia.org', 'images.openverse.org',
-  'cdn.pixabay.com', 'images.pixabay.com',
-]);
-const refIsAllowedHost = (hostname: string) => refApprovedHosts.has(hostname) ||
-  /^[a-z0-9-]+\.vangus-cdn\.com$/.test(hostname) ||
-  /^farm\d+\.staticflickr\.com$/.test(hostname) ||
-  /^[a-z0-9-]+\.flickrstatic\.com$/.test(hostname);
+app.get('/api/inspiration/image', async (req, res) => {
+  const url=String(req.query.url||'');
+  if(url.length>1800 || !publicImageUrl(url))return res.status(403).json({error:'מקור התמונה אינו מורשה'});
+  try {const {mime,bytes}=await readPublicImage(url,{allowPreviewFormats:true});return res.send(new Response(new Uint8Array(bytes),{headers:{'Content-Type':mime,'Cache-Control':'private, max-age=300','X-Content-Type-Options':'nosniff'}}));}
+  catch(e:any){return res.status(502).json({error:String(e?.message||'תמונת המקור אינה זמינה')});}
+});
 app.post('/api/visual-generator/reference-image', async (req, res) => {
-  let target: URL;
-  try {
-    if (typeof req.body?.url !== 'string' || req.body.url.length > 1800) throw new Error('bad input');
-    target = new URL(req.body.url);
-    if (target.protocol !== 'https:' || target.username || target.password || target.port ||
-        !refIsAllowedHost(target.hostname.toLowerCase())) {
-      return res.status(403).json({error:'לא ניתן לקרוא רפרנס ממקור זה. אפשר להעלות את התמונה מהמחשב.'});
-    }
-  } catch {return res.status(400).json({error:'כתובת הרפרנס אינה תקינה'});}
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
-  try {
-    const upstream = await fetch(target, {signal:controller.signal,redirect:'manual',
-      headers:{Accept:'image/png,image/jpeg,image/webp'}});
-    if (!upstream.ok || !upstream.body) return res.status(502).json({error:`מקור התמונה אינו זמין (${upstream.status})`});
-    const mimeType = (upstream.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
-    if (!['image/png','image/jpeg','image/webp'].includes(mimeType)) return res.status(415).json({error:'המקור לא החזיר תמונה נתמכת'});
-    const max=4_000_000;
-    if (Number(upstream.headers.get('content-length')||0)>max) return res.status(413).json({error:'תמונת הרפרנס גדולה מדי (עד 4MB)'});
-    const reader=upstream.body.getReader(); const pieces: Buffer[]=[];let n=0;
-    try {while(true){const {done,value}=await reader.read();if(done)break;
-      n+=value.byteLength;if(n>max) {await reader.cancel();return res.status(413).json({error:'תמונת הרפרנס גדולה מדי (עד 4MB)'});}
-      pieces.push(Buffer.from(value));}}
-    finally {reader.releaseLock();}
-    const bytes=Buffer.concat(pieces);
-    if(bytes.length<100 ||
-      (mimeType==='image/jpeg' && !(bytes[0]===255&&bytes[1]===216)) ||
-      (mimeType==='image/png' && !(bytes[0]===137&&bytes[1]===80)) ||
-      (mimeType==='image/webp' && bytes.subarray(0,4).toString()!=='RIFF'))
-      return res.status(422).json({error:'הקובץ שהתקבל אינו תמונה תקינה'});
-    return res.json({mimeType,imageBase64:bytes.toString('base64')});
-  } catch(e:any) {return res.status(502).json({error:e?.name==='AbortError'?'טעינת הרפרנס נמשכה זמן רב מדי':'לא ניתן לקרוא את תמונת המקור'});}
-  finally {clearTimeout(timer);}
+  const url=typeof req.body?.url==='string'?req.body.url:'';
+  if(url.length>1800 || !publicImageUrl(url))return res.status(403).json({error:'לא ניתן לקרוא רפרנס ממקור זה. אפשר להעלות תמונה מהמחשב.'});
+  try {const {mime,bytes}=await readPublicImage(url);return res.json({mimeType:mime,imageBase64:bytes.toString('base64')});}
+  catch(e:any){return res.status(502).json({error:String(e?.message||'לא ניתן לקרוא את תמונת המקור')});}
 });
 
 // V12: public, bounded discovery of portfolio pages (no login, bypass, bulk mirroring or AI charge).
@@ -556,15 +518,7 @@ const v12MediaAllowed = (raw:string,host:string):string => {
     return '';
   }catch{return '';}
 };
-const v12Fetch = async (url:string,accept='text/html'):Promise<string> => {
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),10000);
-  try {const r=await fetch(url,{signal:controller.signal,redirect:'manual',headers:{Accept:accept,'User-Agent':'DEKEL-AI/1.0 (public portfolio discovery; limited requests)'}});
-    if(!r.ok)throw Error(`HTTP ${r.status}`);
-    const ct=r.headers.get('content-type')||'';
-    if(!ct.includes('html')&&!ct.includes('json'))throw Error('פורמט מקור אינו נתמך');
-    return (await r.text()).slice(0,1000000);
-  }finally{clearTimeout(timer);}
-};
+const v12Fetch = async (url:string,_accept='text/html'):Promise<string> => fetchPublicPage(url);
 const v12Meta = (html:string,key:string):string => {
   for(const m of html.matchAll(/<meta\b[^>]*>/gi)){
     const tag=m[0]; const prop=tag.match(/\b(?:property|name)\s*=\s*["']([^"']+)["']/i)?.[1];
@@ -590,7 +544,11 @@ const v12ArtworkCandidates=(html:string,page:string,host:string):string[]=>{
       // Don't treat ordinary decorative CSS assets as gallery photos.
       if(!/\.(?:png|jpe?g|webp)(?:$|\?)/i.test(resolved))return;
       const matches=filenameWords.filter(w=>pathname.includes(w)).length;
-      candidates.push({url:resolved,score:score+Math.min(matches,3)*12});
+      const dimensions=pathname.match(/-(\d+)x(\d+)\.(?:jpe?g|png|webp)$/i);
+      const side=dimensions?Math.max(Number(dimensions[1]),Number(dimensions[2])):0;
+      // Prefer readable medium gallery variants over multi-megabyte originals.
+      const sizeScore=side>=600&&side<=1600?30:side&&side<400?-25:0;
+      candidates.push({url:resolved,score:score+Math.min(matches,3)*12+sizeScore});
     }catch{}
   };
   // Core images in project pages, including lazy-loaded Elementor galleries.
@@ -640,30 +598,7 @@ const v12ArtworkCandidates=(html:string,page:string,host:string):string[]=>{
 };
 // Verify both file type and image *content* so CDN aliases cannot produce repeated artwork.
 // No image bytes are persisted; the fingerprint exists only during this search request.
-const v12InspectImage=async(raw:string):Promise<{fingerprint:string}|null>=>{
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),7000);
-  try{
-    const response=await fetch(raw,{signal:controller.signal,redirect:'manual',headers:{Accept:'image/webp,image/jpeg,image/png'}});
-    if(!response.ok||!response.body)return null;
-    const ct=(response.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
-    if(!['image/jpeg','image/png','image/webp'].includes(ct))return null;
-    const maxBytes=3_000_000;
-    if(Number(response.headers.get('content-length')||0)>maxBytes)return null;
-    const reader=response.body.getReader();const chunks:Buffer[]=[];let length=0;
-    try{
-      while(true){const {done,value}=await reader.read();if(done)break;
-        length+=value.byteLength;if(length>maxBytes)return null;
-        chunks.push(Buffer.from(value));
-      }
-    }finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
-    if(length<100)return null;
-    const first=chunks[0];if(!first||first.length<4)return null;
-    if(ct==='image/jpeg'&&!(first[0]===255&&first[1]===216))return null;
-    if(ct==='image/png'&&!(first[0]===137&&first[1]===80))return null;
-    if(ct==='image/webp'&&first.subarray(0,4).toString()!=='RIFF')return null;
-    return {fingerprint:createHash('sha256').update(Buffer.concat(chunks)).digest('hex')};
-  }catch{return null;}finally{clearTimeout(timer);}
-};
+const v12InspectImage=async(raw:string):Promise<{fingerprint:string}|null>=>{try{const {bytes}=await readPublicImage(raw,{allowPreviewFormats:true});return{fingerprint:createHash('sha256').update(bytes).digest('hex')};}catch{return null;}};
 // V13: Marketing Juices publishes a public, image-first gallery rather than a
 // WordPress project index. Parse actual uploads from its homepage; never use
 // SVG placeholders, fabricate an artwork title, or assign one image to many posts.
@@ -712,52 +647,49 @@ const v13MarketingGallery = async (query:string) => {
     return tokens.length>0 && tokens.some(t=>haystack.includes(t));
   }).sort((a,b)=>b.score-a.score).slice(0,24);
   const seen=new Set<string>();const results:any[]=[];let inaccessible=0,duplicates=0;
-  for(const item of sorted){
-    if(results.length>=8)break;
+  await Promise.all(sorted.slice(0,12).map(async item=>{
     const check=await v12InspectImage(item.url);
-    if(!check){inaccessible++;continue;}
-    if(seen.has(check.fingerprint)){duplicates++;continue;}
+    if(!check){inaccessible++;return;}
+    if(seen.has(check.fingerprint)){duplicates++;return;}
     seen.add(check.fingerprint);
     results.push({id:'portfolio-juices-'+createHash('sha256').update(item.url).digest('hex').slice(0,24),
       title:words(item.url)||'עבודת פרסום', url:item.url, thumbUrl:item.url,
       source:'Marketing Juices',sourceUrl:home,
       style:'תמונה מתוך גלריה ציבורית — טרם אומתה התאמה חזותית לבריף',isSample:false});
-  }
+  }));
   return {results,discovered:candidates.size,duplicates,inaccessible,
     warning:!results.length?'לא נמצאו תמונות גלויות המתאימות לחיפוש, או שהתמונות אינן נגישות':''};
 };
 const v12PortfolioCache=new Map<string,{time:number;value:any}>();
 app.get('/api/inspiration/portfolios',async(req,res)=>{
-  const query=String(req.query.q||'').trim().slice(0,150);
+  const query=String(req.query.q||'').trim().slice(0,1800);
   const selected=String(req.query.sources||'').split(',').filter(Boolean);
   if(query.length<2)return res.status(400).json({error:'יש להזין לפחות שתי אותיות'});
   const sources=v12Sources.filter(s=>!selected.length||selected.includes(s.id));
   const cacheKey=query+'|'+sources.map(s=>s.id).join(',');const cached=v12PortfolioCache.get(cacheKey);
-  if(cached&&Date.now()-cached.time<10*60_000)return res.json(cached.value);
+  if(cached&&Date.now()-cached.time<(cached.value.results?.length?10*60_000:30_000))return res.json(cached.value);
   const tokens=query.toLowerCase().split(/[\s,.;:()\-]+/).filter(w=>w.length>=3 && !['של','עם','עבור','חסידי','חסידית','יוקרתי','יוקרתית','עיצוב'].includes(w));
   const jobs=sources.map(async source=>{
+    if(source.id==='prog')return {source:source.name,id:source.id,...await discoverProg(query)};
     if(source.id==='juices') {
       try {const found=await v13MarketingGallery(query);
         return {source:source.name,id:source.id,...found};
-      } catch(e:any) {return {source:source.name,id:source.id,results:[],discovered:0,duplicates:0,inaccessible:0,
+      } catch(e:any) {return {source:source.name,id:source.id,results:[],blocked:[401,403,429].includes(e?.status),discovered:0,duplicates:0,inaccessible:0,
         warning:'גלריית Marketing Juices אינה זמינה: '+String(e?.message||'שגיאת חיבור').slice(0,100)};}
     }
-    const rawLinks=new Map<string,string>();const issues:string[]=[];
-    const endpoint=`https://${source.host}/wp-json/wp/v2/search?search=${encodeURIComponent(query)}&per_page=16`;
-    try{const arr=JSON.parse(await v12Fetch(endpoint,'application/json'));
-      if(Array.isArray(arr))for(const obj of arr){const link=v12Allowed(String(obj.url||''),source.host);
-        const title=v12Decode(String(obj.title||''));if(link&&title)rawLinks.set(link,title);}
-    }catch(e:any){issues.push(`חיפוש האתר: ${String(e?.message||'לא זמין').slice(0,65)}`);}
+    const rawLinks=new Map<string,string>();const issues:string[]=[];let homeGallery:any[]=[];
+    const searches=[...new Set([query,...tokens.slice(0,2)])].slice(0,3);
+    await Promise.all(searches.map(async term=>{try{const endpoint='https://'+source.host+'/wp-json/wp/v2/search?search='+encodeURIComponent(term)+'&per_page=8';const arr=JSON.parse(await v12Fetch(endpoint,'application/json'));if(Array.isArray(arr))for(const obj of arr){const link=v12Allowed(String(obj.url||''),source.host);const title=v12Decode(String(obj.title||''));if(link&&title&&/\/(?:projects?|pro|portfolio|works?)\/[^/?#]+/i.test(new URL(link).pathname))rawLinks.set(link,title);}}catch(e:any){issues.push('חיפוש האתר: '+String(e?.message||'לא זמין').slice(0,65));}}));
     // Discover matching links from the public page only. Do NOT use homepage hero images as a matching artwork.
-    if(rawLinks.size<3){try{const home=`https://${source.host}/`;const html=await v12Fetch(home);
+    if(rawLinks.size<3){try{const home=`https://${source.host}/`;const html=await v12Fetch(home);homeGallery=homepageGallery(html,home,query);
       for(const m of html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)){
-        const title=v12Decode(m[2]);if(title.length<4||title.length>160)continue;
+        let title=v12Decode(m[2]);if(!title){try{title=decodeURIComponent(new URL(v12Decode(m[1]),home).pathname).replace(/[-_/]/g,' ').trim();}catch{}}if(title.length<4||title.length>160)continue;
         if(tokens.length&&!tokens.some(w=>title.toLowerCase().includes(w)))continue;
         let link='';try{link=v12Allowed(new URL(v12Decode(m[1]),home).href,source.host);}catch{continue;}
-        if(link && link!==home && !link.includes('/wp-json/') && rawLinks.size<12)rawLinks.set(link,title);
+        if(link && /\/(?:projects?|pro|portfolio|works?)\/[^/?#]+/i.test(new URL(link).pathname) && link!==home && !/\.(?:jpe?g|png|webp)(?:\?|$)/i.test(link) && !link.includes('/wp-json/') && rawLinks.size<12)rawLinks.set(link,title);
       }
     }catch(e:any){issues.push(`דף הבית: ${String(e?.message||'לא זמין').slice(0,65)}`);}}
-    const entries=[...rawLinks.entries()].slice(0,8);
+    const entries=[...rawLinks.entries()].sort((a,b)=>tokens.filter(t=>b[1].toLowerCase().includes(t)).length-tokens.filter(t=>a[1].toLowerCase().includes(t)).length).slice(0,4);
     // Step 1: collect candidates from EACH project's own page, without choosing yet.
     const pages=await Promise.all(entries.map(async([link,title])=>{
       try{const html=await v12Fetch(link);
@@ -773,23 +705,17 @@ app.get('/api/inspiration/portfolios',async(req,res)=>{
     const inspected=new Map<string,{fingerprint:string}|null>();
     let duplicates=0;let inaccessible=0;
     const usable:any[]=[];
-    for(const page of pages){
-      const candidates=page.images.filter(url=>(appearances.get(url)||0)===1);
-      // If all candidate URLs were shared site-wide, abstain rather than assign false artwork.
-      let picked='';
-      for(const url of candidates.slice(0,source.id==='blum'?18:7)){
-        if(imageUrls.has(url)){duplicates++;continue;}
-        let inspection=inspected.get(url);
-        if(inspection===undefined){inspection=await v12InspectImage(url);inspected.set(url,inspection);}
+    await Promise.all(pages.map(async page=>{
+      const candidates=page.images.filter(url=>(appearances.get(url)||0)===1).slice(0,2);
+      const checks=await Promise.all(candidates.map(async url=>({url,inspection:await v12InspectImage(url)})));
+      for(const {url,inspection} of checks){
         if(!inspection){inaccessible++;continue;}
-        if(fingerprints.has(inspection.fingerprint)){duplicates++;continue;}
-        picked=url;imageUrls.add(url);fingerprints.add(inspection.fingerprint);break;
+        if(imageUrls.has(url)||fingerprints.has(inspection.fingerprint)){duplicates++;continue;}
+        imageUrls.add(url);fingerprints.add(inspection.fingerprint);
+        usable.push({id:'portfolio-'+source.id+'-'+createHash('sha256').update(page.link).digest('hex').slice(0,24),title:page.title,url,thumbUrl:url,source:source.name,sourceUrl:page.link,style:'עבודה ממקור חיצוני — טרם נותחה חזותית',isSample:false});break;
       }
-      if(!picked)continue;
-      usable.push({id:`portfolio-${source.id}-${Buffer.from(page.link).toString('base64url').slice(0,42)}`,
-        title:page.title,url:picked,thumbUrl:picked,source:source.name,sourceUrl:page.link,
-        style:'עבודה ממקור חיצוני — טרם נותחה חזותית',isSample:false});
-    }
+    }));
+    await Promise.all(homeGallery.slice(0,8).map(async item=>{const inspection=await v12InspectImage(item.url);if(!inspection){inaccessible++;return;}if(fingerprints.has(inspection.fingerprint)||imageUrls.has(item.url)){duplicates++;return;}fingerprints.add(inspection.fingerprint);imageUrls.add(item.url);usable.push({...item,id:'gallery-'+source.id+'-'+createHash('sha256').update(item.url).digest('hex').slice(0,24),source:source.name,style:'עבודה מגלריית המקור',isSample:false});}));
     const warning=[
       ...(!usable.length ? issues : []),
       ...(duplicates ? [`${duplicates} תמונות זהות הוסרו לאחר בדיקת תוכן הקובץ`] : []),
@@ -799,7 +725,7 @@ app.get('/api/inspiration/portfolios',async(req,res)=>{
   });
   const outcomes=await Promise.all(jobs);
   const result={results:outcomes.flatMap(x=>x.results).slice(0,50),
-    sources:outcomes.map(({source,id,results,warning,discovered,duplicates,inaccessible})=>({source,id,count:results.length,discovered,duplicates,inaccessible,warning})),
+    sources:outcomes.map(o=>({source:o.source,id:o.id,count:o.results.length,discovered:o.discovered,duplicates:o.duplicates,inaccessible:o.inaccessible,warning:o.warning,blocked:'blocked' in o&&!!o.blocked})),
     note:'מוצגות תמונות שנמצאו בדפי הפרויקטים ואינן חוזרות בקובץ זהה או בכמה דפי עבודות. התאמה תוכנית טרם נבדקה ב-AI.'};
   if(v12PortfolioCache.size>40)v12PortfolioCache.clear();v12PortfolioCache.set(cacheKey,{time:Date.now(),value:result});
   res.json(result);
@@ -1664,3 +1590,4 @@ app.post('/api/shadow-master/segment-hints', async (req, res) => {
 
 
 export default app;
+

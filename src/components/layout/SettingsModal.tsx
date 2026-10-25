@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { Icon } from '../common/Icon';
 import { GeminiSetup } from './GeminiSetup';
@@ -6,9 +6,10 @@ import { GeminiSetup } from './GeminiSetup';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: 'creative'|'connection';
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialTab='creative' }) => {
   const {
     globalPrefs,
     updateGlobalPrefs,
@@ -19,6 +20,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   } = useProject();
 
   const [activeTab, setActiveTab] = useState<'creative' | 'search_provider' | 'backup' | 'connection'>('creative');
+  useEffect(()=>{if(isOpen)setActiveTab(initialTab);},[isOpen,initialTab]);
   const [unsplashKey, setUnsplashKey] = useState(globalPrefs.unsplashApiKey || '');
   const [pexelsKey, setPexelsKey] = useState(globalPrefs.pexelsApiKey || '');
 

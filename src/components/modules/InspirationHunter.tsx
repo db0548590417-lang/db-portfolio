@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { InspirationItem } from '../../types';
 import { Icon } from '../common/Icon';
+import { ArtworkImage } from '../common/ArtworkImage';
 import { interpretBrief, type SourceMode } from '../../data/inspirationSearch';
 import { saveDesignImage } from '../../data/designAssetsDb';
 
 const OPENVERSE_API_URL = '/api/inspiration/openverse';
+const SOURCE_OPTIONS = [{id:'hafsakat',name:'הפסקת פרסומות'},{id:'heller',name:'יהודה הלר'},{id:'blum',name:'מרדכי בלום'},{id:'signon',name:'סגנון 7'},{id:'juices',name:'Marketing Juices'},{id:'prog',name:'פרוג'}];
 
 interface OpenverseImageRaw {
   id: string;
@@ -36,8 +38,8 @@ export const InspirationHunter: React.FC = () => {
   // Search input & filter state (Independent Openverse Search)
   const [searchQuery, setSearchQuery] = useState('');
   const [sourceMode, setSourceMode] = useState<SourceMode>('haredi');
-  const selectedSites = ['hafsakat','heller','blum','signon','juices','prog'];
-  const [siteReports, setSiteReports] = useState<{source:string;count:number;warning:string}[]>([]);
+  const [selectedSites,setSelectedSites] = useState(SOURCE_OPTIONS.map(source=>source.id));
+  const [siteReports, setSiteReports] = useState<{id:string;source:string;count:number;warning:string;pending?:boolean;blocked?:boolean}[]>([]);
   const [interpreted, setInterpreted] = useState<ReturnType<typeof interpretBrief> | null>(null);
   const [briefQuery, setBriefQuery] = useState(activeProject?.brief?.productOrService || '');
   const [styleFilter, setStyleFilter] = useState('הכל');
@@ -107,13 +109,10 @@ export const InspirationHunter: React.FC = () => {
   // Link-only pages are not image inspirations and must not masquerade as visual results.
   const mergeHarediResults = (reviewed: InspirationItem[], candidates: InspirationItem[], queryOverride?: string): InspirationItem[] => {
     const seen = new Set<string>();
-    const terms = (queryOverride || lastQuery || searchQuery).toLowerCase().split(/[\s,.;:()\-]+/).filter(w => w.length >= 3 && !['אני','מחפש','רוצה','עיצוב','מודעה','מיתוג','עבור','שיהיה','סגנון'].includes(w));
     return [...reviewed, ...candidates].filter((item) => {
       if (!(item.thumbUrl || item.url)) return false;
-      const key = item.sourceUrl || item.id;
+      const key = item.url || item.thumbUrl || item.id;
       if (!key || seen.has(key)) return false;
-      const searchable = [item.title, item.technique].filter(Boolean).join(' ').toLowerCase();
-      if (terms.length && !terms.some(w => searchable.includes(w))) return false;
       seen.add(key);
       return true;
     });
@@ -122,40 +121,24 @@ export const InspirationHunter: React.FC = () => {
   // V12.4: combine both source families exactly once. Parallel completion must never
   // overwrite a different source's results, and stale searches must not replace a newer one.
   const searchHarediAll = async (queryText: string) => {
-    const generation = ++searchGenerationRef.current;
-    setIsSearching(true);
-    setSearchError(null);
-    setLearningNotice('');
-    setSearchResults([]);
-    setSourceCandidates([]);
-    setPortfolioCandidates([]);
-    setSiteReports([]);
-    setReviewedSourceUrls([]);
-    try {
-      const portfolioSources = selectedSites.filter(x=>x!=='hafsakat').join(',');
-      const [rawHafsakat, indexedHafsakat, rawPortfolios] = await Promise.allSettled([
-        fetch(`/api/inspiration/hafsakat?q=${encodeURIComponent(queryText)}`).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'המקור לא זמין');return d;}),
-        fetch('/api/inspiration/hafsakat/visual-search', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:queryText})}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'הניתוח לא זמין');return d;}),
-        fetch(`/api/inspiration/portfolios?q=${encodeURIComponent(queryText)}&sources=${encodeURIComponent(portfolioSources)}`).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'אתרי המעצבים לא זמינים');return d;}),
-      ]);
-      if (generation!==searchGenerationRef.current) return;
-      const candidates: InspirationItem[] = rawHafsakat.status==='fulfilled' && Array.isArray(rawHafsakat.value.results) ? rawHafsakat.value.results : [];
-      const reviewed: InspirationItem[] = indexedHafsakat.status==='fulfilled' && Array.isArray(indexedHafsakat.value.results) ? indexedHafsakat.value.results : [];
-      const portfolios: InspirationItem[] = rawPortfolios.status==='fulfilled' && Array.isArray(rawPortfolios.value.results) ? rawPortfolios.value.results : [];
-      setSourceCandidates(candidates);
-      setReviewedSourceUrls(reviewed.map(item=>item.sourceUrl));
-      setVisionRanking(indexedHafsakat.status==='fulfilled' ? indexedHafsakat.value.ranking||'' : '');
-      setPortfolioCandidates(portfolios);
-      setSiteReports(rawPortfolios.status==='fulfilled' && Array.isArray(rawPortfolios.value.sources) ? rawPortfolios.value.sources : []);
-      setSearchResults(mergeHarediResults(reviewed, [...candidates,...portfolios], queryText));
-      const issues = [rawHafsakat,rawPortfolios].filter(x=>x.status==='rejected').map(x=>String((x as PromiseRejectedResult).reason?.message||'מקור לא זמין'));
-      if(issues.length) setLearningNotice(issues.join(' | '));
-      void refreshVisionStatus();
-    } catch(e:any) {
-      if(generation===searchGenerationRef.current)setSearchError(e?.message||'שגיאה בחיפוש');
-    } finally {
-      if(generation===searchGenerationRef.current)setIsSearching(false);
-    }
+    const generation=++searchGenerationRef.current;
+    let ids=selectedSites;
+    try {const url=new URL(queryText);if(['prog.co.il','www.prog.co.il'].includes(url.hostname))ids=['prog'];}catch{}
+    if(!ids.length){showToast('בחר לפחות מקור אחד לחיפוש','info');return;}
+    setIsSearching(true);setSearchError(null);setLearningNotice('');setSearchResults([]);setSourceCandidates([]);setPortfolioCandidates([]);setReviewedSourceUrls([]);setVisionRanking('');
+    setSiteReports(SOURCE_OPTIONS.filter(s=>ids.includes(s.id)).map(s=>({id:s.id,source:s.name,count:0,warning:'',pending:true})));
+    const collected=new Map<string,InspirationItem[]>();
+    const publish=()=>{if(generation!==searchGenerationRef.current)return;const all=[...collected.values()].flat();setSearchResults(mergeHarediResults([],all,queryText));setSourceCandidates(collected.get('hafsakat')||[]);setPortfolioCandidates([...collected.entries()].filter(([id])=>id!=='hafsakat').flatMap(([,items])=>items));};
+    await Promise.allSettled(ids.map(async id=>{
+      let warning='',blocked=false;let results:InspirationItem[]=[];
+      try{const url=id==='hafsakat'?'/api/inspiration/hafsakat?q='+encodeURIComponent(queryText):'/api/inspiration/portfolios?q='+encodeURIComponent(queryText)+'&sources='+id;
+        const response=await fetch(url,{signal:AbortSignal.timeout(90000)});const data=await response.json();if(!response.ok)throw Error(data.error||'המקור אינו זמין');results=Array.isArray(data.results)?data.results:[];
+        const report=data.sources?.find((s:any)=>s.id===id);warning=report?.warning||data.warning||'';blocked=!!report?.blocked;
+      }catch(error:any){warning=error.name==='TimeoutError'?'המקור לא הגיב בזמן. אפשר לחפש שוב.':String(error.message||'המקור אינו זמין');}
+      if(generation!==searchGenerationRef.current)return;
+      collected.set(id,results);publish();setSiteReports(prev=>prev.map(r=>r.id===id?{...r,count:results.length,warning,blocked,pending:false}:r));
+    }));
+    if(generation===searchGenerationRef.current){setIsSearching(false);void refreshVisionStatus();}
   };
 
   const reviewPortfoliosWithAI = async () => {
@@ -217,7 +200,7 @@ export const InspirationHunter: React.FC = () => {
   const searchOpenverse = async (queryText: string) => {
     const q = queryText.trim();
     if (!q) return;
-
+    const generation=++searchGenerationRef.current;
     setIsSearching(true);
     setSearchError(null);
     setLastQuery(q);
@@ -254,13 +237,14 @@ export const InspirationHunter: React.FC = () => {
         isSample: false,
       }));
 
-      setSearchResults(items);
+      if(generation===searchGenerationRef.current)setSearchResults(items);
     } catch (err: any) {
+      if(generation!==searchGenerationRef.current)return;
       console.warn('Openverse API connection warning:', err);
       setSearchError('לא ניתן לטעון תמונות מ-Openverse כעת. אנא בדוק את החיבור לרשת ונסה שוב.');
       showToast('שגיאה בקבלת תמונות מ-Openverse', 'error');
     } finally {
-      setIsSearching(false);
+      if(generation===searchGenerationRef.current)setIsSearching(false);
     }
   };
 
@@ -362,7 +346,16 @@ export const InspirationHunter: React.FC = () => {
             dataUrl=`data:${body.mimeType};base64,${body.imageBase64}`;
         } catch { /* try the browser directly next */ }
       }
-      if (!dataUrl && item.url.startsWith('https://')) {
+        if (!dataUrl && item.url.startsWith('https://')) {
+          // Animated/AVIF gallery artwork remains viewable; save a static PNG frame as the AI reference.
+          try {
+            const response=await fetch('/api/inspiration/image?url='+encodeURIComponent(item.url));
+            if(response.ok){const blob=await response.blob();if(['image/gif','image/avif'].includes(blob.type)&&blob.size<=4_000_000){
+              const bitmap=await createImageBitmap(blob);try{const ratio=Math.min(1,2048/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*ratio));canvas.height=Math.max(1,Math.round(bitmap.height*ratio));const context=canvas.getContext('2d');if(context){context.drawImage(bitmap,0,0,canvas.width,canvas.height);dataUrl=canvas.toDataURL('image/png');}}finally{bitmap.close();}
+            }}
+          }catch{/* Continue with browser CORS when the public proxy is unavailable. */}
+        }
+        if (!dataUrl && item.url.startsWith('https://')) {
         // Some public image CDNs permit browser CORS even if the server cannot fetch them.
         try {
           const response = await fetch(item.url,{mode:'cors'});
@@ -463,7 +456,7 @@ export const InspirationHunter: React.FC = () => {
 
         <div className="flex gap-2" role="group" aria-label="תחום מקורות">
           {([['haredi', 'חרדי'], ['international', 'בינלאומי']] as const).map(([mode, label]) => (
-            <button key={mode} onClick={() => { setSourceMode(mode); setInterpreted(null); setSearchResults([]); setSourceCandidates([]); setSearchError(null); setLearningNotice(''); }}
+            <button key={mode} onClick={() => { searchGenerationRef.current++;setIsSearching(false);setSiteReports([]);setSourceMode(mode); setInterpreted(null); setSearchResults([]); setSourceCandidates([]); setSearchError(null); setLearningNotice(''); }}
               aria-pressed={sourceMode === mode}
               className={`px-5 py-2 rounded-xl text-xs font-bold border transition cursor-pointer ${sourceMode === mode ? 'bg-teal-500 text-white border-teal-300' : 'bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-teal-500'}`}>{label}</button>
           ))}
@@ -476,10 +469,12 @@ export const InspirationHunter: React.FC = () => {
             <p className="text-[13px] text-[#C1D1D5]">תצוגה ראשונית</p>
           </div>
         )}
+        {sourceMode==='haredi'&&<fieldset className="flex flex-wrap gap-2" aria-label="בחירת מקורות השראה"><legend className="mb-2 text-sm text-zinc-200">מקורות לחיפוש</legend>{SOURCE_OPTIONS.map(source=><label key={source.id} className="flex items-center gap-2 rounded-lg border border-[#45656A] px-3 py-2 text-sm text-zinc-100"><input type="checkbox" checked={selectedSites.includes(source.id)} onChange={e=>setSelectedSites(prev=>e.target.checked?[...prev,source.id]:prev.filter(id=>id!==source.id))} className="accent-[#43D6CB]" />{source.name}</label>)}</fieldset>}
         {sourceMode === 'haredi' && siteReports.length > 0 && <div className="rounded-xl bg-[#183036] border border-[#45656A] p-3 text-xs text-zinc-200">
-          החיפוש בודק אוטומטית את מקורות ההשראה החרדיים. מוצגות רק תוצאות שיש להן תמונה וזיקה לבריף.
+          תוצאות מכל מקור מופיעות ברגע שהן מוכנות.
           <details className="mt-2"><summary className="cursor-pointer text-[#43D6CB]">מצב מקורות</summary>
-            <div className="flex flex-wrap gap-2 mt-2">{siteReports.map((r,i)=><span key={i} title={r.warning||''} className="border border-[#45656A] rounded-lg px-2 py-1">{r.source}: {r.count}{r.warning?' · לא זמין/אין התאמות':''}</span>)}</div>
+            <div className="grid gap-2 mt-2 sm:grid-cols-2">{siteReports.map(r=><div key={r.id} className="border border-[#45656A] rounded-lg px-3 py-2"><p>{r.source}: {r.pending?'טוען…':r.blocked?'גישה מוגבלת':r.count+' עבודות'}</p>{r.warning&&<p className="mt-1 text-[13px] leading-6 text-zinc-300">{r.warning}</p>}</div>)}</div>
+            <p className="mt-3 text-sm text-zinc-300">אפשר לחפש גם באמצעות קישור לאשכול ציבורי בפרוג.</p>
           </details>
         </div>}
         {/* Quick Search Preset Tags */}
@@ -537,7 +532,7 @@ export const InspirationHunter: React.FC = () => {
                 {isLearning ? 'מנתח עד 6 עבודות ב-AI…' : 'נתח עד 6 עבודות מהמאגר עם AI'}
               </button>
             </div>
-            {!visionStatus?.aiConfigured && <p className="text-amber-200">ניתוח תמונות זמין אחרי חיבור AI בהגדרות.</p>}
+            {!visionStatus?.aiConfigured && <button onClick={()=>window.dispatchEvent(new CustomEvent('dekel-open-settings',{detail:{tab:'connection'}}))} className="text-[#43D6CB] underline">חיבור AI בהגדרות</button>}
             {learningNotice && <p className="p-2 rounded-lg bg-zinc-900/70 text-zinc-300 break-words">{learningNotice}</p>}
             {visionRanking === 'ai' && !!searchResults.length && <p className="text-emerald-400">התוצאות מדורגות באמצעות AI לפי התיאור החזותי שלהן.</p>}
             {visionRanking === 'descriptions' && !!searchResults.length && <p className="text-[#C1D1D5]">הדירוג הזמני לפי התיאורים שנלמדו. הדירוג הסמנטי מחייב חיבור AI פעיל.</p>}
@@ -804,18 +799,7 @@ export const InspirationHunter: React.FC = () => {
                 onClick={() => (item.thumbUrl || item.url) ? setPreviewItem(item) : window.open(item.sourceUrl, '_blank', 'noopener,noreferrer')}
                 title="לחץ לתצוגה מקדימה מלאה"
               >
-                {(item.thumbUrl || item.url) ? <img
-                  src={item.thumbUrl || item.url}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  loading="lazy"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (item.url && target.src !== item.url) {
-                      target.src = item.url;
-                    }
-                  }}
-                /> : <div className="h-full w-full flex flex-col items-center justify-center gap-2 text-center p-4 bg-[#102B31] text-white"><Icon name="ExternalLink" className="w-7 h-7 text-[#43D6CB]"/><span className="text-xs font-bold">{item.title}</span><span className="text-[12px] text-zinc-300">העיצוב זמין באתר המקור</span></div>}
+                {(item.thumbUrl || item.url) ? <ArtworkImage src={item.thumbUrl || item.url} fallbackSrc={item.url} alt={item.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" /> : <div className="h-full w-full flex flex-col items-center justify-center gap-2 text-center p-4 bg-[#102B31] text-white"><Icon name="ExternalLink" className="w-7 h-7 text-[#43D6CB]"/><span className="text-xs font-bold">{item.title}</span><span className="text-[12px] text-zinc-300">העיצוב זמין באתר המקור</span></div>}
 
                 {/* Preview hover overlay hint */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
@@ -961,7 +945,7 @@ export const InspirationHunter: React.FC = () => {
 
             {/* Modal Image View */}
             <div className="flex-1 bg-black/60 p-4 flex items-center justify-center overflow-auto max-h-[60vh]">
-              <img
+              <ArtworkImage
                 src={previewItem.url || previewItem.thumbUrl}
                 alt={previewItem.title}
                 className="max-h-full max-w-full object-contain rounded-lg shadow-2xl"
