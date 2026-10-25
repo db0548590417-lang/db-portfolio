@@ -23,8 +23,14 @@ export function GeminiSetup() {
     } catch (error: any) { setError(error.message || 'לא ניתן להתחבר כרגע.'); }
     finally { setBusy(false); }
   }
+  async function testConnection(){
+    setBusy(true);setError('');setMessage('');
+    try{const response=await fetch('/api/settings/gemini',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({test:true})});const result=await response.json();if(!response.ok)throw Error(result.error||'בדיקת החיבור נכשלה');setMessage(result.message);}catch(error:any){setError(error.message||'לא ניתן לבדוק את החיבור כרגע.');}finally{setBusy(false);}
+  }
   return <section className="max-w-xl space-y-5">
-    <div className="flex items-center justify-between gap-3"><h3 className="text-lg font-bold text-white">חיבור AI</h3><span role="status" className={`rounded-full px-3 py-1 text-sm ${configured ? 'bg-emerald-500/15 text-emerald-200' : 'bg-white/10 text-zinc-200'}`}>{checking ? 'בודק…' : configured ? 'מחובר' : 'לא מחובר'}</span></div>
+    <div className="flex items-center justify-between gap-3"><h3 className="text-lg font-bold text-white">חיבור AI</h3><span role="status" className={`rounded-full px-3 py-1 text-sm ${configured ? 'bg-emerald-500/15 text-emerald-200' : 'bg-white/10 text-zinc-200'}`}>{checking ? 'בודק…' : configured ? 'מפתח נשמר' : 'לא מחובר'}</span></div>
+    {configured&&<button type="button" disabled={busy} onClick={testConnection} className="rounded-lg border border-[#66858A] px-4 py-2 text-sm text-white disabled:opacity-50">{busy?'בודק חיבור…':'בדוק חיבור ל־Gemini'}</button>}
+    {configured&&<p className="text-xs text-zinc-300">הבדיקה שולחת בקשת טקסט קצרה בהתאם למכסת Google שלך.</p>}
     <form onSubmit={save} className="space-y-4">
       <label htmlFor="gemini-key" className="block text-sm font-medium text-zinc-200">מפתח Gemini אישי</label>
       <input id="gemini-key" type="password" value={key} onChange={event => setKey(event.target.value)} autoComplete="off" spellCheck={false} dir="ltr" placeholder={configured ? 'להחלפה, הזן מפתח חדש' : 'הדבק מפתח'} required minLength={20} maxLength={200} className="w-full rounded-xl border border-[#66858A] bg-[#183036] p-3 text-base text-white outline-none focus:border-[#43D6CB]" />

@@ -1,6 +1,7 @@
 import app from '../server';
 import { requestScope } from './runtime';
 import assets from './assets.json';
+import {geminiError} from './gemini-errors';
 
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 const configPath = (userId: string) => `users/${encodeURIComponent(userId)}/gemini-config.json`;
@@ -24,6 +25,16 @@ async function configure(request: Request, env: any, userId: string) {
   if (text.length > 10000) return json({ error: 'בקשה גדולה מדי' }, 413);
   let value: any;
   try { value = JSON.parse(text); } catch { return json({ error: 'בקשה לא תקינה' }, 400); }
+  if(value.test===true){
+    const config=await getConfig(env.BUCKET,userId);
+    if(!config?.apiKey)return json({error:'לא נשמר מפתח בדפדפן הזה. שמור חיבור לפני הבדיקה.',code:'KEY_MISSING'},400);
+    try{
+      const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(config.model)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':config.apiKey},body:JSON.stringify({contents:[{parts:[{text:'Reply OK'}]}],generationConfig:{maxOutputTokens:4}}),signal:AbortSignal.timeout(20000)});
+      const body=await response.json().catch(()=>({}));
+      if(!response.ok)return json(geminiError(response.status,body),response.status===429?429:400);
+      return json({working:true,message:'החיבור נבדק בהצלחה. Gemini השלים בקשת טקסט.',model:config.model});
+    }catch{return json({error:'השרת לא הצליח להגיע ל־Gemini בזמן. נסה שוב בעוד רגע.',code:'CONNECTION_FAILED'},502);}
+  }
   const key = typeof value.apiKey === 'string' ? value.apiKey.trim() : '';
   if (!/^[A-Za-z0-9_-]{20,200}$/.test(key)) return json({ error: 'יש להזין מפתח Gemini תקין' }, 400);
   let response: Response;
@@ -32,7 +43,7 @@ async function configure(request: Request, env: any, userId: string) {
       headers: { 'x-goog-api-key': key }, signal: AbortSignal.timeout(20000),
     });
   } catch { return json({ error: 'לא ניתן להתחבר ל-Gemini כרגע. נסה שוב בעוד רגע.' }, 502); }
-  if (!response.ok) return json({ error: `Gemini לא אישר את המפתח (קוד ${response.status}). בדוק שהמפתח פעיל ומורשה לשירות.` }, 400);
+  if (!response.ok) return json(geminiError(response.status,await response.json().catch(()=>({}))),response.status===429?429:400);
   const result: any = await response.json();
   const available = (result.models || []).filter((model: any) => model.supportedGenerationMethods?.includes('generateContent')).map((model: any) => model.name.replace(/^models\//, ''));
   const preferred = ['gemini-3.8-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash'];

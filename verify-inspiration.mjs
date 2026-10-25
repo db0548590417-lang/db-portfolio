@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {publicImageUrl,readPublicImage,fetchPublicPage,parseProgImages,discoverProg,homepageGallery} from './inspiration-public.mjs';
+import {publicImageUrl,readPublicImage,fetchPublicPage,parseProgImages,parseProgFeed,discoverProg,homepageGallery} from './inspiration-public.mjs';
 for(const url of ['http://www.prog.co.il/attachments/a.1/','https://localhost/image.png','https://prog.co.il/members/a.1/','https://prog.co.il:444/attachments/a.1/','https://prog.co.il.evil.test/attachments/a.1/','https://user:pass@prog.co.il/attachments/a.1/'])assert.equal(publicImageUrl(url),'');
 assert(publicImageUrl('https://www.prog.co.il/attachments/coffee-jpg.12345/'));
 const page='https://www.prog.co.il/threads/coffee.123/';
@@ -8,6 +8,10 @@ const images=parseProgImages(html,page);assert.equal(images.length,1);assert.equ
 const calls=[];const fetcher=async url=>{calls.push(String(url));return new Response(String(url).includes('/search/')?'<a href="/threads/coffee.123/">מיתוג קפה</a>':html,{headers:{'content-type':'text/html'}});};
 const found=await discoverProg('מיתוג קפה',{fetcher});assert.equal(found.results.length,1);assert(!calls.some(url=>url.includes('/wp-json/')));
 const direct=await discoverProg(page,{fetcher});assert.equal(direct.results.length,1);
+const feed='<rss><channel><item><title>מיתוג קפה</title><link>'+page+'</link><content:encoded><![CDATA['+html+']]></content:encoded></item></channel></rss>';
+assert.equal(parseProgFeed(feed,'קפה').length,1);assert.equal(parseProgFeed(feed,'ריהוט').length,0);
+const rssOnly=await discoverProg('קפה',{fetcher:async url=>String(url).endsWith('index.rss')?new Response(feed,{headers:{'content-type':'application/rss+xml'}}):new Response('',{status:403})});
+assert.equal(rssOnly.results.length,1);assert.equal(rssOnly.blocked,false);assert.match(rssOnly.warning,/האחרונים/);
 const blocked=await discoverProg('מיתוג',{fetcher:async()=>new Response('',{status:403})});assert.equal(blocked.blocked,true);assert.equal(blocked.results.length,0);assert.match(blocked.warning,/403/);
 const png=Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),Buffer.alloc(200)]);let seen=0;
 const image=await readPublicImage('https://signon7.com/art.png',{fetcher:async()=>++seen===1?new Response(null,{status:302,headers:{location:'https://vangus-cdn.com/signon7.com/art.png'}}):new Response(png,{headers:{'content-type':'image/png'}})});assert.deepEqual(image.bytes,png);assert.equal(seen,2);

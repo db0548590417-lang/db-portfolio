@@ -16,17 +16,40 @@ export function parseProgImages(html,page){const results=[],seen=new Set();const
   if(!full||seen.has(full)||/avatar|smilie|emoji|logo|banner/i.test(full))continue;seen.add(full);results.push({id:'prog-'+Buffer.from(full).toString('base64url'),title:alt&&alt.length>2?alt:(title||'עבודה מפרוג'),url:full,thumbUrl:thumb||full,source:'פרוג',sourceUrl:page,style:'עבודה ציבורית מפרוג',isSample:false});}
  return results.slice(0,12);}
 function threadLinks(html,base,query){const terms=plain(query).toLowerCase().split(/\s+/).filter(x=>x.length>=3&&!['עיצוב','מודעה','רוצה','מחפש','פרסום'].includes(x));const found=[];for(const m of html.matchAll(/<a\b[^>]*>[\s\S]*?<\/a>/gi)){const tag=m[0],link=sameSiteUrl(attribute(tag,'href'),base),title=plain(tag);if(!link||!new URL(link).pathname.startsWith('/threads/')||!title||/login|register/i.test(link))continue;found.push({link,title,score:terms.filter(t=>title.toLowerCase().includes(t)).length});}return[...new Map(found.sort((a,b)=>b.score-a.score).map(x=>[x.link,x])).values()].slice(0,4);}
+export function parseProgFeed(xml,query){
+ const terms=plain(query).toLowerCase().split(/\s+/).filter(x=>x.length>=3);
+ const direct=/^https:\/\//i.test(query)?sameSiteUrl(query,'https://www.prog.co.il/'):'';const results=[];
+ for(const match of xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)){
+   const item=match[1];const field=name=>(item.match(new RegExp('<'+name+'(?:\\s[^>]*)?>([\\s\\S]*?)<\\/'+name+'>','i'))?.[1]||'').trim().replace(/^<!\[CDATA\[|\]\]>$/g,'');
+   const link=sameSiteUrl(plain(field('link')),'https://www.prog.co.il/');
+   if(!link||!new URL(link).pathname.startsWith('/threads/'))continue;
+   const content=field('content:encoded')||field('description');const title=plain(field('title'));
+   if(direct?link!==direct:terms.length&&!terms.some(term=>plain(title+' '+content).toLowerCase().includes(term)))continue;
+   results.push(...parseProgImages('<h1>'+title+'</h1>'+content,link).map(image=>({...image,title:title||image.title})));
+ }
+ return [...new Map(results.map(item=>[item.url,item])).values()].slice(0,12);
+}
+async function progFeedFallback(query,fetcher,issue){
+ try{
+   const xml=await fetchPublicPage('https://www.prog.co.il/forums/-/index.rss',{fetcher});
+   const results=parseProgFeed(xml,query);
+   return{results,discovered:[...xml.matchAll(/<item\b/g)].length,duplicates:0,inaccessible:0,blocked:false,warning:results.length?'מוצגות עבודות מהעדכונים הציבוריים האחרונים בפרוג; החיפוש המלא אינו זמין כרגע.':'החיפוש המלא בפרוג אינו זמין כרגע. נבדקו גם עדכוני RSS ציבוריים אחרונים, ולא נמצאו בהם תמונות מתאימות.'};
+ }catch{return{results:[],discovered:0,duplicates:0,inaccessible:0,blocked:[401,403,429].includes(issue?.status),warning:String(issue?.message||'פרוג אינו זמין כרגע')};}
+}
 export async function discoverProg(query,{fetcher=fetch}={}){const origin='https://www.prog.co.il/';let pages=[];try{
  const direct=sameSiteUrl(query,origin);if(/^https:\/\//i.test(query)&&direct&&new URL(direct).pathname.startsWith('/threads/'))pages=[direct];
  else{const html=await fetchPublicPage(origin+'search/?q='+encodeURIComponent(query)+'&t=post',{fetcher});pages=threadLinks(html,origin,query).map(x=>x.link);if(!pages.length){const home=await fetchPublicPage(origin,{fetcher});pages=threadLinks(home,origin,query).filter(x=>x.score>0).map(x=>x.link);}}
- const failures=[];const outcomes=await Promise.all(pages.slice(0,4).map(async page=>{try{return parseProgImages(await fetchPublicPage(page,{fetcher}),page);}catch(e){failures.push(e);return[];}}));const results=[...new Map(outcomes.flat().map(x=>[x.url,x])).values()].slice(0,12);return{results,discovered:pages.length,duplicates:0,inaccessible:failures.length,blocked:!results.length&&failures.some(e=>[401,403,429].includes(e.status)),warning:results.length?'':failures.length?String(failures[0].message):pages.length?'לא נמצאו תמונות ציבוריות נגישות באשכולות שנמצאו':'לא נמצאו אשכולות ציבוריים עם תמונות לחיפוש הזה'};
- }catch(e){return{results:[],discovered:0,duplicates:0,inaccessible:0,blocked:[401,403,429].includes(e.status),warning:e.name==='TimeoutError'?'פרוג לא הגיב בזמן. אפשר לנסות שוב או להדביק קישור לאשכול ציבורי.':String(e.message||'פרוג אינו זמין כרגע')};}}
+ const failures=[];const outcomes=await Promise.all(pages.slice(0,4).map(async page=>{try{return parseProgImages(await fetchPublicPage(page,{fetcher}),page);}catch(e){failures.push(e);return[];}}));const results=[...new Map(outcomes.flat().map(x=>[x.url,x])).values()].slice(0,12);if(!results.length)return progFeedFallback(query,fetcher,failures[0]);return{results,discovered:pages.length,duplicates:0,inaccessible:failures.length,blocked:!results.length&&failures.some(e=>[401,403,429].includes(e.status)),warning:results.length?'':failures.length?String(failures[0].message):pages.length?'לא נמצאו תמונות ציבוריות נגישות באשכולות שנמצאו':'לא נמצאו אשכולות ציבוריים עם תמונות לחיפוש הזה'};
+ }catch(e){return progFeedFallback(query,fetcher,e);}}
 
 let imageReads=0;const imageWaiters=[];
 export async function readPublicImage(raw,options={}){
   if(imageReads>=8){if(imageWaiters.length>=64)throw Error('טעינת התמונות עמוסה כרגע. נסה שוב.');await new Promise((resolve,reject)=>{const entry={resolve:()=>{clearTimeout(timer);resolve();}};const timer=setTimeout(()=>{const at=imageWaiters.indexOf(entry);if(at>=0)imageWaiters.splice(at,1);reject(Error('טעינת התמונות עמוסה כרגע. נסה שוב.'));},30000);imageWaiters.push(entry);});}
   imageReads++;try{return await readPublicImageInternal(raw,options);}finally{imageReads--;imageWaiters.shift()?.resolve();}
 }
+
+
+
 
 
 

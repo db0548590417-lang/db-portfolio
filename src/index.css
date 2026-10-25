@@ -91,8 +91,13 @@ body {font-family: 'Heebo', 'Assistant', system-ui, sans-serif;}
   text-rendering: optimizeLegibility;
 }
 :is(.dekel-app, .dekel-account, .studio-dialog) :is(button, label, input, select, textarea) {
-  font-size: max(.875rem, 1em);
+  font-size: .8125rem;
 }
+.dekel-app { font-size: 14px; }
+.dekel-app h1 { font-size: 1.375rem; }
+.dekel-app h2 { font-size: 1.125rem; }
+.dekel-app h3 { font-size: 1rem; }
+.studio-dialog h2 { font-size: 1.375rem; }
 :is(.dekel-app, .dekel-account, .studio-dialog) :is(input, textarea)::placeholder {
   color: #a9bec3;
   opacity: 1;

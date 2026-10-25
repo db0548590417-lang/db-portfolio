@@ -64,8 +64,8 @@ export function createPasswordAuth({ secret, ownerPassword, storePromise }) {
         send(response, { user: owner }, 200, sessionCookie(owner)); return true;
       }
       if (!store) { send(response, { error: 'ההרשמה והכניסה לחשבונות ייפתחו לאחר חיבור מסד הנתונים. בעל הסטודיו יכול להיכנס עם הסיסמה הקיימת.' }, 503); return true; }
-      if (!/^[\p{L}\p{N}_.-]{3,32}$/u.test(username) || password.length < 12 || password.length > 128) {
-        send(response, { error: 'שם משתמש: 3–32 אותיות, מספרים, נקודה, קו או קו תחתון. סיסמה: 12–128 תווים.' }, 400); return true;
+      if (!/^[\p{L}\p{N}_.-]{3,32}$/u.test(username) || password.length < (pathname === '/api/auth/register' ? 8 : 1) || password.length > 128) {
+        send(response, { error: 'שם משתמש: 3–32 אותיות, מספרים, נקודה, קו או קו תחתון. סיסמה: 8–128 תווים.' }, 400); return true;
       }
       const key = userKey(username);
       if (['owner', 'admin', 'dekel'].includes(key)) { send(response, { error: 'שם המשתמש שמור. בחר שם אחר.' }, 400); return true; }
@@ -83,3 +83,4 @@ export function createPasswordAuth({ secret, ownerPassword, storePromise }) {
     },
   };
 }
+

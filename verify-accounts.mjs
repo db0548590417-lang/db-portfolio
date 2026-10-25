@@ -41,6 +41,10 @@ try {
   assert.equal((await request('/api/health', { headers: { 'oai-authenticated-user-id': 'spoofed' } })).status, 401);
   assert.equal((await (await request('/api/auth/session')).json()).registrationEnabled, true);
   assert.equal((await post('/api/auth/register', { username: 'alice', password: 'short' })).status, 400);
+  assert.equal((await post('/api/auth/register', { username: 'short_rejected', password: '1234567' })).status, 400);
+  assert.equal((await post('/api/auth/register', { username: 'eight_allowed', password: 'local8pw' })).status, 201);
+  assert.equal((await post('/api/auth/login', { username: 'eight_allowed', password: 'local8pw' })).status, 200);
+  assert.equal((await post('/api/auth/login', { username: 'eight_allowed', password: 'wrong' })).status, 401);
   assert.equal((await post('/api/auth/register', { username: 'dekel', password })).status, 400);
   const registered = await post('/api/auth/register', { username: 'Alice', password });
   assert.equal(registered.status, 201);

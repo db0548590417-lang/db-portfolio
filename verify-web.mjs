@@ -34,6 +34,16 @@ try {
   assert.equal((await (await call('/api/health')).json()).hasApiKey, true);
   assert.equal((await (await call('/api/health', {}, 'user-two')).json()).hasApiKey, false);
   assert.equal((await (await call('/api/settings/gemini', {}, 'user-two')).json()).configured, false);
+  const test=()=>call('/api/settings/gemini',{method:'POST',headers:{origin},body:JSON.stringify({test:true})});
+  globalThis.fetch=async()=>Response.json({error:{status:'RESOURCE_EXHAUSTED'}},{status:429});
+  const limited=await test();assert.equal(limited.status,429);assert.equal((await limited.json()).code,'QUOTA_EXCEEDED');
+  assert.equal((await (await call('/api/settings/gemini')).json()).configured,true);
+  globalThis.fetch=async()=>Response.json({error:{details:[{reason:'API_KEY_HTTP_REFERRER_BLOCKED'}]}},{status:403});
+  assert.equal((await (await test()).json()).code,'ACCESS_DENIED');
+  globalThis.fetch=async()=>Response.json({error:{details:[{reason:'API_KEY_INVALID'}]}},{status:400});
+  assert.equal((await (await test()).json()).code,'INVALID_KEY');
+  globalThis.fetch=async()=>Response.json({candidates:[{content:{parts:[{text:'OK'}]}}]});
+  const connected=await test();assert.equal(connected.status,200);const body=await connected.json();assert.equal(body.working,true);assert(!JSON.stringify(body).includes('test_key_value'));
 } finally { globalThis.fetch = originalFetch; }
 assert.equal((await call('/api/unknown')).status, 404);
 assert.equal((await call('/api/inspiration/hafsakat/visual-search', { method: 'POST', body: '{}' })).status >= 400, true);
