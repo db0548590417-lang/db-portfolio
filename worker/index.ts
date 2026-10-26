@@ -2,6 +2,7 @@ import app from '../server';
 import { requestScope } from './runtime';
 import assets from './assets.json';
 import {geminiError} from './gemini-errors';
+import {normalizeGeminiKey,canSubmitGeminiKey} from '../shared/gemini-key';
 
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 const configPath = (userId: string) => `users/${encodeURIComponent(userId)}/gemini-config.json`;
@@ -35,8 +36,8 @@ async function configure(request: Request, env: any, userId: string) {
       return json({working:true,message:'החיבור נבדק בהצלחה. Gemini השלים בקשת טקסט.',model:config.model});
     }catch{return json({error:'השרת לא הצליח להגיע ל־Gemini בזמן. נסה שוב בעוד רגע.',code:'CONNECTION_FAILED'},502);}
   }
-  const key = typeof value.apiKey === 'string' ? value.apiKey.trim() : '';
-  if (!/^[A-Za-z0-9_-]{20,200}$/.test(key)) return json({ error: 'יש להזין מפתח Gemini תקין' }, 400);
+  const key = normalizeGeminiKey(value.apiKey);
+  if (!canSubmitGeminiKey(key)) return json({ error: 'לא ניתן לקרוא את המפתח שהודבק. העתק את ערך המפתח בלבד מתוך Google AI Studio.',code:'KEY_INPUT_UNREADABLE' }, 400);
   let response: Response;
   try {
     response = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000', {

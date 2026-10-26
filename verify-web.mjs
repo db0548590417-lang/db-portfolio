@@ -21,11 +21,20 @@ assert.equal((await (await call('/api/health')).json()).hasApiKey, false);
 assert.deepEqual(await (await call('/api/settings/gemini')).json(), { configured: false, model: null });
 assert.equal((await call('/api/settings/gemini', { method: 'POST', body: '{}' })).status, 403);
 assert.equal((await call('/api/settings/gemini', { method: 'POST', headers: { origin }, body: '{' })).status, 400);
-assert.equal((await call('/api/settings/gemini', { method: 'POST', headers: { origin }, body: JSON.stringify({ apiKey: 'bad' }) })).status, 400);
+assert.equal((await call('/api/settings/gemini', { method: 'POST', headers: { origin }, body: JSON.stringify({ apiKey: '' }) })).status, 400);
 
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async () => Response.json({ models: [{ name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] }] });
 try {
+  let forwarded='';
+  globalThis.fetch=async(_url,options)=>{forwarded=options.headers['x-goog-api-key'];return Response.json({models:[{name:'models/gemini-2.5-flash',supportedGenerationMethods:['generateContent']}]});};
+  const pasted=await call('/api/settings/gemini',{method:'POST',headers:{origin},body:JSON.stringify({apiKey:' “\u200ftest_key_\nvalue_for_local_test_only\u200b” '})});
+  assert.equal(pasted.status,200);assert.equal(forwarded,'test_key_value_for_local_test_only');
+  globalThis.fetch=async()=>Response.json({error:{details:[{reason:'API_KEY_INVALID'}]}},{status:400});
+  const rejected=await call('/api/settings/gemini',{method:'POST',headers:{origin},body:JSON.stringify({apiKey:'bad'})});
+  assert.equal((await rejected.json()).code,'INVALID_KEY');
+  assert.equal((await (await call('/api/settings/gemini')).json()).configured,true);
+  globalThis.fetch=async()=>Response.json({models:[{name:'models/gemini-2.5-flash',supportedGenerationMethods:['generateContent']}]});
   const saved = await call('/api/settings/gemini', { method: 'POST', headers: { origin }, body: JSON.stringify({ apiKey: 'test_key_value_for_local_test_only' }) });
   assert.equal(saved.status, 200);
   const status = await (await call('/api/settings/gemini')).json();
