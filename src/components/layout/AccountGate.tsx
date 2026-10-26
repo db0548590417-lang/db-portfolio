@@ -14,6 +14,9 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [recovering,setRecovering] = useState(false);
+  const [recoveryCode,setRecoveryCode] = useState('');
+  const [recoveryMessage,setRecoveryMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const acceptUser = (value: User) => { setStorageUser(value.id); setUser(value); };
@@ -62,6 +65,11 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
     } catch (error: any) { setError(error.message); }
     finally { setBusy(false); }
   }
+  async function recover(event: React.FormEvent) {
+    event.preventDefault();setBusy(true);setError('');
+    try {const r=await fetch('/api/auth/recover',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,recoveryCode,newPassword:password})});const data=await r.json();if(!r.ok)throw Error(data.error);setRecovering(false);setPassword('');setRecoveryCode('');setRecoveryMessage('הסיסמה עודכנה. התחבר עם הסיסמה החדשה וצור קוד שחזור חדש בהגדרות.');}
+    catch(e:any){setError(e.message||'השחזור נכשל');}finally{setBusy(false);}
+  }
   if (!loading && user?.username) return <AccountContext.Provider value={user}>{children}</AccountContext.Provider>;
   return <main dir="rtl" className="dekel-account min-h-screen bg-[#183036] text-[#F7F8F3] font-['Heebo',sans-serif] flex items-center justify-center p-5 relative overflow-hidden">
     <div aria-hidden="true" className="pointer-events-none absolute -top-44 -right-44 h-[520px] w-[520px] rounded-full border border-[#43D6CB]/20" />
@@ -82,12 +90,14 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
             <button onClick={() => changeMode('register')} className={`flex-1 rounded-lg p-2 text-sm ${mode === 'register' ? 'bg-[#43D6CB] font-bold text-[#183036]' : 'text-zinc-300'}`}>הרשמה</button>
           </div>
           {!registrationEnabled && mode === 'register' && <p role="status" className="mb-4 rounded-lg border border-[#43D6CB]/25 p-3 text-sm leading-7 text-zinc-300">ההרשמה אינה זמינה כרגע. נסה שוב בעוד רגע.</p>}
-          <form key={mode} method="post" autoComplete="on" onSubmit={submit} className="space-y-4">
+          {recovering ? <form onSubmit={recover} className="space-y-4"><p className="text-sm text-zinc-200">הזן את קוד החירום ששמרת בהגדרות החשבון. הקוד חד־פעמי והחלפת הסיסמה תנתק מפגשים קודמים.</p><label className="block">שם משתמש<input required value={username} onChange={e=>setUsername(e.target.value)} autoComplete="username" className="mt-1 w-full rounded-lg bg-[#183036] p-3"/></label><label className="block">קוד שחזור<input required value={recoveryCode} onChange={e=>setRecoveryCode(e.target.value)} autoComplete="off" className="mt-1 w-full rounded-lg bg-[#183036] p-3"/></label><label className="block">סיסמה חדשה<input required type="password" minLength={8} maxLength={128} value={password} onChange={e=>setPassword(e.target.value)} autoComplete="new-password" className="mt-1 w-full rounded-lg bg-[#183036] p-3"/></label><button disabled={busy} className="rounded-lg bg-[#43D6CB] p-3 font-bold text-[#183036]">החלף סיסמה</button><button type="button" onClick={()=>setRecovering(false)} className="mr-3 underline">חזרה לכניסה</button></form> : <form key={mode} method="post" autoComplete="on" onSubmit={submit} className="space-y-4">
             <div><label htmlFor="account-username" className="mb-2 block text-sm">שם משתמש</label><input id="account-username" name="username" autoCapitalize="none" spellCheck={false} autoComplete="username" minLength={3} maxLength={32} required value={username} onChange={event => setUsername(event.target.value)} className="w-full rounded-xl border border-white/20 bg-[#183036] p-3 outline-none focus:border-[#43D6CB]" /></div>
             <div><label htmlFor="account-password" className="mb-2 block text-sm">סיסמה</label><input id="account-password" name="password" type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} minLength={mode === 'register' ? 8 : 1} maxLength={128} required value={password} onChange={event => setPassword(event.target.value)} className="w-full rounded-xl border border-white/20 bg-[#183036] p-3 outline-none focus:border-[#43D6CB]" /></div>
             {mode === 'register' && <div><label htmlFor="account-confirm" className="mb-2 block text-sm">אימות סיסמה</label><input id="account-confirm" name="confirm-password" type="password" autoComplete="new-password" minLength={mode === 'register' ? 8 : 1} maxLength={128} required value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} className="w-full rounded-xl border border-white/20 bg-[#183036] p-3 outline-none focus:border-[#43D6CB]" /><p className="mt-2 text-xs text-zinc-400">לפחות 8 תווים. שם המשתמש יכול לכלול אותיות בעברית או באנגלית, מספרים, נקודה, קו וקו תחתון.</p></div>}
             <button disabled={busy || (!registrationEnabled && mode === 'register')} className="w-full rounded-xl bg-[#43D6CB] p-3 font-bold text-[#183036] disabled:opacity-50">{busy ? 'רק רגע…' : mode === 'register' ? 'יצירת חשבון' : 'כניסה לסטודיו'}</button>
-          </form>
+          </form>}
+          {!recovering && mode === 'login' && <button type="button" onClick={()=>{setRecovering(true);setPassword('');setError('');}} className="mt-4 text-sm text-[#43D6CB] underline">שכחתי סיסמה — יש לי קוד שחזור</button>}
+          {recoveryMessage && <p role="status" className="mt-3 text-sm text-[#43D6CB]">{recoveryMessage}</p>}
         </>}
         {error && <p role="alert" className="mt-5 text-sm text-red-300">{error}</p>}
       </div>

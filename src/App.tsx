@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { WelcomeTour } from './components/layout/WelcomeTour';
 import { AccountGate } from './components/layout/AccountGate';
 import { userStorageKey } from './data/accountStorage';
@@ -8,25 +8,25 @@ import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { PropertyPanel } from './components/layout/PropertyPanel';
 import { SettingsModal } from './components/layout/SettingsModal';
-import { Dashboard } from './components/modules/Dashboard';
-import { InspirationHunter } from './components/modules/InspirationHunter';
-import { CreativeDirector } from './components/modules/CreativeDirector';
-import { IdeaFactory } from './components/modules/IdeaFactory';
-import { CreativeAnalyzer } from './components/modules/CreativeAnalyzer';
-import { ColorLaboratory } from './components/modules/ColorLaboratory';
-import { TypographyPlayground } from './components/modules/TypographyPlayground';
-import { MockupMaster } from './components/modules/MockupMaster';
-import { GestaltLab } from './components/modules/GestaltLab';
-import { InspirationMixer } from './components/modules/InspirationMixer';
-import { DesignAnalyzer } from './components/modules/DesignAnalyzer';
-import { VisualGenerator } from './components/modules/VisualGenerator';
-import { ExportStudio } from './components/modules/ExportStudio';
-import { ShadowMasterPro } from './components/modules/ShadowMasterPro';
-import { SystemHealthDashboard } from './components/modules/SystemHealthDashboard';
+const Dashboard = lazy(() => import('./components/modules/Dashboard').then(module => ({default:module.Dashboard})));
+const InspirationHunter = lazy(() => import('./components/modules/InspirationHunter').then(module => ({default:module.InspirationHunter})));
+const CreativeDirector = lazy(() => import('./components/modules/CreativeDirector').then(module => ({default:module.CreativeDirector})));
+const IdeaFactory = lazy(() => import('./components/modules/IdeaFactory').then(module => ({default:module.IdeaFactory})));
+const CreativeAnalyzer = lazy(() => import('./components/modules/CreativeAnalyzer').then(module => ({default:module.CreativeAnalyzer})));
+const ColorLaboratory = lazy(() => import('./components/modules/ColorLaboratory').then(module => ({default:module.ColorLaboratory})));
+const TypographyPlayground = lazy(() => import('./components/modules/TypographyPlayground').then(module => ({default:module.TypographyPlayground})));
+const MockupMaster = lazy(() => import('./components/modules/MockupMaster').then(module => ({default:module.MockupMaster})));
+const GestaltLab = lazy(() => import('./components/modules/GestaltLab').then(module => ({default:module.GestaltLab})));
+const InspirationMixer = lazy(() => import('./components/modules/InspirationMixer').then(module => ({default:module.InspirationMixer})));
+const DesignAnalyzer = lazy(() => import('./components/modules/DesignAnalyzer').then(module => ({default:module.DesignAnalyzer})));
+const VisualGenerator = lazy(() => import('./components/modules/VisualGenerator').then(module => ({default:module.VisualGenerator})));
+const ExportStudio = lazy(() => import('./components/modules/ExportStudio').then(module => ({default:module.ExportStudio})));
+const ShadowMasterPro = lazy(() => import('./components/modules/ShadowMasterPro').then(module => ({default:module.ShadowMasterPro})));
+const SystemHealthDashboard = lazy(() => import('./components/modules/SystemHealthDashboard').then(module => ({default:module.SystemHealthDashboard})));
 import { Icon } from './components/common/Icon';
 
 const MainWorkspace: React.FC = () => {
-  const { activeModule, toast } = useProject();
+  const { activeModule, setActiveModule, toast, saveStatus, exportProjectBackup, exportProjectMetadata, cloudStatus } = useProject();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => window.innerWidth < 1024);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsTab,setSettingsTab]=useState<'creative'|'connection'>('creative');
@@ -81,6 +81,10 @@ const MainWorkspace: React.FC = () => {
       <Navbar onOpenSettings={() => {setSettingsTab('creative');setIsSettingsOpen(true);}} onOpenTour={() => setIsTourOpen(true)} />
       <WelcomeTour key={isTourOpen ? 'tour-open' : 'tour-closed'} open={isTourOpen} onClose={closeTour} />
 
+      <div role={saveStatus === 'error' ? 'alert' : 'status'} className={saveStatus === 'error' ? 'bg-red-950 px-4 py-2 text-sm text-red-100' : 'bg-[#103F46] px-4 py-1 text-xs text-zinc-200'}>
+        {saveStatus === 'error' ? <>השמירה במכשיר נכשלה. הורד גיבוי לפני סגירת האתר. <button onClick={exportProjectMetadata} className="underline font-bold">הורד גיבוי נתונים בחירום (ללא תמונות)</button></> : saveStatus === 'saving' ? 'שומר…' : <>נשמר במכשיר הזה · {cloudStatus}</>}
+      </div>
+      <nav aria-label="מסלול העבודה" dir="rtl" className="flex shrink-0 gap-2 overflow-x-auto whitespace-nowrap border-b border-[#31535A] px-3 py-2 text-xs text-zinc-200">{([['creative_director','בריף וקונספט'],['inspiration_hunter','השראות'],['idea_factory','פיתוח רעיונות'],['visual_generator','יצירת תמונה'],['export_studio','ייצוא']] as const).map(([module,label],index)=><button key={module} aria-current={activeModule===module?'step':undefined} onClick={()=>setActiveModule(module)} className={activeModule===module?'rounded bg-[#43D6CB] px-3 py-1 font-bold text-[#183036]':'rounded border border-[#31535A] px-3 py-1'}>{index+1}. {label}</button>)}</nav>
       {/* Main Studio Body: Left (PropertyPanel) | Center (Workspace) | Right (RTL Sidebar) */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Left: Contextual Tool Properties */}
@@ -88,7 +92,7 @@ const MainWorkspace: React.FC = () => {
 
         {/* Center: Main Active Workspace */}
         <main className="flex-1 h-full overflow-hidden bg-[#183036] relative flex flex-col">
-          {renderActiveModule()}
+          <Suspense fallback={<p role="status" className="p-6 text-white">טוען כלי…</p>}>{renderActiveModule()}</Suspense>
         </main>
 
         {/* Right: Primary RTL Navigation Sidebar */}

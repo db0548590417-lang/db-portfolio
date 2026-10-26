@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" source("./");
 
 html, body, #root {
   background-color: #183036;

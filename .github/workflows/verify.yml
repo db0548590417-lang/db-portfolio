@@ -1,0 +1,24 @@
+name: Studio checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm exec -- tsc --noEmit
+      - run: npm run build
+      - run: node verify-web.mjs
+      - run: node verify-accounts.mjs
+      - run: node verify-inspiration.mjs
+      - run: node verify-inspiration-api.mjs
+      - run: node verify-brand-assets.mjs
+      - run: node verify-durability.mjs
+      - run: node verify-ai-queue.mjs
+      - run: node verify-generation-jobs.mjs

@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { SAMPLE_INSPIRATIONS } from '../../data/sampleInspirations';
 import { InspirationItem } from '../../types';
+import { loadDesignImage } from '../../data/designAssetsDb';
 import { Icon } from '../common/Icon';
 
 export const InspirationMixer: React.FC = () => {
   const { activeProject, updateActiveProject, globalPrefs, showToast } = useProject();
 
+  const projectIdRef=useRef(activeProject.id);projectIdRef.current=activeProject.id;
   // Candidate inspirations: saved from active project + curated samples
   const candidates: InspirationItem[] = [
     ...activeProject.savedInspirations,
@@ -21,8 +23,9 @@ export const InspirationMixer: React.FC = () => {
   ]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [mixResult, setMixResult] = useState<any>(null);
+  const [mixResult, setMixResult] = useState<any>(activeProject.mixerDraft || null);
 
+  useEffect(() => {setMixResult(activeProject.mixerDraft || null); setSelectedIds([]);}, [activeProject.id]);
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       if (prev.includes(id)) {
@@ -43,13 +46,24 @@ export const InspirationMixer: React.FC = () => {
       return;
     }
 
+    if (isLoading || !window.confirm('ניתוח התמונות ושילובן משתמשים במכסת Gemini. להמשיך?')) return;
+    const targetProjectId=activeProject.id;
     setIsLoading(true);
     try {
+      const images = await Promise.all(selectedItems.map(async item => {
+        const local = await loadDesignImage('ref-'+item.id);
+        if (local) return local;
+        const response = await fetch('/api/visual-generator/reference-image', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:item.url})});
+        const data = await response.json();
+        if (!response.ok) throw Error('לא ניתן לקרוא את אחת התמונות. העלה אותה מחדש לפרויקט.');
+        return 'data:'+data.mimeType+';base64,'+data.imageBase64;
+      }));
       const res = await fetch('/api/inspiration-mixer/mix', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: selectedItems,
+          images,
           action,
           excludePeople: globalPrefs.excludePeople,
         }),
@@ -57,6 +71,8 @@ export const InspirationMixer: React.FC = () => {
 
       if (!res.ok) throw new Error('שגיאה בערבוב ההשראות');
       const data = await res.json();
+      updateActiveProject(p=>({...p,mixerDraft:data}));
+      if(projectIdRef.current!==targetProjectId)return;
       setMixResult(data);
       showToast('הסינתזה הקריאייטיבית הושלמה!', 'success');
     } catch (err: any) {
@@ -78,6 +94,7 @@ export const InspirationMixer: React.FC = () => {
       suggestedDesignTechnique: 'Hybrid Creative Synthesis',
       imageGenerationPrompt: concept.imagePrompt,
       createdAt: Date.now(),
+      status: 'approved' as const, version:1, referenceIds:selectedIds,
     };
     updateActiveProject((p) => ({
       ...p,

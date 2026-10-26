@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { buildBrandContext } from '../../data/brandContext';
 import { useProject } from '../../context/ProjectContext';
 import { CreativeConcept, CreativeWorkspace, CreativeWorkMode } from '../../types';
@@ -15,13 +15,15 @@ export const CreativeDirector: React.FC = () => {
   } = useProject();
 
   const defaultWorkspace: CreativeWorkspace = {mode: 'full', approvedCopy: '', visualDirection: '', visualReferenceUrl: '', notes: '', lockedCopy: false, lockedVisual: false, directorMode: false, history: []};
-  const [workspace, setWorkspace] = useState<CreativeWorkspace>({ ...defaultWorkspace, ...activeProject.creativeWorkspace });
+  const workspace:CreativeWorkspace = {...defaultWorkspace,...activeProject.creativeWorkspace};
+  const setWorkspace = (next:React.SetStateAction<CreativeWorkspace>) => updateActiveProject(project=>{const previous={...defaultWorkspace,...project.creativeWorkspace};return {...project,creativeWorkspace:typeof next==='function'?next(previous):next};});
+  const projectIdRef=useRef(activeProject.id);projectIdRef.current=activeProject.id;
   const [showHistory, setShowHistory] = useState(false);
   const [entryModal, setEntryModal] = useState<'visual' | 'copy' | null>(null);
   const [entryDraft, setEntryDraft] = useState({ copy: '', visual: '', url: '' });
   const updateWorkspace = (key: keyof CreativeWorkspace, value: any) => {
     setWorkspace(prev => ({ ...prev, [key]: value }));
-    updateActiveProject(p => ({...p, creativeWorkspace: {...defaultWorkspace, ...p.creativeWorkspace, [key]: value}}));
+
   };
   const chooseMode = (mode: CreativeWorkMode) => {
     updateWorkspace('mode', mode);
@@ -56,7 +58,7 @@ export const CreativeDirector: React.FC = () => {
 
   // Brief state prefilled from activeProject
   const brief = activeProject.brief;
-  useEffect(() => { setGeneratedConcepts(activeProject.concepts || []); setWorkspace({ ...defaultWorkspace, ...activeProject.creativeWorkspace }); }, [activeProject.id]);
+  useEffect(() => { setGeneratedConcepts(activeProject.creativeDrafts?.length ? activeProject.creativeDrafts : (activeProject.concepts || [])); }, [activeProject.id]);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedConcepts, setGeneratedConcepts] = useState<CreativeConcept[]>(activeProject.concepts || []);
   const [selectedForCombine, setSelectedForCombine] = useState<string[]>([]);
@@ -69,6 +71,8 @@ export const CreativeDirector: React.FC = () => {
     if (workspace.mode === 'visual' && !(activeProject.creativeWorkspace?.approvedCopy || '').trim()) { showToast('כדי ליצור ויזואל, הזן תחילה את הקופי הקיים', 'info'); setActiveTab('brief'); return; }
     if (workspace.mode === 'copy' && !(activeProject.creativeWorkspace?.visualDirection || '').trim() && !(activeProject.creativeWorkspace?.visualReferenceUrl || '').trim()) { showToast('כדי ליצור קופי, תאר את הוויזואל או צרף כתובת תמונה', 'info'); setActiveTab('brief'); return; }
     updateActiveProject(p => ({...p, creativeWorkspace: {...defaultWorkspace,...p.creativeWorkspace,mode: workspace.mode}}));
+    if(isLoading)return;
+    const targetProjectId=activeProject.id;
     setIsLoading(true);
     try {
       let previousConceptsPayload: any = null;
@@ -106,6 +110,8 @@ export const CreativeDirector: React.FC = () => {
           visualExecution: activeProject.creativeWorkspace?.lockedVisual && activeProject.creativeWorkspace?.visualDirection?.trim() ? activeProject.creativeWorkspace.visualDirection : c.visualExecution,
         }));
 
+        updateActiveProject(p => ({...p, creativeDrafts:[...enriched, ...(p.creativeDrafts || p.concepts)]}));
+        if(projectIdRef.current!==targetProjectId)return;
         setGeneratedConcepts((prev) => [...enriched, ...prev]);
         setActiveTab('concepts');
         showToast('קונספטים חדשים הופקו על ידי במאי הקריאייטיב!', 'success');
@@ -128,7 +134,7 @@ export const CreativeDirector: React.FC = () => {
     }
     updateActiveProject((p) => ({
       ...p,
-      concepts: [concept, ...p.concepts],
+      concepts: [{...concept, status:'approved', version:concept.version || 1}, ...p.concepts],
       brief,
       creativeWorkspace: workspace,
     }));
@@ -223,7 +229,7 @@ export const CreativeDirector: React.FC = () => {
           <button type="button" onClick={()=>setShowHistory(!showHistory)} className="border border-white/20 text-white px-4 py-2 rounded-lg text-xs">היסטוריית גרסאות ({workspace.history.length})</button>
           <button type="button" onClick={()=>handleGenerate('initial')} disabled={isLoading} className="bg-[#183036] border border-white/20 text-white px-4 py-2 rounded-lg text-xs disabled:opacity-50">{isLoading ? 'מעבד...' : 'צור 3 כיוונים עם AI'}</button>
         </div>
-        {showHistory && <div className="rounded-lg bg-[#183036] p-3 space-y-2">{workspace.history.length===0 ? <p className="text-xs text-[#C1D1D5]">עדיין לא נשמרו גרסאות.</p> : workspace.history.map(version=><div key={version.id} className="flex justify-between gap-3 items-center border-b border-white/10 pb-2 text-xs"><span>{new Date(version.time).toLocaleString('he-IL')}</span><button className="text-[#43D6CB]" type="button" onClick={()=>{updateActiveProject(p=>({...p,creativeWorkspace:{...defaultWorkspace,...p.creativeWorkspace,approvedCopy:version.copy,visualDirection:version.visual,notes:version.notes}}));showToast('הגרסה שוחזרה בתיק הפרויקט','info');}}>טען גרסה לעריכה</button></div>)}</div>}
+        {showHistory && <div className="rounded-lg bg-[#183036] p-3 space-y-2">{workspace.history.length===0 ? <p className="text-xs text-[#C1D1D5]">עדיין לא נשמרו גרסאות.</p> : workspace.history.map(version=><div key={version.id} className="flex justify-between gap-3 items-center border-b border-white/10 pb-2 text-xs"><span>{new Date(version.time).toLocaleString('he-IL')}</span><button className="text-[#43D6CB]" type="button" onClick={()=>{setWorkspace(previous=>({...previous,approvedCopy:version.copy,visualDirection:version.visual,notes:version.notes}));updateActiveProject(p=>({...p,creativeWorkspace:{...defaultWorkspace,...p.creativeWorkspace,approvedCopy:version.copy,visualDirection:version.visual,notes:version.notes}}));showToast('הגרסה שוחזרה בתיק הפרויקט','info');}}>טען גרסה לעריכה</button></div>)}</div>}
       </section>
 
       {activeTab === 'concepts' && (

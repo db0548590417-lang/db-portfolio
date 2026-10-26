@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { MODULES_LIST } from '../../data/modules';
+import {StudioDialog} from '../common/StudioDialog';
 import { Icon } from '../common/Icon';
-import { ModuleId } from '../../types';
+import { ModuleId, CreativeConcept } from '../../types';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -10,8 +11,10 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
-  const { activeModule, setActiveModule, activeProject, setSelectedConceptForVisual } = useProject();
+  const { activeModule, setActiveModule, activeProject, setSelectedConceptForVisual, updateActiveProject } = useProject();
 
+  const [editing,setEditing]=useState<CreativeConcept|null>(null);
+  useEffect(()=>setEditing(null),[activeProject.id]);
   const previousConcepts = useRef({ projectId: activeProject.id, count: activeProject.concepts.length });
   useEffect(() => {
     if (previousConcepts.current.projectId === activeProject.id && activeProject.concepts.length > previousConcepts.current.count && isCollapsed) onToggleCollapse();
@@ -130,13 +133,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
 
       {!isCollapsed && activeProject.concepts.length > 0 && <section aria-label="קונספטים שמורים" className="shrink-0 border-t border-[#31535A] p-3 text-right">
         <h2 className="mb-2 text-xs font-bold text-[#43D6CB]">הקונספטים שלי ({activeProject.concepts.length})</h2>
-        <div className="max-h-48 space-y-2 overflow-y-auto">{activeProject.concepts.map(concept => <button key={concept.id} onClick={() => { setSelectedConceptForVisual(concept); setActiveModule('visual_generator'); }} className="block w-full rounded-lg border border-[#31535A] p-2 text-right hover:border-[#43D6CB]">
+        <div className="max-h-48 space-y-2 overflow-y-auto">{activeProject.concepts.map(concept => <div key={concept.id} className="rounded-lg border border-[#31535A] p-2"><button onClick={() => { setSelectedConceptForVisual(concept); setActiveModule('visual_generator'); }} className="block w-full rounded-lg border border-[#31535A] p-2 text-right hover:border-[#43D6CB]">
           <span className="block text-xs font-bold text-white">{concept.conceptName}</span>
-          <span className="mt-1 block text-[12px] text-zinc-300 line-clamp-2">{concept.coreIdea}</span>
+          <span className="mt-1 block text-[12px] text-zinc-300 line-clamp-2">{concept.coreIdea}</span><span className="mt-1 block text-[12px] text-zinc-300">גרסה {concept.version || 1} · {concept.status === 'draft' ? 'טיוטה' : 'מאושר'} · {(activeProject.generatedImages || []).filter(image => image.conceptId === concept.id).length} תמונות</span>
           <span className="mt-1 block text-[12px] text-[#43D6CB]">יצירת תמונה מהקונספט ←</span>
-        </button>)}</div>
+        </button><div className="mt-2 flex gap-2 text-xs"><button onClick={()=>setEditing({...concept})} className="rounded border border-[#31535A] p-1.5 text-white">עריכה וגרסאות</button><button onClick={()=>{updateActiveProject(p=>({...p,ideaFactoryWorkspace:{focus:'',method:'auto',intensity:3,...p.ideaFactoryWorkspace,selectedConceptIds:[concept.id]}}));setActiveModule('idea_factory');}} className="rounded border border-[#31535A] p-1.5 text-white">ליטוש במעבדה</button></div></div>)}</div>
       </section>}
 
+      <StudioDialog open={!!editing} onClose={()=>setEditing(null)} titleId="concept-edit-title">{editing&&<section className="space-y-3 text-white"><h2 id="concept-edit-title" className="text-lg font-bold">עריכת קונספט וגרסאות</h2>{(['conceptName','coreIdea','visualExecution','imageGenerationPrompt'] as const).map((key,index)=><label key={key} className="block text-sm">{['שם הקונספט','הרעיון המרכזי','כיוון חזותי','פרומפט למחולל'][index]}<textarea aria-label={['שם הקונספט','הרעיון המרכזי','כיוון חזותי','פרומפט למחולל'][index]} value={editing[key]} onChange={e=>setEditing({...editing,[key]:e.target.value})} className="block w-full rounded-lg bg-[#183036] p-3 mt-1" rows={key==='imageGenerationPrompt'?4:2}/></label>)}<label className="block">מצב<select value={editing.status||'approved'} onChange={e=>setEditing({...editing,status:e.target.value as 'draft'|'approved'})} className="block w-full rounded-lg bg-[#183036] p-2"><option value="draft">טיוטה</option><option value="approved">מאושר</option></select></label><fieldset className="space-y-2"><legend>רפרנסים קשורים</legend>{activeProject.savedInspirations.map(ref=><label key={ref.id} className="flex gap-2 text-sm"><input type="checkbox" checked={editing.referenceIds?.includes(ref.id)||false} onChange={e=>setEditing({...editing,referenceIds:e.target.checked?[...(editing.referenceIds||[]),ref.id]:(editing.referenceIds||[]).filter(id=>id!==ref.id)})}/>{ref.title}</label>)}</fieldset><label className="block">טעינת גרסה קודמת לעריכה<select value="" onChange={e=>{const version=(activeProject.conceptHistory||[])[Number(e.target.value)];if(version)setEditing({...version});}} className="block w-full rounded-lg bg-[#183036] p-2"><option value="">בחר גרסה</option>{(activeProject.conceptHistory||[]).map((version,index)=>version.id===editing.id?<option key={index} value={index}>גרסה {version.version||1} — {version.conceptName}</option>:null)}</select></label><div className="flex gap-3"><button onClick={()=>{updateActiveProject(p=>{const previous=p.concepts.find(c=>c.id===editing.id);return {...p,concepts:p.concepts.map(c=>c.id===editing.id?{...editing,version:(c.version||1)+1}:c),conceptHistory:previous?[previous,...(p.conceptHistory||[])].slice(0,100):p.conceptHistory};});setEditing(null);}} className="rounded-lg bg-[#43D6CB] p-3 font-bold text-[#183036]">שמור גרסה</button><button onClick={()=>setEditing(null)} className="p-3">ביטול</button></div></section>}</StudioDialog>
       {/* Project Quick Info Footer */}
       {!isCollapsed && (
         <div className="p-3 border-t border-[#31535A] bg-[#183036]/50">

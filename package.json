@@ -6,7 +6,9 @@
   "scripts": {
     "build": "node build-web.mjs",
     "dev": "vite --host 127.0.0.1",
-    "start": "node host-render.mjs"
+    "start": "node host-render.mjs",
+    "check": "tsc --noEmit",
+    "test": "node verify-web.mjs && node verify-accounts.mjs && node verify-inspiration.mjs && node verify-inspiration-api.mjs && node verify-brand-assets.mjs && node verify-durability.mjs && node verify-ai-queue.mjs && node verify-generation-jobs.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.30.0",
@@ -29,7 +31,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
-    "esbuild": "0.28.0",
+    "esbuild": "0.28.2",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { Icon } from '../common/Icon';
+import { UsagePanel } from './UsagePanel';
+import { RecoveryPanel } from './RecoveryPanel';
 import { GeminiSetup } from './GeminiSetup';
 
 interface SettingsModalProps {
@@ -14,7 +16,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
     globalPrefs,
     updateGlobalPrefs,
     exportProjectBackup,
+    exportProjectMetadata,
     importProjectBackup,
+    importProjectFile,
+    cloudStatus, cloudConfigured, syncCloud,
     activeProject,
     updateActiveProject,
   } = useProject();
@@ -37,14 +42,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const content = ev.target?.result as string;
-      if (content) {
-        importProjectBackup(content);
-      }
-    };
-    reader.readAsText(file);
+    if (!window.confirm('ייבוא הגיבוי יחליף את רשימת הפרויקטים במכשיר. מומלץ להוריד גיבוי קודם. להמשיך?')) return;
+    void importProjectFile(file);
+    e.target.value = '';
   };
 
   return (
@@ -175,60 +175,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
             </div>
           )}
 
-          {activeTab === 'search_provider' && (
-            <form onSubmit={handleSaveApiKeys} className="space-y-4">
+          {activeTab === 'search_provider' && <div className="space-y-4 text-sm text-zinc-200"><h3 className="font-bold text-white">מקורות ההשראה הפעילים</h3><p>בחר בצייד ההשראות בין מקורות עיצוב חרדיים לבין חיפוש בינלאומי ב־Openverse. ניתן לבחור כל אתר בנפרד ולראות את מצב החיבור שלו.</p><p>חיפוש התמונות אינו דורש מפתח Gemini. ניתוח חזותי ומיקסר ההשראות משתמשים בחיבור ה־AI שלך.</p></div>}
 
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-zinc-300 font-bold mb-1">
-                    ספק פעיל במנוע צייד ההשראות:
-                  </label>
-                  <select
-                    value={globalPrefs.searchProvider}
-                    onChange={(e) => updateGlobalPrefs({ searchProvider: e.target.value as any })}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-[#43D6CB]"
-                  >
-                    <option value="samples">מאגר דגימות ורפרנסים מקצועיים (מובנה ללא מפתח)</option>
-                    <option value="unsplash">Unsplash API (דורש Access Key)</option>
-                    <option value="pexels">Pexels API (דורש API Key)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-zinc-300 font-medium mb-1">Unsplash Access Key:</label>
-                  <input
-                    type="password"
-                    value={unsplashKey}
-                    onChange={(e) => setUnsplashKey(e.target.value)}
-                    placeholder="הדבק כאן מפתח Unsplash Access Key..."
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-xs font-mono focus:outline-none focus:border-[#43D6CB]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-zinc-300 font-medium mb-1">Pexels API Key:</label>
-                  <input
-                    type="password"
-                    value={pexelsKey}
-                    onChange={(e) => setPexelsKey(e.target.value)}
-                    placeholder="הדבק כאן מפתח Pexels API Key..."
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-xs font-mono focus:outline-none focus:border-[#43D6CB]"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-2 bg-[#43D6CB] text-white font-bold rounded-lg hover:bg-teal-600 transition"
-                >
-                  שמור הגדרות ספקים
-                </button>
-              </div>
-            </form>
-          )}
-
-          {activeTab === 'connection' && <GeminiSetup />}
+          {activeTab === 'connection' && <><GeminiSetup /><UsagePanel /><RecoveryPanel /></>}
           {activeTab === 'backup' && (
-            <div className="space-y-4">
+            <div className="space-y-4"><section className="rounded-xl border border-[#31535A] p-4 space-y-3 text-sm text-zinc-200"><h3 className="font-bold text-white">שמירה בענן</h3><p role="status">{cloudStatus}</p>{cloudConfigured ? <><p>הפעלה ראשונה תעלה את הפרויקטים והתמונות בחשבון ותמזג לפי מועד העדכון עם העותק בענן. לאחר מכן שינויים מסתנכרנים אוטומטית. גיבוי ZIP עדיין מומלץ.</p><button onClick={()=>void syncCloud()} className="rounded-lg border border-[#43D6CB] p-2 text-[#43D6CB]">הפעל / סנכרן עכשיו</button></> : <p>חיבור הענן מוכן בקוד. הפעלת האחסון דורשת הגדרת מסד קבוע בשרת והפעלת CLOUD_STORAGE_ENABLED.</p>}</section>
               <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3">
                 <div className="font-bold text-white flex items-center gap-2">
                   <Icon name="Download" className="w-4 h-4 text-[#43D6CB]" />
@@ -242,8 +193,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                   className="px-4 py-2 bg-[#43D6CB] text-white font-bold rounded-lg hover:bg-teal-600 transition flex items-center gap-2"
                 >
                   <Icon name="Download" className="w-3.5 h-3.5" />
-                  הורד קובץ JSON של כל העבודות
+                  הורד ZIP עם הפרויקטים והתמונות
                 </button>
+                <button onClick={exportProjectMetadata} className="block text-sm text-zinc-300 underline">גיבוי נתונים בלבד (JSON, ללא תמונות)</button>
               </div>
 
               <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3">
@@ -252,12 +204,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                   <span>ייבוא פרויקטים מקובץ גיבוי</span>
                 </div>
                 <p className="text-[#C1D1D5] text-[13px]">
-                  העלה קובץ גיבוי JSON שיוצא בעבר כדי לשחזר את כל הנתונים.
+                  העלה ZIP לשחזור נתונים ותמונות, או JSON ישן לשחזור נתוני פרויקטים בלבד.
                 </p>
                 <label className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold rounded-lg cursor-pointer transition">
                   <Icon name="Upload" className="w-3.5 h-3.5" />
-                  <span>בחר קובץ JSON מהמחשב</span>
-                  <input type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
+                  <span>בחר קובץ גיבוי מהמחשב</span>
+                  <input type="file" accept=".zip,.json" onChange={handleFileUpload} className="hidden" />
                 </label>
               </div>
             </div>

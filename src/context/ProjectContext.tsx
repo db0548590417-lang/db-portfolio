@@ -12,6 +12,10 @@ import {
 } from '../types';
 import { buildBrandContext } from '../data/brandContext';
 import { userStorageKey } from '../data/accountStorage';
+import {pendingImageJobs,isImageJobRunning,imageJobStatus,acknowledgeImageJob} from '../data/generationJobs';
+import {saveDesignImage,loadDesignImage} from '../data/designAssetsDb';
+import {setCloudAssetsEnabled,readCloudWorkspace,writeCloudWorkspace} from '../data/cloudSync';
+import { createProjectArchive, readProjectArchive } from '../data/projectBackup';
 import { deleteDesignImage } from '../data/designAssetsDb';
 
 interface ProjectContextType {
@@ -24,7 +28,13 @@ interface ProjectContextType {
   updateActiveProject: (updater: (prev: Project) => Project) => void;
   deleteProject: (id: string) => void;
   duplicateProject: (id: string) => void;
-  exportProjectBackup: () => void;
+  exportProjectBackup: () => Promise<void>;
+  exportProjectMetadata: () => void;
+  importProjectFile: (file: File) => Promise<boolean>;
+  saveStatus: 'saving' | 'saved' | 'error';
+  cloudStatus: string;
+  cloudConfigured: boolean;
+  syncCloud: () => Promise<void>;
   importProjectBackup: (jsonContent: string) => boolean;
   globalPrefs: GlobalPreferences;
   updateGlobalPrefs: (partial: Partial<GlobalPreferences>) => void;
@@ -108,10 +118,13 @@ const sanitizeProject = (raw: any): Project => {
     },
     brand: raw.brand && typeof raw.brand === 'object' ? raw.brand : {},
     creativeWorkspace: raw.creativeWorkspace && typeof raw.creativeWorkspace === 'object' ? raw.creativeWorkspace : undefined,
+    creativeDrafts: Array.isArray(raw.creativeDrafts) ? raw.creativeDrafts : [],
+    mixerDraft: raw.mixerDraft,
     ideaFactoryWorkspace: raw.ideaFactoryWorkspace && typeof raw.ideaFactoryWorkspace === 'object' ? { ...raw.ideaFactoryWorkspace, focus: String(raw.ideaFactoryWorkspace.focus || ''), method: String(raw.ideaFactoryWorkspace.method || 'auto'), intensity: Math.max(1, Math.min(5, Number(raw.ideaFactoryWorkspace.intensity) || 3)) } : undefined,
     creativeProfile: ['modern_luxury','hasidic_traditional','bold_brutalist','minimalist'].includes(raw.creativeProfile) ? raw.creativeProfile : defaultPreferences.creativeProfile,
     designAssets: Array.isArray(raw.designAssets) ? raw.designAssets : [],
     savedInspirations: Array.isArray(raw.savedInspirations) ? raw.savedInspirations : [],
+    conceptHistory: Array.isArray(raw.conceptHistory) ? raw.conceptHistory : [],
     concepts: Array.isArray(raw.concepts) ? raw.concepts : [],
     colorPalettes: Array.isArray(raw.colorPalettes) ? raw.colorPalettes : init.colorPalettes,
     typographyDesigns: Array.isArray(raw.typographyDesigns) ? raw.typographyDesigns : [],
@@ -174,39 +187,86 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, 4000);
   };
 
+  const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | 'error'>('saved');
+
   // Sync to localStorage
   useEffect(() => {
     try {
+      setSaveStatus('saving');
       localStorage.setItem(userStorageKey(STORAGE_KEY_PROJECTS), JSON.stringify(projects));
+      setSaveStatus('saved');
     } catch (e) {
+      setSaveStatus('error');
       console.error('Failed to save projects to storage', e);
     }
   }, [projects]);
 
   useEffect(() => {
     if (activeProjectId) {
-      localStorage.setItem(userStorageKey(STORAGE_KEY_ACTIVE_ID), activeProjectId);
+      try{localStorage.setItem(userStorageKey(STORAGE_KEY_ACTIVE_ID), activeProjectId);}catch{setSaveStatus('error');}
     }
   }, [activeProjectId]);
 
   useEffect(() => {
-    localStorage.setItem(userStorageKey(STORAGE_KEY_PREFS), JSON.stringify(globalPrefs));
+    try{localStorage.setItem(userStorageKey(STORAGE_KEY_PREFS), JSON.stringify(globalPrefs));}catch{setSaveStatus('error');}
   }, [globalPrefs]);
 
   // The active project is the single source of truth for all AI requests.
   const projectForAiRef = useRef<Project | null>(null);
   const activeProject = sanitizeProject(projects.find((p) => p.id === activeProjectId) || projects[0] || createInitialProject());
-  const selectedConceptForVisual = visualConceptSelection?.projectId === activeProject.id ? visualConceptSelection.concept : null;
+  const selectedConceptForVisual = visualConceptSelection?.projectId === activeProject.id ? (activeProject.concepts.find(concept=>concept.id===visualConceptSelection.concept.id) || visualConceptSelection.concept) : null;
   const setSelectedConceptForVisual = (concept: CreativeConcept | null) => setVisualConceptSelection(concept ? { projectId: activeProject.id, concept } : null);
   projectForAiRef.current = activeProject;
+  const [cloudConfigured,setCloudConfigured]=useState(false);
+  const [cloudStatus,setCloudStatus]=useState('שמירה מקומית');
+  const [autoSync,setAutoSync]=useState(false);
+  const [syncCycle,setSyncCycle]=useState(0);
+  const cloudVersion=useRef(0), cloudBusy=useRef(false), lastSynced=useRef('');
+  const projectsRef=useRef(projects);projectsRef.current=projects;
+  const syncCloud = async () => {
+    if(cloudBusy.current)return;
+    cloudBusy.current=true;setCloudStatus('מסנכרן…');
+    try {
+      const remote=await readCloudWorkspace();
+      if(!remote.enabled){setCloudStatus('אחסון ענן טרם הופעל בשרת');return;}
+      const incoming=remote.content?JSON.parse(remote.content).projects:[];
+      if(!Array.isArray(incoming))throw Error('נתוני הענן אינם תקינים');
+      const merged=new Map<string,Project>();
+      for(const project of [...incoming,...projectsRef.current]){const item=sanitizeProject(project);if(!merged.has(item.id)||merged.get(item.id)!.updatedAt<item.updatedAt)merged.set(item.id,item);}
+      const data=[...merged.values()];
+      setCloudAssetsEnabled(true);
+      const version=await writeCloudWorkspace(data,remote.version);
+      cloudVersion.current=version;lastSynced.current=JSON.stringify(data);
+      setProjects(previous=>{const current=new Map(data.map(item=>[item.id,item]));for(const item of previous)if(!current.has(item.id)||current.get(item.id)!.updatedAt<item.updatedAt)current.set(item.id,item);return [...current.values()];});setAutoSync(true);setCloudStatus('נשמר בענן');
+      localStorage.setItem(userStorageKey('dekel-cloud-sync'),'on');
+    }catch(error:any){setAutoSync(false);setCloudStatus(error.message||'סנכרון הענן נכשל');}
+    finally{cloudBusy.current=false;}
+  };
+  useEffect(()=>{
+    let alive=true;
+    void fetch('/api/storage').then(r=>r.ok?r.json():{enabled:false}).then(data=>{if(alive){setCloudConfigured(!!data.enabled);if(data.enabled&&localStorage.getItem(userStorageKey('dekel-cloud-sync'))==='on')void syncCloud();}}).catch(()=>{});
+    return()=>{alive=false;setCloudAssetsEnabled(false);};
+  },[]);
+  useEffect(()=>{
+    if(!autoSync||JSON.stringify(projects)===lastSynced.current)return;
+    const timer=setTimeout(async()=>{
+      if(cloudBusy.current)return;
+      cloudBusy.current=true;setCloudStatus('מסנכרן…');
+      const snapshot=projectsRef.current;
+      try{cloudVersion.current=await writeCloudWorkspace(snapshot,cloudVersion.current);lastSynced.current=JSON.stringify(snapshot);setCloudStatus('נשמר בענן');}
+      catch(error:any){setAutoSync(false);setCloudStatus(error.message||'הסנכרון נכשל. השמירה המקומית נשמרה.');}
+      finally{cloudBusy.current=false;if(JSON.stringify(projectsRef.current)!==lastSynced.current)setSyncCycle(value=>value+1);}
+    },1500);
+    return()=>clearTimeout(timer);
+  },[projects,autoSync,syncCycle]);
   useEffect(() => {
     const originalFetch = window.fetch.bind(window);
     window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       const method = (init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
       // Only our JSON POST endpoints are enriched. Never send a project to third-party URLs.
-      if (url.startsWith('/api/') && method === 'POST' && typeof init?.body === 'string' &&
-          (init.headers instanceof Headers ? init.headers.get('content-type') : JSON.stringify(init.headers || {})).toLowerCase().includes('application/json')) {
+      if (url.startsWith('/api/') && !url.startsWith('/api/auth/') && !url.startsWith('/api/settings/') && method === 'POST' && typeof init?.body === 'string' &&
+          (init.headers instanceof Headers ? (init.headers.get('content-type') || '') : JSON.stringify(init.headers || {})).toLowerCase().includes('application/json')) {
         try {
           const data = JSON.parse(init.body);
           const project = projectForAiRef.current;
@@ -220,6 +280,30 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }) as typeof fetch;
     return () => { window.fetch = originalFetch; };
   }, []);
+
+  useEffect(()=>{
+    let stopped=false,busy=false;
+    const recover=async()=>{
+      if(busy||stopped)return;busy=true;
+      try{for(const job of pendingImageJobs()){
+        if(stopped||isImageJobRunning(job.id))continue;
+        try{
+          const result=await imageJobStatus(job.id);
+          if(result.state==='failed'){await acknowledgeImageJob(job.id,true);showToast(result.result?.error||'בקשת יצירה נכשלה','error');continue;}
+          if(result.state!=='completed'||!result.result?.imageUrl)continue;
+          if(!projectsRef.current.some(project=>project.id===job.projectId))continue;
+          await saveDesignImage(job.image.id,result.result.imageUrl);
+          await saveDesignImage(job.image.id+'-original',result.result.imageUrl);
+          setProjects(previous=>previous.map(project=>project.id===job.projectId&&!project.generatedImages.some(image=>image.id===job.image.id)?{...project,generatedImages:[{...job.image,url:''},...project.generatedImages],updatedAt:Date.now()}:project));
+          const alreadyPresent=projectsRef.current.some(project=>project.generatedImages.some(image=>image.id===job.image.id));
+          await acknowledgeImageJob(job.id);
+          if(!alreadyPresent)showToast('יצירה שהושלמה ברקע שוחזרה לפרויקט. ניתן להמשיך לערוך אותה.');
+        }catch{/* Keep the recovery handle on temporary network or storage failure. */}
+      }}finally{busy=false;}
+    };
+    void recover();const timer=setInterval(recover,5000);
+    return()=>{stopped=true;clearInterval(timer);};
+  },[]);
 
   const setActiveProjectId = (id: string) => {
     setSelectedInspirationForAnalysis(null);
@@ -272,7 +356,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
     const removed = projects.find(p => p.id === id);
     // Delete image bytes as well as their project metadata.
-    if (removed?.designAssets?.length) void Promise.allSettled(removed.designAssets.map(a => deleteDesignImage(a.id)));
+    const imageKeys=(project:Project)=>[...(project.designAssets||[]).map(item=>item.id),...project.generatedImages.flatMap(item=>[item.id,item.id+'-original']),...project.savedInspirations.map(item=>'ref-'+item.id)];
+    const usedElsewhere=new Set(projects.filter(project=>project.id!==id).flatMap(imageKeys));
+    if(removed)void Promise.allSettled(imageKeys(removed).filter(key=>!usedElsewhere.has(key)).map(key=>deleteDesignImage(key)));
     const filtered = projects.filter((p) => p.id !== id);
     setProjects(filtered);
     if (activeProjectId === id) {
@@ -282,39 +368,49 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     showToast('הפרויקט נמחק', 'info');
   };
 
-  const duplicateProject = (id: string) => {
-    const target = projects.find((p) => p.id === id);
-    if (!target) return;
-    const duplicated: Project = {
-      ...JSON.parse(JSON.stringify(target)),
-      designAssets: [], // Images are stored outside JSON; never share mutable blob IDs across projects.
-      id: 'proj-' + Date.now(),
-      name: `${target.name} (עותק)`,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    setProjects((prev) => [duplicated, ...prev]);
-    setSelectedInspirationForAnalysis(null);
-    setActiveProjectIdState(duplicated.id);
-    showToast('הפרויקט שוכפל בהצלחה', 'success');
+  const duplicateProject = async (id: string) => {
+    const target=projects.find(project=>project.id===id);if(!target)return;
+    const createdKeys:string[]=[];
+    try{
+      const copied:Project=structuredClone(target),refIds=new Map<string,string>();
+      const copyImage=async(oldKey:string,newKey:string,required=false)=>{const data=await loadDesignImage(oldKey);if(data){await saveDesignImage(newKey,data);createdKeys.push(newKey);}else if(required)throw Error('לא ניתן לשכפל תמונה חסרה. חבר את הענן או העלה אותה מחדש.');};
+      for(const asset of copied.designAssets||[]){const previous=asset.id;asset.id='asset-'+crypto.randomUUID();await copyImage(previous,asset.id,true);}
+      for(const image of copied.generatedImages){const previous=image.id;image.id='gen-'+crypto.randomUUID();if(!image.url)await copyImage(previous,image.id,true);await copyImage(previous+'-original',image.id+'-original');}
+      for(const ref of copied.savedInspirations){const previous=ref.id;ref.id='ref-'+crypto.randomUUID();refIds.set(previous,ref.id);await copyImage('ref-'+previous,'ref-'+ref.id,ref.source==='מהמחשב');}
+      for(const concept of [...copied.concepts,...(copied.conceptHistory||[]),...(copied.creativeDrafts||[])])concept.referenceIds=concept.referenceIds?.map(ref=>refIds.get(ref)||ref);
+      for(const image of copied.generatedImages)image.referenceIds=image.referenceIds?.map(ref=>refIds.get(ref)||ref);
+      copied.id='proj-'+crypto.randomUUID();copied.name=target.name+' (עותק)';copied.createdAt=Date.now();copied.updatedAt=Date.now();
+      setProjects(previous=>[copied,...previous]);setActiveProjectIdState(copied.id);setSelectedInspirationForAnalysis(null);showToast('הפרויקט והתמונות שוכפלו לעותק עצמאי');
+    }catch(error:any){await Promise.allSettled(createdKeys.map(key=>deleteDesignImage(key)));showToast(error.message||'שכפול הפרויקט נכשל','error');}
   };
 
-  const exportProjectBackup = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(projects, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `inspira_studio_backup_${new Date().toISOString().slice(0, 10)}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    showToast('גיבוי JSON הורד. קובצי תמונות נשארים באחסון הדפדפן ואינם כלולים בגיבוי.', 'info');
+  const exportProjectMetadata = () => {
+    const url=URL.createObjectURL(new Blob([JSON.stringify(projects,null,2)],{type:'application/json'}));
+    const anchor=document.createElement('a');anchor.href=url;anchor.download='dekel-project-data-'+new Date().toISOString().slice(0,10)+'.json';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+    showToast('נתוני הפרויקטים הורדו. קובץ זה אינו כולל תמונות.','info');
+  };
+  const exportProjectBackup = async () => {
+    try {
+      const blob = await createProjectArchive(projects);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a'); anchor.href = url;
+      anchor.download = 'dekel-backup-' + new Date().toISOString().slice(0,10) + '.zip';
+      anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 30000);
+      showToast('גיבוי ZIP עם כל הפרויקטים והתמונות הורד בהצלחה');
+    } catch (error:any) { showToast(error.message || 'הגיבוי נכשל. נסה שוב.', 'error'); }
+  };
+  const importProjectFile = async (file: File) => {
+    try {
+      const data = await readProjectArchive(file);
+      return importProjectBackup(JSON.stringify(data));
+    } catch(error:any) { showToast(error.message || 'ייבוא הגיבוי נכשל', 'error'); return false; }
   };
 
   const importProjectBackup = (jsonContent: string): boolean => {
     try {
       const parsed = JSON.parse(jsonContent);
       if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id && parsed[0].name) {
-        setProjects(parsed);
+        setProjects(parsed.map(sanitizeProject));
         setActiveProjectIdState(parsed[0].id);
         showToast(`נטענו ${parsed.length} פרויקטים בהצלחה מגיבוי!`, 'success');
         return true;
@@ -345,6 +441,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteProject,
         duplicateProject,
         exportProjectBackup,
+        exportProjectMetadata,
+        importProjectFile,
+        saveStatus,
+        cloudConfigured, cloudStatus, syncCloud,
         importProjectBackup,
         globalPrefs,
         updateGlobalPrefs,

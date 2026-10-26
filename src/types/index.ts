@@ -118,11 +118,18 @@ export interface CreativeConcept {
   suggestedDesignTechnique: string;
   imageGenerationPrompt: string;
   createdAt: number;
+  status?: 'draft' | 'approved';
+  version?: number;
+  sourceConceptIds?: string[];
+  referenceIds?: string[];
   tags?: string[];
   notes?: string;
 }
 
 export interface InspirationItem {
+  folder?: string;
+  favorite?: boolean;
+  tags?: string[];
   assetRole?: 'reference' | 'logo' | 'product';
   id: string;
   title: string;
@@ -240,15 +247,18 @@ export interface Project {
   brand?: BrandProfile;
   creativeProfile?: GlobalPreferences['creativeProfile'];
   creativeWorkspace?: CreativeWorkspace;
+  creativeDrafts?: CreativeConcept[];
+  mixerDraft?: any;
   ideaFactoryWorkspace?: { focus: string; method: string; intensity: number; seedIdea?: string; feedback?: string; selectedConceptIds?: string[]; drafts?: { id: string; title: string; visualHook: string; mechanism: string; executionTip: string; suggestedCopy: string; imagePrompt: string }[] };
   designAssets?: DesignAsset[];
   savedInspirations: InspirationItem[];
   concepts: CreativeConcept[];
+  conceptHistory?: CreativeConcept[];
   colorPalettes: ColorPalette[];
   typographyDesigns: TypographyDesign[];
   mockups: MockupProject[];
   gestaltConcepts: GestaltConcept[];
-  generatedImages: { id: string; url: string; prompt: string; createdAt: number; aspectRatio: string; model?: string; quality?: string; originalUrl?: string; processedUrl?: string }[];
+  generatedImages: { id: string; url: string; prompt: string; createdAt: number; aspectRatio: string; model?: string; quality?: string; conceptId?: string; referenceIds?: string[]; originalUrl?: string; processedUrl?: string }[];
   createdAt: number;
   updatedAt: number;
 }

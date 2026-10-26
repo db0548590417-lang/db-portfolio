@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useSyncExternalStore } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { Icon } from '../common/Icon';
 import { removeImageBackground } from '../../data/removeImageBackground';
+import {createImageJob,acknowledgeImageJob} from '../../data/generationJobs';
 import { loadDesignImage } from '../../data/designAssetsDb';
 
 const STYLE_PRESETS = [
@@ -12,6 +13,9 @@ const STYLE_PRESETS = [
   { id: 'gestalt_negative', label: 'גשטאלט ומרחב שלילי (Gestalt Negative Space)', promptSuffix: 'Clever gestalt negative space art, dual meaning silhouette, high contrast black and gold, Cannes Lions winning design' },
 ];
 
+const imageRequests = new Set<string>();
+const imageRequestListeners = new Set<() => void>();
+const subscribeImageRequests = (listener:() => void) => {imageRequestListeners.add(listener);return()=>{imageRequestListeners.delete(listener);};};
 export const VisualGenerator: React.FC = () => {
   const {
     selectedConceptForVisual,
@@ -43,7 +47,8 @@ export const VisualGenerator: React.FC = () => {
   const [showOriginal, setShowOriginal] = useState(false);
   const [removalChoice, setRemovalChoice] = useState<'local'|'advanced'>('local');
   const [isEnhancing, setIsEnhancing] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const isGenerating = useSyncExternalStore(subscribeImageRequests, () => imageRequests.has(activeProject.id));
+  const setIsGenerating = (value:boolean) => {if(value)imageRequests.add(activeProject.id);else imageRequests.delete(activeProject.id);for(const listener of imageRequestListeners)listener();};
   const [generatedImages, setGeneratedImages] = useState(activeProject.generatedImages || []);
   const [selectedImage, setSelectedImage] = useState<string | null>(
     activeProject.generatedImages?.[0]?.url || null
@@ -128,6 +133,7 @@ export const VisualGenerator: React.FC = () => {
   useEffect(() => {
     if (selectedConceptForVisual) {
       setPrompt(selectedConceptForVisual.imageGenerationPrompt || [selectedConceptForVisual.coreIdea, selectedConceptForVisual.visualExecution].filter(Boolean).join('\n'));
+      setChosenReferenceIds((selectedConceptForVisual.referenceIds||[]).filter(id=>activeProject.savedInspirations.some(ref=>ref.id===id&&ref.assetRole!=='logo')).slice(0,1));
     }
   }, [selectedConceptForVisual]);
 
@@ -172,6 +178,7 @@ export const VisualGenerator: React.FC = () => {
 
   // Generate Image with Gemini image model
   const handleGenerate = async () => {
+    if (imageRequests.has(activeProject.id)) return;
     if (!prompt.trim()) {
       showToast('נא להזין פרומפט', 'info');
       return;
@@ -216,28 +223,7 @@ export const VisualGenerator: React.FC = () => {
       }
 
       if (!window.confirm('יצירת תמונה צורכת קרדיטים. להמשיך?')) return;
-      const res = await fetch('/api/visual-generator/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: fullPrompt + referenceGuidance,
-          aspectRatio,
-          model, quality,
-          excludePeople: globalPrefs.excludePeople,
-          referenceImageBase64,
-          referenceAssetRole:activeProject.savedInspirations.find(item=>item.id===chosenReferenceIds[0])?.assetRole||'reference',
-          logoImageBase64,
-          logoMimeType:/^data:(image\/(?:png|jpeg|webp));base64,/.exec(logoImageBase64)?.[1]||'image/png',
-          referenceMimeType: /^data:(image\/(?:png|jpeg|webp));base64,/.exec(referenceImageBase64)?.[1] || 'image/png',
-        }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'שגיאה ביצירת התמונה');
-      }
-
-      const data = await res.json();
+      const data = await createImageJob({prompt:fullPrompt+referenceGuidance,aspectRatio,model,quality,excludePeople:globalPrefs.excludePeople,referenceImageBase64,referenceAssetRole:activeProject.savedInspirations.find(item=>item.id===chosenReferenceIds[0])?.assetRole||'reference',logoImageBase64,logoMimeType:/^data:(image\/(?:png|jpeg|webp));base64,/.exec(logoImageBase64)?.[1]||'image/png',referenceMimeType:/^data:(image\/(?:png|jpeg|webp));base64,/.exec(referenceImageBase64)?.[1]||'image/png'},activeProject.id,{prompt:fullPrompt+referenceGuidance,aspectRatio,model,quality,createdAt:Date.now(),conceptId:selectedConceptForVisual?.id,referenceIds:chosenReferenceIds});
       if (data.imageUrl) {
         setOriginalImage(data.imageUrl);
         let finalUrl = data.imageUrl;
@@ -246,19 +232,21 @@ export const VisualGenerator: React.FC = () => {
           catch (error: any) { showToast(error?.message || 'לא ניתן להסיר רקע אוטומטית', 'info'); }
         }
         const newImgObj = {
-          id: 'gen-' + Date.now(),
+          id: 'gen-' + data.jobId,
           url: '',
           prompt: fullPrompt + referenceGuidance,
           aspectRatio, model, quality,
+          conceptId:selectedConceptForVisual?.id, referenceIds:chosenReferenceIds,
           createdAt: Date.now(),
         };
 
+        let imageSaved = true;
         try {
           const {saveDesignImage} = await import('../../data/designAssetsDb');
           await saveDesignImage(newImgObj.id, finalUrl);
           await saveDesignImage(newImgObj.id+'-original', data.imageUrl);
           setLoadedHistory(prev=>({...prev,[newImgObj.id]:finalUrl}));
-        } catch { showToast('היצירה נוצרה אך שמירתה נכשלה. הורד אותה עכשיו.', 'error'); }
+        } catch { imageSaved = false; showToast('היצירה נוצרה אך שמירתה נכשלה. הורד אותה עכשיו.', 'error'); }
         const updated = [newImgObj, ...generatedImages];
         setGeneratedImages(updated);
         setSelectedImage(finalUrl);
@@ -266,10 +254,11 @@ export const VisualGenerator: React.FC = () => {
 
         updateActiveProject((p) => ({
           ...p,
-          generatedImages: [newImgObj, ...p.generatedImages],
+          generatedImages: [newImgObj, ...p.generatedImages.filter(image=>image.id!==newImgObj.id)],
         }));
 
-        showToast(finalUrl === data.imageUrl && removeBg ? 'התמונה נוצרה, אך לא הוסר הרקע. המקור נשמר ללא שינוי.' : 'התמונה נוצרה ונשמרה בפרויקט', finalUrl === data.imageUrl && removeBg ? 'info' : 'success');
+        if (imageSaved) await acknowledgeImageJob(data.jobId).catch(()=>{});
+        if (imageSaved) showToast(finalUrl === data.imageUrl && removeBg ? 'התמונה נוצרה, אך לא הוסר הרקע. המקור נשמר ללא שינוי.' : 'התמונה נוצרה ונשמרה בפרויקט', finalUrl === data.imageUrl && removeBg ? 'info' : 'success');
       }
     } catch (err: any) {
       showToast(err.message || 'שגיאה ביצירת תמונה', 'error');
@@ -524,7 +513,7 @@ export const VisualGenerator: React.FC = () => {
                   <button onClick={extractBackground} disabled={isRemovingBg} className="px-2 py-1 bg-zinc-800 rounded-lg text-[#43D6CB] disabled:opacity-50">{isRemovingBg?'מסיר...':'הסר רקע'}</button>
                   {originalImage && <button onClick={()=>setShowOriginal(x=>!x)} className="px-2 py-1 rounded-lg bg-zinc-800 text-white">{showOriginal?'הצג תוצאה':'הצג מקור'}</button>}
                   {false && <button
-                    onClick={() => sendToMockup(selectedImage)}
+                    onClick={() => sendToMockup(selectedImage || '')}
                     className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg font-bold transition flex items-center gap-1 border border-zinc-700"
                   >
                     <Icon name="Layers" className="w-3 h-3 text-[#43D6CB]" />

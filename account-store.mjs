@@ -1,3 +1,4 @@
+import { durableSchema, durableMethods } from './durable-store.mjs';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,8 +16,10 @@ export async function createSqliteAccountStore(filename) {
   if (filename !== ':memory:') fs.mkdirSync(path.dirname(filename), { recursive: true });
   const database = new DatabaseSync(filename);
   database.exec(schema);
+  database.exec(durableSchema);
   return {
-    async find(key) { return database.prepare('SELECT * FROM dekel_accounts WHERE username_key = ?').get(key) || null; },
+    ...durableMethods(database),
+    async find(key) { return database.prepare('SELECT a.*, COALESCE(s.session_version,0) AS session_version FROM dekel_accounts a LEFT JOIN dekel_security s ON s.user_id=a.id WHERE a.username_key = ?').get(key) || null; },
     async findById(id) { return database.prepare('SELECT * FROM dekel_accounts WHERE id = ?').get(id) || null; },
     async create(username, usernameKey, passwordHash) {
       const account = { id: randomUUID(), username, username_key: usernameKey, password_hash: passwordHash, created_at: new Date().toISOString() };
@@ -33,9 +36,9 @@ export async function createPostgresAccountStore(connectionString) {
   const database = new Pool({ connectionString, max: 5, connectionTimeoutMillis: 10000,
     ssl: new URL(connectionString).hostname.includes('.') ? { rejectUnauthorized: true } : undefined });
   database.on('error', () => console.error('Account database connection was interrupted.'));
-  try { await database.query(schema); } catch (error) { await database.end(); throw error; }
+  try { await database.query(schema); await database.query(durableSchema); } catch (error) { await database.end(); throw error; }
   return {
-    async find(key) { return (await database.query('SELECT * FROM dekel_accounts WHERE username_key = $1', [key])).rows[0] || null; },
+    async find(key) { return (await database.query('SELECT a.*, COALESCE(s.session_version,0) AS session_version FROM dekel_accounts a LEFT JOIN dekel_security s ON s.user_id=a.id WHERE a.username_key = $1', [key])).rows[0] || null; },
     async findById(id) { return (await database.query('SELECT * FROM dekel_accounts WHERE id = $1', [id])).rows[0] || null; },
     async create(username, usernameKey, passwordHash) {
       const id = randomUUID();

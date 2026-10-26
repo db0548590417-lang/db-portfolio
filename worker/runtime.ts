@@ -1,3 +1,4 @@
+import {runAiTask} from '../ai-jobs.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { GoogleGenAI } from '@google/genai';
 
@@ -7,8 +8,8 @@ export const ai = { models: { generateContent(args: any) {
   const scope = requestScope.getStore();
   if (!scope?.values.GEMINI_API_KEY) throw new Error('יש להגדיר מפתח Gemini בהגדרות האתר');
   const client = new GoogleGenAI({ apiKey: scope.values.GEMINI_API_KEY });
-  return client.models.generateContent({ ...args,
-    model: ['gemini-3.8-flash', 'gemini-2.5-flash'].includes(args.model) ? scope.values.INSPIRA_VISION_MODEL : args.model });
+  return runAiTask(scope.userId, (abortSignal:AbortSignal) => client.models.generateContent({ ...args, config:{...args.config,abortSignal},
+    model: ['gemini-3.8-flash', 'gemini-2.5-flash'].includes(args.model) ? scope.values.INSPIRA_VISION_MODEL : args.model }));
 } } };
 
 const storageKey = (file: string) => {

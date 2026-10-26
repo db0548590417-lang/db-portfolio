@@ -1,4 +1,6 @@
-﻿import http from 'node:http';
+﻿import { createGenerationJobs } from './generation-jobs.mjs';
+import { createCloudStorage } from './cloud-storage.mjs';
+import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import worker from './dist/server/index.js';
 import { createPasswordAuth, readCookie } from './password-auth.mjs';
@@ -32,6 +34,8 @@ export function createRenderServer(options = {}) {
     return connecting;
   }
   const auth = createPasswordAuth({ secret, ownerPassword: password, getStore });
+  const cloudStorage = createCloudStorage({getStore, enabled: options.cloudEnabled ?? process.env.CLOUD_STORAGE_ENABLED === 'true'});
+  const generationJobs = createGenerationJobs({getStore,worker});
   const cache = new Map();
   const failures = new Map();
   return http.createServer(async (incoming, outgoing) => {
@@ -44,7 +48,7 @@ export function createRenderServer(options = {}) {
       // The trusted proxy's client address is the last address in its forwarded chain.
       const address = isHosted ? String(incoming.headers['x-forwarded-for'] || '').split(',').at(-1).trim() || incoming.socket.remoteAddress : incoming.socket.remoteAddress;
       const failure = failures.get(address);
-      if (['/api/auth/owner', '/api/auth/register', '/api/auth/login'].includes(pathname) && failure && failure.count >= 20 && Date.now() - failure.at < 60000) {
+      if (['/api/auth/owner', '/api/auth/register', '/api/auth/login','/api/auth/recover','/api/auth/recovery-code'].includes(pathname) && failure && failure.count >= 20 && Date.now() - failure.at < 60000) {
         outgoing.writeHead(429, { 'Retry-After': '60', 'Cache-Control': 'no-store' }).end('Please wait one minute before trying again.');
         return;
       }
@@ -61,7 +65,7 @@ export function createRenderServer(options = {}) {
         failures.set(address, { count: failure && Date.now() - failure.at < 60000 ? failure.count + 1 : 1, at: Date.now() });
       }
       if (await auth.handle(incoming, outgoing, origin)) return;
-      const user = auth.readUser(incoming);
+      const user = await auth.readUser(incoming);
       if (user && incoming.headers['x-dekel-user-id'] && incoming.headers['x-dekel-user-id'] !== user.id) {
         outgoing.writeHead(409, { 'Cache-Control': 'no-store' }).end('Account changed. Reload the page.'); return;
       }
@@ -73,6 +77,7 @@ export function createRenderServer(options = {}) {
         outgoing.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }).end(JSON.stringify({ error: 'יש לבחור שם משתמש כדי להשלים הרשמה' }));
         return;
       }
+      if (await cloudStorage(incoming,outgoing,user,origin)) return;
       const headers = new Headers();
       for (const [name, value] of Object.entries(incoming.headers)) {
         if (value && !['authorization', 'cookie', 'oai-authenticated-user-id', 'oai-authenticated-user-email'].includes(name))
@@ -107,9 +112,10 @@ export function createRenderServer(options = {}) {
       }
       const request = new Request(origin + incoming.url, { method: incoming.method, headers,
         body: ['GET', 'HEAD'].includes(incoming.method) ? undefined : Buffer.concat(chunks) });
+      if (await generationJobs(request,outgoing,user,{BUCKET:bucket})) return;
       const response = await worker.fetch(request, { BUCKET: bucket });
       const responseHeaders = Object.fromEntries(response.headers);
-      responseHeaders['Cache-Control'] = 'private, no-store';
+      responseHeaders['Cache-Control'] = pathname.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : 'private, no-store';
       responseHeaders['X-Content-Type-Options'] = 'nosniff';
       responseHeaders['Referrer-Policy'] = 'same-origin';
       if (updatedConfig) responseHeaders['Set-Cookie'] = `${COOKIE}=${encryptConfig({ userId: user.id, keyConfig: updatedConfig }, secret)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000`;

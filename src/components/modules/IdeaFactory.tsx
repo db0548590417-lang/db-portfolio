@@ -118,6 +118,7 @@ export const IdeaFactory: React.FC = () => {
       suggestedDesignTechnique: selectedMethod,
       imageGenerationPrompt: idea.imagePrompt,
       createdAt: Date.now(),
+      status:'approved' as const, version:1, sourceConceptIds:selectedConceptIds,
     };
     updateActiveProject((p) => ({
       ...p,

@@ -5,7 +5,7 @@ import { Icon } from '../common/Icon';
 import { loadDesignImage, saveDesignImage, deleteDesignImage } from '../../data/designAssetsDb';
 
 export const PropertyPanel: React.FC = () => {
-  const { activeModule, activeProject, updateActiveProject, setActiveModule, globalPrefs, showToast } = useProject();
+  const { activeModule, activeProject, updateActiveProject, setActiveModule, globalPrefs, showToast, setSelectedConceptForVisual } = useProject();
   const uploadRef = useRef<HTMLInputElement>(null);
   const assetsSectionRef=useRef<HTMLDetailsElement>(null);
   const activeProjectIdRef=useRef(activeProject.id);activeProjectIdRef.current=activeProject.id;
@@ -54,6 +54,8 @@ export const PropertyPanel: React.FC = () => {
     setRefPreviews(prev=>{const next={...prev};delete next[id];return next;});
   };
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const previousConceptCount = useRef(activeProject.concepts.length);
+  useEffect(()=>{if(activeProject.concepts.length>previousConceptCount.current)setIsCollapsed(false);previousConceptCount.current=activeProject.concepts.length;},[activeProject.id,activeProject.concepts.length]);
 
   if (isCollapsed) {
     return (
@@ -86,6 +88,7 @@ export const PropertyPanel: React.FC = () => {
         </button>
       </div>
 
+      {activeProject.concepts.length>0&&<section aria-label="קונספטים בפאנל הפרויקט" className="shrink-0 p-3 border-b border-[#31535A] space-y-2"><h2 className="text-sm font-bold text-[#43D6CB]">הקונספטים של הפרויקט</h2><div className="max-h-52 overflow-y-auto space-y-2">{activeProject.concepts.map(concept=><button key={concept.id} onClick={()=>{setSelectedConceptForVisual(concept);setActiveModule('visual_generator');}} className="w-full rounded-lg border border-[#31535A] bg-[#103F46] p-2 text-right text-white"><span className="block font-bold text-xs">{concept.conceptName}</span><span className="block mt-1 text-[12px] text-zinc-300">גרסה {concept.version||1} · {concept.status==='draft'?'טיוטה':'מאושר'}</span><span className="block mt-1 text-[12px] text-[#43D6CB]">פתח במחולל עם הפרומפט ←</span></button>)}</div></section>}
       {/* Content based on active module */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5 text-xs">
         {/* One editable project source-of-truth across every module. Updates are persisted by ProjectContext. */}

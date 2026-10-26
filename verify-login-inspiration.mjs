@@ -43,6 +43,7 @@ try {
  assert.equal(await page.getByPlaceholder('תאר את הסצנה, התאורה, החומרים והקומפוזיציה...').inputValue(),'Second concept image prompt');
  await page.reload();
  await page.getByRole('button',{name:'מחולל תמונות',exact:true}).click();
+ await page.getByLabel('בחירת קונספט מהפרויקט').waitFor();
  assert.equal(await page.getByLabel('בחירת קונספט מהפרויקט').locator('option').count(),3);
  let lastInput;
  await page.route('**/api/idea-factory/generate',route => {
@@ -72,6 +73,23 @@ try {
  await page.getByRole('button',{name:'שמור כקונספט',exact:true}).click();
  await page.getByRole('region',{name:'קונספטים שמורים'}).getByRole('button').filter({hasText:'רעיון מלוטש'}).click();
  assert.equal(await page.getByPlaceholder('תאר את הסצנה, התאורה, החומרים והקומפוזיציה...').inputValue(),'Polished final image prompt');
+ await page.getByRole('region',{name:'קונספטים שמורים'}).getByRole('button',{name:'עריכה וגרסאות',exact:true}).first().click();
+ await page.screenshot({path:'review/concept-dialog.png'});
+ await page.getByRole('dialog',{name:'עריכת קונספט וגרסאות'}).getByLabel('פרומפט למחולל',{exact:true}).fill('Updated polished prompt version 2');
+ await page.getByRole('button',{name:'שמור גרסה',exact:true}).click();
+ await page.getByRole('region',{name:'קונספטים בפאנל הפרויקט'}).getByRole('button').filter({hasText:'רעיון מלוטש'}).click();
+ assert.equal(await page.getByPlaceholder('תאר את הסצנה, התאורה, החומרים והקומפוזיציה...').inputValue(),'Updated polished prompt version 2');
+ await page.route('**/api/creative-director/generate',route=>route.fulfill({json:{concepts:[{conceptName:'טיוטה שנשמרה אוטומטית',coreIdea:'רעיון',visualExecution:'ביצוע',imageGenerationPrompt:'Draft prompt'}]}}));
+ await page.getByRole('button',{name:'במאי קריאייטיב',exact:true}).click();
+ await page.getByRole('button',{name:'צור 3 כיוונים עם AI',exact:true}).click();
+ await page.getByRole('heading',{name:'טיוטה שנשמרה אוטומטית',exact:true}).waitFor();
+ await page.getByRole('button',{name:'מחולל תמונות',exact:true}).click();
+ await page.getByRole('button',{name:'במאי קריאייטיב',exact:true}).click();
+ await page.getByRole('button',{name:/קונספטים שהופקו/}).click();
+ await page.getByRole('heading',{name:'טיוטה שנשמרה אוטומטית',exact:true}).waitFor();
+ await page.getByRole('button',{name:'שמור גרסה מאושרת',exact:true}).click();
+ await page.getByRole('button',{name:'היסטוריית גרסאות (1)',exact:true}).waitFor();
+ console.log('PASS: edited concept version feeds generator, right project panel navigation, director drafts survive tool changes, version history updates immediately');
  console.log('PASS: seed continuation, concept blending, feedback refinement, persisted drafts, polished concept to image generator');
  console.log('PASS: saved ideas appear in right panel, concept selection updates image prompt, concepts persist after reload');
  console.log('PASS: owner login, upstream 401 preserves workspace, multi-source inspiration gallery displays loaded artwork (mocked sources)');

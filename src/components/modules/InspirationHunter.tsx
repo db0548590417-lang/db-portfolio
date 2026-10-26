@@ -1,3 +1,4 @@
+import {InspirationLibrary} from './InspirationLibrary';
 import React, { useState, useEffect, useRef } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { InspirationItem } from '../../types';
@@ -164,7 +165,7 @@ export const InspirationHunter: React.FC = () => {
     try {
       const existingSources = new Set(reviewedSourceUrls);
       const sourceUrls = sourceCandidates
-        .filter(item => !existingSources.has(item.sourceUrl))
+        .filter(item => !existingSources.has(item.sourceUrl || ''))
         .slice(0, 6).map(item => item.sourceUrl);
       if (!sourceUrls.length) {
         setLearningNotice('כל המועמדות הזמינות כבר נבדקו. נסה בריף אחר כדי להרחיב את המאגר.');
@@ -416,6 +417,7 @@ export const InspirationHunter: React.FC = () => {
 
       </div>
 
+      <InspirationLibrary />
       {/* Primary: Pure Independent Openverse Image Search (NO Gemini required) */}
       <div className="bg-[#103F46] border border-zinc-800 rounded-2xl p-5 space-y-4 shadow-xl">
         <div className="flex items-center justify-between">
@@ -825,7 +827,7 @@ export const InspirationHunter: React.FC = () => {
                   </span>
                   {sourceMode === 'haredi' && (
                     <span className="text-[12px] font-bold bg-[#183036]/95 text-[#F7F8F3] px-2 py-0.5 rounded-md border border-[#43D6CB]/30">
-                      {!item.url ? 'קישור לעבודה' : ((item as any).visuallyReviewed || reviewedSourceUrls.includes(item.sourceUrl)) ? 'נותחה ב־AI' : 'טרם נותחה ב־AI'}
+                      {!item.url ? 'קישור לעבודה' : ((item as any).visuallyReviewed || reviewedSourceUrls.includes(item.sourceUrl || '')) ? 'נותחה ב־AI' : 'טרם נותחה ב־AI'}
                     </span>
                   )}
                 </div>

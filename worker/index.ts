@@ -1,3 +1,4 @@
+import {aiUsage} from '../ai-jobs.mjs';
 import app from '../server';
 import { requestScope } from './runtime';
 import assets from './assets.json';
@@ -61,6 +62,7 @@ export default {
       const userId = request.headers.get('oai-authenticated-user-id');
       if (!userId) return json({ error: 'נדרשת התחברות לחשבון שלך' }, 401);
       try {
+        if (url.pathname === '/api/usage/status' && request.method === 'GET') return json(aiUsage(userId));
         if (url.pathname === '/api/settings/gemini') return await configure(request, env, userId);
         const config = await getConfig(env.BUCKET, userId);
         const values = { ...env, GEMINI_API_KEY: config?.apiKey || '', INSPIRA_VISION_MODEL: config?.model || 'gemini-2.5-flash' };
