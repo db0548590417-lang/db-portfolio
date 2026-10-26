@@ -52,6 +52,10 @@ export const VisualGenerator: React.FC = () => {
   const [referenceRole, setReferenceRole] = useState<'art_style'|'composition'|'materials'|'colors'|'lighting'|'close'>('art_style');
   const [referenceArtType, setReferenceArtType] = useState('auto');
   const [referenceStrength, setReferenceStrength] = useState(3);
+  const [useBrandLogo,setUseBrandLogo]=useState(true);
+  const brandLogo=activeProject.savedInspirations.find(item=>item.assetRole==='logo');
+  useEffect(()=>{setUseBrandLogo(true);setChosenReferenceIds([]);},[activeProject.id]);
+  useEffect(()=>{if(brandLogo)setChosenReferenceIds(ids=>ids.filter(id=>id!==brandLogo.id));},[brandLogo?.id]);
   const [preserveOwnSubject, setPreserveOwnSubject] = useState(true);
   const [chosenPaletteId, setChosenPaletteId] = useState<string>('');
   const [zoomImage, setZoomImage] = useState<string | null>(null);
@@ -197,8 +201,11 @@ export const VisualGenerator: React.FC = () => {
         watercolor: 'Make the result a watercolor painting with translucent pigments.',
         drawing: 'Make the result a hand-drawn illustration with natural linework.',
       };
-      const referenceGuidance = chosenReferenceIds.length ? `\nREFERENCE IMAGE INSTRUCTIONS: Use the supplied image as a reference, not as the main subject. Specifically transfer: ${referenceRoles[referenceRole]} Medium: ${referenceArtTypes[referenceArtType]}. Influence strength ${referenceStrength}/5 (${referenceStrength <= 2 ? 'subtle' : referenceStrength === 3 ? 'moderate' : 'strong'}). ${preserveOwnSubject ? 'STRICT: Preserve the user-requested subject and concept. Never substitute the original reference subject for it.' : 'Adapt reference traits to the requested scene, but respect explicit user instructions.'} Avoid copying watermarks, lettering or logos from the reference. These are creative instructions, not exact numeric controls.\n` : '';
+      let referenceGuidance = chosenReferenceIds.length ? `\nREFERENCE IMAGE INSTRUCTIONS: Use the supplied image as a reference, not as the main subject. Specifically transfer: ${referenceRoles[referenceRole]} Medium: ${referenceArtTypes[referenceArtType]}. Influence strength ${referenceStrength}/5 (${referenceStrength <= 2 ? 'subtle' : referenceStrength === 3 ? 'moderate' : 'strong'}). ${preserveOwnSubject ? 'STRICT: Preserve the user-requested subject and concept. Never substitute the original reference subject for it.' : 'Adapt reference traits to the requested scene, but respect explicit user instructions.'} Avoid copying watermarks, lettering or logos from the reference. These are creative instructions, not exact numeric controls.\n` : '';
+      if(activeProject.savedInspirations.find(item=>item.id===chosenReferenceIds[0])?.assetRole==='product')referenceGuidance=' PRODUCT INSTRUCTIONS: Preserve the supplied product identity, shape and details; use it as the subject of the requested scene or mockup.';
       let referenceImageBase64 = '';
+      let logoImageBase64='';
+      if(useBrandLogo&&brandLogo){logoImageBase64=await loadReference(brandLogo.id);if(!logoImageBase64)throw Error('קובץ הלוגו אינו זמין במחשב הזה. העלה אותו מחדש בפאנל הפרויקט.');}
       if (chosenReferenceIds.length) {
         const images = await Promise.all(chosenReferenceIds.map(id=>loadReference(id)));
         const available = images.filter(Boolean);
@@ -217,6 +224,9 @@ export const VisualGenerator: React.FC = () => {
           model, quality,
           excludePeople: globalPrefs.excludePeople,
           referenceImageBase64,
+          referenceAssetRole:activeProject.savedInspirations.find(item=>item.id===chosenReferenceIds[0])?.assetRole||'reference',
+          logoImageBase64,
+          logoMimeType:/^data:(image\/(?:png|jpeg|webp));base64,/.exec(logoImageBase64)?.[1]||'image/png',
           referenceMimeType: /^data:(image\/(?:png|jpeg|webp));base64,/.exec(referenceImageBase64)?.[1] || 'image/png',
         }),
       });
@@ -436,10 +446,11 @@ export const VisualGenerator: React.FC = () => {
           </section>
           <section className="space-y-2 border border-[#31535A] bg-[#183036] rounded-xl p-3">
             <h3 className="font-bold text-white">רפרנסים מתיקיית ההשראות</h3>
-            <p className="text-xs text-zinc-200">בחר אילו השראות ישמשו את היצירה. כרגע ניתן לשלוח תמונה אחת בפועל.</p>
+            <p className="text-xs text-zinc-200">בחר תמונת השראה או מוצר. לוגו המותג יכול להישלח בנוסף אליה.</p>
+            {brandLogo&&<div className="rounded-lg border border-[#43D6CB]/50 p-2 space-y-2"><label className="flex items-center gap-2 text-white"><input type="checkbox" checked={useBrandLogo} onChange={e=>setUseBrandLogo(e.target.checked)}/>שלב את לוגו המותג בתמונה</label><div className="flex items-center gap-2"><img src={referencePreviews[brandLogo.id]} alt="לוגו המותג" className="h-14 w-14 object-contain rounded bg-white/10"/><span className="truncate text-zinc-200">{brandLogo.title}</span></div><button type="button" onClick={()=>{setUseBrandLogo(true);setSelectedStyle('studio_packaging');setRemoveBg(false);setTransparentPref(false);setPrompt('צור מוקאפ פוטוריאליסטי מקצועי של אריזה ממותגת עם לוגו המותג המצורף. שלב את הלוגו באופן טבעי על האריזה ושמור על הכיתוב, הצבעים והפרופורציות שלו. תאורת סטודיו רכה, חומרים מציאותיים וקומפוזיציה נקייה.');}} className="rounded-lg bg-[#43D6CB] px-3 py-2 font-bold text-[#183036]">הכן מוקאפ עם הלוגו</button></div>}
             <div className="max-h-40 overflow-y-auto space-y-2">
               {activeProject.savedInspirations.length===0 && <p className="text-zinc-200">עדיין לא נשמרו השראות בפרויקט.</p>}
-              {activeProject.savedInspirations.map(ref=><label key={ref.id} className="flex gap-2 items-center bg-[#102B31] text-white rounded-lg p-2 cursor-pointer">
+              {activeProject.savedInspirations.filter(ref=>ref.assetRole!=='logo').map(ref=><label key={ref.id} className="flex gap-2 items-center bg-[#102B31] text-white rounded-lg p-2 cursor-pointer">
                 <input type="radio" name="dekel-reference" checked={chosenReferenceIds[0]===ref.id} onChange={()=>setChosenReferenceIds([ref.id])}/>
                 <img src={referencePreviews[ref.id]} alt="" className="h-12 w-12 rounded-md object-cover bg-[#183036]" onError={e=>{e.currentTarget.style.visibility="hidden"}}/><span className="truncate">{ref.title}</span>
               </label>)}
@@ -574,3 +585,5 @@ export const VisualGenerator: React.FC = () => {
     </div>
   );
 };
+
+

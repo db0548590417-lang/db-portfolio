@@ -7,8 +7,12 @@ import { loadDesignImage, saveDesignImage, deleteDesignImage } from '../../data/
 export const PropertyPanel: React.FC = () => {
   const { activeModule, activeProject, updateActiveProject, setActiveModule, globalPrefs, showToast } = useProject();
   const uploadRef = useRef<HTMLInputElement>(null);
+  const assetsSectionRef=useRef<HTMLDetailsElement>(null);
+  const activeProjectIdRef=useRef(activeProject.id);activeProjectIdRef.current=activeProject.id;
   const [refPreviews, setRefPreviews] = useState<Record<string,string>>({});
   const [uploadingRefs, setUploadingRefs] = useState(false);
+  const [uploadRole,setUploadRole]=useState<'reference'|'logo'|'product'>('reference');
+  const setAssetRole=(id:string,role:'reference'|'logo'|'product')=>updateActiveProject(prev=>({...prev,savedInspirations:prev.savedInspirations.map(item=>item.id===id?{...item,assetRole:role}:role==='logo'&&item.assetRole==='logo'?{...item,assetRole:'reference'}:item)}));
   useEffect(() => {
     let alive=true;
     Promise.all(activeProject.savedInspirations.map(async item => {
@@ -20,9 +24,10 @@ export const PropertyPanel: React.FC = () => {
   const uploadReferences = async (files: FileList | null) => {
     if (!files?.length) return;
     setUploadingRefs(true);
+    const targetProjectId=activeProject.id;
     try {
       let count=0;
-      for (const file of Array.from(files).slice(0,12)) {
+      for (const file of Array.from(files).slice(0,uploadRole==='logo'?1:12)) {
         if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size>8_000_000) {
           showToast('אפשר להעלות PNG, JPG או WebP עד 8MB לתמונה', 'error');
           continue;
@@ -30,9 +35,11 @@ export const PropertyPanel: React.FC = () => {
         const dataUrl = await new Promise<string>((resolve,reject) => {
           const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);
         });
+        const decoded=await createImageBitmap(file);decoded.close();
         const id='local-ref-'+(globalThis.crypto?.randomUUID?.() || Date.now()+'-'+count);
         await saveDesignImage('ref-'+id, dataUrl);
-        updateActiveProject(prev => ({...prev, savedInspirations:[...prev.savedInspirations, {id,title:file.name,source:'מהמחשב',url:'',thumbUrl:'',savedAt:Date.now(),isSample:false}]}));
+        if(activeProjectIdRef.current!==targetProjectId){await deleteDesignImage('ref-'+id);return;}
+        updateActiveProject(prev => ({...prev, savedInspirations:[...prev.savedInspirations.map(item=>uploadRole==='logo'&&item.assetRole==='logo'?{...item,assetRole:'reference' as const}:item), {id,title:file.name,source:'מהמחשב',url:'',thumbUrl:'',savedAt:Date.now(),isSample:false,assetRole:uploadRole}]}));
         setRefPreviews(prev=>({...prev,[id]:dataUrl}));
         count++;
       }
@@ -88,6 +95,7 @@ export const PropertyPanel: React.FC = () => {
             <span className="text-[12px] text-[#43D6CB]">שמירה אוטומטית</span>
           </div>
           <p className="text-[13px] text-[#C1D1D5]">כל שינוי נשמר בפרויקט הפעיל ומשמש כמידע רקע לפקודות AI.</p>
+          <button type="button" onClick={()=>{if(assetsSectionRef.current){assetsSectionRef.current.open=true;assetsSectionRef.current.scrollIntoView({block:'start',behavior:'smooth'});}}} className="w-full rounded-lg bg-[#43D6CB] px-3 py-2 font-bold text-[#183036]">＋ לוגו ותמונות לפרויקט</button>
           {([
             ['פרויקט ולקוחות', [
               ['name', 'שם הפרויקט'], ['clientName', 'הלקוח המזמין'],
@@ -160,17 +168,18 @@ export const PropertyPanel: React.FC = () => {
             {activeProject.colorPalettes.find(p=>p.id===activeProject.brand?.officialPaletteId) &&
               <div className="flex h-5 gap-1">{activeProject.colorPalettes.find(p=>p.id===activeProject.brand?.officialPaletteId)!.colors.map((c,i)=><div key={i} className="flex-1 rounded" style={{backgroundColor:c}} title={c}/>)}</div>}
           </div>
-          <details className="rounded-xl border border-[#31535A] bg-[#103F46] p-3">
-            <summary className="cursor-pointer font-bold text-white">רפרנסים והשראות שמורות ({activeProject.savedInspirations.length})</summary>
-            <p className="mt-2 text-[12px] text-zinc-300">העלה תמונות מהמחשב או שמור השראות מצייד ההשראות. תמונות מקומיות זמינות במחולל הוויזואלי.</p>
+          <details ref={assetsSectionRef} className="rounded-xl border border-[#31535A] bg-[#103F46] p-3">
+            <summary className="cursor-pointer font-bold text-white">לוגו, תמונות והשראות ({activeProject.savedInspirations.length})</summary>
+            <p className="mt-2 text-[12px] text-zinc-300">הוסף לוגו, צילום מוצר או השראה לפרויקט.</p>
+            <label className="mt-3 block text-zinc-100">סוג התמונה להעלאה<select aria-label="סוג התמונה להעלאה" value={uploadRole} onChange={e=>setUploadRole(e.target.value as typeof uploadRole)} className="mt-1 w-full rounded-lg border border-[#45656A] bg-[#183036] p-2"><option value="reference">השראה ורפרנס</option><option value="logo">לוגו המותג</option><option value="product">תמונת מוצר</option></select></label>
              <input ref={uploadRef} type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={e=>void uploadReferences(e.target.files)} />
-             <button type="button" disabled={uploadingRefs} onClick={()=>uploadRef.current?.click()} className="mt-3 w-full rounded-lg bg-[#43D6CB] text-[#103036] font-bold px-3 py-2 hover:bg-[#69E1D7] disabled:opacity-50">{uploadingRefs?'שומר תמונות...':'＋ העלה רפרנסים מהמחשב'}</button>
+             <button type="button" disabled={uploadingRefs} onClick={()=>uploadRef.current?.click()} className="mt-3 w-full rounded-lg bg-[#43D6CB] text-[#103036] font-bold px-3 py-2 hover:bg-[#69E1D7] disabled:opacity-50">{uploadingRefs?'שומר תמונות...':uploadRole==='logo'?'＋ העלה לוגו מהמחשב':'＋ העלה תמונות מהמחשב'}</button>
              <p className="text-[12px] text-zinc-300 mt-1">PNG, JPG, WebP · עד 8MB לקובץ · שמירה מקומית במחשב זה</p>
             <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
               {activeProject.savedInspirations.length === 0 && <p className="text-[#C1D1D5]">אין רפרנסים. פתח את צייד ההשראות ושמור השראה לפרויקט.</p>}
               {activeProject.savedInspirations.map(item => <div key={item.id} className="flex gap-2 items-center rounded-lg p-2 border border-[#31535A] bg-[#183036]">
                 {refPreviews[item.id] || item.thumbUrl || item.url ? <img src={refPreviews[item.id] || item.thumbUrl || item.url} alt="" loading="lazy" className="w-12 h-12 object-cover rounded-md" /> : <div className="w-12 h-12 rounded-md bg-zinc-800 flex items-center justify-center text-[#C1D1D5]"><Icon name="Image" className="w-5 h-5" /></div>}
-                <div className="min-w-0 flex-1"><p className="truncate text-zinc-100 font-semibold">{item.title}</p><p className="truncate text-[12px] text-[#C1D1D5]">{item.source}</p></div>
+                <div className="min-w-0 flex-1"><p className="truncate text-zinc-100 font-semibold">{item.title}</p><select aria-label={'תפקיד התמונה '+item.title} value={item.assetRole||'reference'} onChange={e=>setAssetRole(item.id,e.target.value as typeof uploadRole)} className="mt-1 w-full rounded border border-[#45656A] bg-[#183036] p-1 text-zinc-100"><option value="reference">השראה</option><option value="logo">לוגו המותג</option><option value="product">מוצר</option></select></div>
                 <button type="button" title="הסר רפרנס מהפרויקט" onClick={() => void removeReference(item.id)} className="text-rose-300 hover:text-rose-200 p-1"><Icon name="Trash2" className="w-4 h-4" /></button>
               </div>)}
             </div>

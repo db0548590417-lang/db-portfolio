@@ -1,4 +1,5 @@
 import { discoverProg, homepageGallery, fetchPublicPage, publicImageUrl, readPublicImage } from './inspiration-public.mjs';
+import {generationParts} from './worker/image-input';
 ﻿import express from './worker/router';
 import { ai, getRuntimeEnv, visionFs } from './worker/runtime';
 import path from 'node:path';
@@ -1400,25 +1401,8 @@ app.post('/api/visual-generator/generate', async (req, res) => {
       finalPrompt += ' [No people, no humans, no faces. Pure product, object, abstract, or architectural composition]';
     }
 
-    let contentsPayload: any;
-    if (referenceImageBase64) {
-      const cleanRef = referenceImageBase64.replace(/^data:image\/\w+;base64,/, '');
-      contentsPayload = {
-        parts: [
-          {
-            inlineData: {
-              data: cleanRef,
-              mimeType: referenceMimeType,
-            },
-          },
-          { text: finalPrompt },
-        ],
-      };
-    } else {
-      contentsPayload = {
-        parts: [{ text: finalPrompt }],
-      };
-    }
+    let contentsPayload:any;
+    try{contentsPayload={parts:generationParts(req.body,finalPrompt)};}catch(error:any){return res.status(400).json({error:error.message});}
 
     const response = await generateWithProjectContext({
       model,

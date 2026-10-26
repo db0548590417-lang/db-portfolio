@@ -123,6 +123,7 @@ export interface CreativeConcept {
 }
 
 export interface InspirationItem {
+  assetRole?: 'reference' | 'logo' | 'product';
   id: string;
   title: string;
   url: string;
