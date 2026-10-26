@@ -12,8 +12,8 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - run: npm exec -- tsc --noEmit
       - run: npm run build
+      - run: npm exec -- tsc --noEmit
       - run: node verify-web.mjs
       - run: node verify-accounts.mjs
       - run: node verify-inspiration.mjs

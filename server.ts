@@ -1,5 +1,5 @@
 import { discoverProg, homepageGallery, fetchPublicPage, publicImageUrl, readPublicImage } from './inspiration-public.mjs';
-import {generationParts} from './worker/image-input';
+import {imageInput, generationParts} from './worker/image-input';
 ﻿import express from './worker/router';
 import { ai, getRuntimeEnv, visionFs } from './worker/runtime';
 import path from 'node:path';
@@ -286,11 +286,11 @@ app.post('/api/inspiration/hafsakat/visual-search', async (req, res) => {
   if (!query) return res.status(400).json({ error: 'חסר בריף' });
   const index = await readVisionIndex();
   if (!index.length) return res.json({ results: [], indexed: 0, ranking: 'empty', message: 'עדיין לא נותחו עבודות.' });
-  const tokens = query.toLowerCase().split(/[\s,.;:()\-]+/).filter(w => w.length > 2 &&
+  const tokens = query.toLowerCase().split(/[\s,.;:()\-]+/).filter((w: string) => w.length > 2 &&
     !/^(מודעה|מודעת|עיצוב|מעוצב|חסידי|חסידית|יוקרתי|יוקרתית|של|עם|עבור|אני|מחפש|רוצה)$/.test(w));
   const fallbackScore = (item: LearnedArtwork) => {
     const haystack = (item.visualText + ' ' + item.visualTags.join(' ')).toLowerCase();
-    return tokens.reduce((score, word) => score + (haystack.includes(word) ? 1 : 0), 0);
+    return tokens.reduce((score:number, word:string) => score + (haystack.includes(word) ? 1 : 0), 0);
   };
   let results = index.filter(i => fallbackScore(i) > 0).sort((a,b) => fallbackScore(b) - fallbackScore(a));
   let ranking: 'ai' | 'descriptions' = 'descriptions';
@@ -1187,7 +1187,7 @@ ${excludePeople ? 'הנחיה: ללא אנשים.' : ''}`;
 // ---------------- MODULE 9: INSPIRATION MIXER ----------------
 app.post('/api/inspiration-mixer/mix', async (req, res) => {
   try {
-    const { items, action = 'ערבב השראות', excludePeople } = req.body;
+    const { items, images, action = 'ערבב השראות', excludePeople } = req.body;
     if (!items || items.length < 2) {
       return res.status(400).json({ error: 'נדרשות לפחות 2 השראות למיקסר' });
     }
@@ -1224,7 +1224,11 @@ ${itemsSummary}
   ]
 }`;
 
-    const result = await callGeminiJson(prompt, systemPrompt);
+    if (!Array.isArray(images) || images.length !== items.length || images.length > 5) return res.status(400).json({error:'יש לצרף את תמונות ההשראה לניתוח חזותי'});
+    const parts:any[] = [{text:prompt}];
+    for (let index=0;index<images.length;index++) parts.push({text:'תמונת השראה #'+(index+1)},imageInput(images[index],'image/png','השראה'));
+    const response = await generateWithProjectContext({model:'gemini-2.5-flash',contents:{parts},config:{systemInstruction:systemPrompt,responseMimeType:'application/json'}});
+    const result = JSON.parse((response.text || '{}').replace(/^```json\s*|```$/g,''));
     res.json(result);
   } catch (error: any) {
     console.error('Inspiration mixer error:', error);

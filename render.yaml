@@ -3,7 +3,7 @@ services:
     name: dekel-ai-studio
     runtime: node
     plan: free
-    buildCommand: npm ci --include=dev && npm run check && npm run build && npm test
+    buildCommand: npm ci --include=dev && npm run build && npm run check && npm test
     startCommand: npm start
     healthCheckPath: /healthz
     envVars:
