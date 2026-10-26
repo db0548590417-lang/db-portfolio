@@ -3,7 +3,8 @@ import { useProject } from '../../context/ProjectContext';
 import { Icon } from '../common/Icon';
 import { removeImageBackground } from '../../data/removeImageBackground';
 import {createImageJob,acknowledgeImageJob} from '../../data/generationJobs';
-import { loadDesignImage } from '../../data/designAssetsDb';
+import type {InspirationItem} from '../../types';
+import { loadDesignImage, saveDesignImage, deleteDesignImage } from '../../data/designAssetsDb';
 
 const STYLE_PRESETS = [
   { id: 'cinematic', label: 'צילום פרסום קולנועי (Cinematic)', promptSuffix: 'Ultra high-end advertising photography, dramatic chiaroscuro lighting, shallow depth of field, 8k resolution, Hasselblad medium format' },
@@ -55,12 +56,19 @@ export const VisualGenerator: React.FC = () => {
   );
 
   const [chosenReferenceIds, setChosenReferenceIds] = useState<string[]>([]);
-  const [referenceRole, setReferenceRole] = useState<'art_style'|'composition'|'materials'|'colors'|'lighting'|'close'>('art_style');
+  const referenceRole = 'art_style';
+  const [referenceOptions,setReferenceOptions]=useState<Record<string,{role:string;instruction:string;strength:number}>>({});
+  const [uploadingReferences,setUploadingReferences]=useState(false);
+  const referenceInput=useRef<HTMLInputElement>(null);
+  const currentProjectId=useRef(activeProject.id);currentProjectId.current=activeProject.id;
+  const referenceChoices=[['product','מוצר'],['logo','לוגו'],['art_style','סגנון אמנותי'],['composition','קומפוזיציה'],['materials','חומרים וטקסטורות'],['colors','צבעוניות'],['lighting','תאורה ואווירה'],['close','מאפיינים חזותיים']];
+  const referenceOption=(id:string)=>referenceOptions[id]||{role:activeProject.savedInspirations.find(item=>item.id===id)?.assetRole==='product'?'product':activeProject.savedInspirations.find(item=>item.id===id)?.assetRole==='logo'?'logo':referenceRole,instruction:'',strength:referenceStrength};
+  const updateReferenceOption=(id:string,patch:Partial<{role:string;instruction:string;strength:number}>)=>setReferenceOptions(previous=>({...previous,[id]:{...referenceOption(id),...patch}}));
   const [referenceArtType, setReferenceArtType] = useState('auto');
-  const [referenceStrength, setReferenceStrength] = useState(3);
+  const referenceStrength = 3;
   const [useBrandLogo,setUseBrandLogo]=useState(true);
   const brandLogo=activeProject.savedInspirations.find(item=>item.assetRole==='logo');
-  useEffect(()=>{setUseBrandLogo(true);setChosenReferenceIds([]);},[activeProject.id]);
+  useEffect(()=>{setUseBrandLogo(true);setChosenReferenceIds([]);setReferenceOptions({});},[activeProject.id]);
   useEffect(()=>{if(brandLogo)setChosenReferenceIds(ids=>ids.filter(id=>id!==brandLogo.id));},[brandLogo?.id]);
   const [preserveOwnSubject, setPreserveOwnSubject] = useState(true);
   const [chosenPaletteId, setChosenPaletteId] = useState<string>('');
@@ -133,9 +141,30 @@ export const VisualGenerator: React.FC = () => {
   useEffect(() => {
     if (selectedConceptForVisual) {
       setPrompt(selectedConceptForVisual.imageGenerationPrompt || [selectedConceptForVisual.coreIdea, selectedConceptForVisual.visualExecution].filter(Boolean).join('\n'));
-      setChosenReferenceIds((selectedConceptForVisual.referenceIds||[]).filter(id=>activeProject.savedInspirations.some(ref=>ref.id===id&&ref.assetRole!=='logo')).slice(0,1));
+      setChosenReferenceIds((selectedConceptForVisual.referenceIds||[]).filter(id=>activeProject.savedInspirations.some(ref=>ref.id===id&&ref.id!==brandLogo?.id)).slice(0,useBrandLogo&&brandLogo?5:6));
     }
   }, [selectedConceptForVisual]);
+
+  const uploadReferences=async(files:FileList|null)=>{
+    if(!files?.length||uploadingReferences)return;
+    const batch=Array.from(files),targetProjectId=activeProject.id;
+    const written:string[]=[];setUploadingReferences(true);
+    try{
+      if(batch.length>6)throw Error('אפשר להעלות עד 6 תמונות בבת אחת');
+      if(batch.some(file=>!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>8_000_000))throw Error('אפשר להעלות PNG, JPG או WebP עד 8MB לתמונה');
+      if(batch.reduce((sum,file)=>sum+file.size,0)>24_000_000)throw Error('הנפח הכולל להעלאה אחת מוגבל ל־24MB');
+      const prepared=await Promise.all(batch.map(async file=>{
+        const data=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});
+        const bitmap=await createImageBitmap(file);bitmap.close();
+        return {file,data,id:'local-ref-'+crypto.randomUUID()};
+      }));
+      const added:InspirationItem[]=[];
+      for(const item of prepared){await saveDesignImage('ref-'+item.id,item.data);written.push('ref-'+item.id);added.push({id:item.id,title:item.file.name,source:'מהמחשב',url:'',thumbUrl:'',assetRole:'reference',savedAt:Date.now()});}
+      updateActiveProject(project=>({...project,savedInspirations:[...project.savedInspirations,...added]}));
+      if(currentProjectId.current===targetProjectId)setChosenReferenceIds(previous=>[...previous,...added.map(item=>item.id)].slice(0,useBrandLogo&&brandLogo?5:6));
+      showToast('התמונות נשמרו בפרויקט. בחר תפקיד והנחיה לכל תמונה. עד 6 תמונות נשלחות ליצירה.');
+    }catch(error:any){await Promise.allSettled(written.map(id=>deleteDesignImage(id)));showToast(error.message||'העלאת התמונות נכשלה','error');}finally{setUploadingReferences(false);if(referenceInput.current)referenceInput.current.value='';}
+  };
 
   // Enhance prompt with Gemini
   const handleEnhancePrompt = async () => {
@@ -178,7 +207,7 @@ export const VisualGenerator: React.FC = () => {
 
   // Generate Image with Gemini image model
   const handleGenerate = async () => {
-    if (imageRequests.has(activeProject.id)) return;
+    if (imageRequests.has(activeProject.id) || uploadingReferences) return;
     if (!prompt.trim()) {
       showToast('נא להזין פרומפט', 'info');
       return;
@@ -192,14 +221,6 @@ export const VisualGenerator: React.FC = () => {
       const fullPrompt = `${prompt}. ${contextBrief ? 'Project brief: '+contextBrief+'. ' : ''}${palette ? 'Preferred palette: '+palette.colors.join(', ')+'. ' : ''}Style: ${activeStyleObj?.promptSuffix || ''}${(transparentPref || removeBg) ? '. Isolated subject on a clean, uniform white studio background, no patterns, easy to mask; no environment.' : ''}`;
       // Reference guidance is applied in the *same* generation request, without a
       // separate image-analysis API call or additional Gemini credit consumption.
-      const referenceRoles: Record<typeof referenceRole, string> = {
-        art_style: 'Visual art style and artistic language only: medium, rendering technique, line quality, finish and visual character.',
-        composition: 'Composition only: spatial arrangement, viewpoint, perspective and framing.',
-        materials: 'Materials and textures only: surface finish, grain, reflectivity and material treatment.',
-        colors: 'Color palette only: dominant colors and relationships; do not copy the reference subject.',
-        lighting: 'Lighting and atmosphere only: direction, quality, contrast and mood.',
-        close: 'Follow visual properties of the reference closely while still honoring the requested new subject and constraints.',
-      };
       const referenceArtTypes: Record<string, string> = {
         auto: 'Infer the medium/technique visually from the reference image itself; do not assume it is photography.',
         photo: 'Make the result photorealistic, with professional photographic realism.',
@@ -209,21 +230,18 @@ export const VisualGenerator: React.FC = () => {
         watercolor: 'Make the result a watercolor painting with translucent pigments.',
         drawing: 'Make the result a hand-drawn illustration with natural linework.',
       };
-      let referenceGuidance = chosenReferenceIds.length ? `\nREFERENCE IMAGE INSTRUCTIONS: Use the supplied image as a reference, not as the main subject. Specifically transfer: ${referenceRoles[referenceRole]} Medium: ${referenceArtTypes[referenceArtType]}. Influence strength ${referenceStrength}/5 (${referenceStrength <= 2 ? 'subtle' : referenceStrength === 3 ? 'moderate' : 'strong'}). ${preserveOwnSubject ? 'STRICT: Preserve the user-requested subject and concept. Never substitute the original reference subject for it.' : 'Adapt reference traits to the requested scene, but respect explicit user instructions.'} Avoid copying watermarks, lettering or logos from the reference. These are creative instructions, not exact numeric controls.\n` : '';
-      if(activeProject.savedInspirations.find(item=>item.id===chosenReferenceIds[0])?.assetRole==='product')referenceGuidance=' PRODUCT INSTRUCTIONS: Preserve the supplied product identity, shape and details; use it as the subject of the requested scene or mockup.';
-      let referenceImageBase64 = '';
-      let logoImageBase64='';
-      if(useBrandLogo&&brandLogo){logoImageBase64=await loadReference(brandLogo.id);if(!logoImageBase64)throw Error('קובץ הלוגו אינו זמין במחשב הזה. העלה אותו מחדש בפאנל הפרויקט.');}
-      if (chosenReferenceIds.length) {
-        const images = await Promise.all(chosenReferenceIds.map(id=>loadReference(id)));
-        const available = images.filter(Boolean);
-        if (!available.length) throw Error('לא ניתן לקרוא את תמונות הרפרנס שנבחרו. נסה עיצוב אישי או תמונה ממקור נגיש.');
-        referenceImageBase64 = available[0];
-        if (chosenReferenceIds.length > 1) showToast('בגרסה זו נשלח הרפרנס הראשון בלבד; שאר הבחירות אינן מועברות לתמונה.', 'info');
-      }
-
-      if (!window.confirm('יצירת תמונה צורכת קרדיטים. להמשיך?')) return;
-      const data = await createImageJob({prompt:fullPrompt+referenceGuidance,aspectRatio,model,quality,excludePeople:globalPrefs.excludePeople,referenceImageBase64,referenceAssetRole:activeProject.savedInspirations.find(item=>item.id===chosenReferenceIds[0])?.assetRole||'reference',logoImageBase64,logoMimeType:/^data:(image\/(?:png|jpeg|webp));base64,/.exec(logoImageBase64)?.[1]||'image/png',referenceMimeType:/^data:(image\/(?:png|jpeg|webp));base64,/.exec(referenceImageBase64)?.[1]||'image/png'},activeProject.id,{prompt:fullPrompt+referenceGuidance,aspectRatio,model,quality,createdAt:Date.now(),conceptId:selectedConceptForVisual?.id,referenceIds:chosenReferenceIds});
+      let referenceGuidance = '';
+      const selected=chosenReferenceIds.filter(id=>!(useBrandLogo&&id===brandLogo?.id));
+      if(selected.length+(useBrandLogo&&brandLogo?1:0)>6)throw Error('אפשר לבחור עד 6 תמונות בסך הכול, כולל הלוגו');
+      const references=await Promise.all(selected.map(async id=>{const image=await loadReference(id);if(!image)throw Error('לא ניתן לקרוא אחת מהתמונות שנבחרו. העלה אותה מחדש.');return {...referenceOption(id),imageBase64:image,mimeType:/^data:(image\/(?:png|jpeg|webp));base64,/.exec(image)?.[1]||'image/png'};}));
+      if(useBrandLogo&&brandLogo){const image=await loadReference(brandLogo.id);if(!image)throw Error('הלוגו אינו זמין. העלה אותו מחדש.');references.unshift({role:'logo',instruction:referenceOption(brandLogo.id).instruction||'שמור על לוגו המותג ושלב אותו לפי הפרומפט',strength:5,imageBase64:image,mimeType:/^data:(image\/(?:png|jpeg|webp));base64,/.exec(image)?.[1]||'image/png'});}
+      const totalBytes=references.reduce((sum,reference)=>sum+((reference.imageBase64.split(',')[1]?.length||0)*3/4-(reference.imageBase64.endsWith('==')?2:reference.imageBase64.endsWith('=')?1:0)),0);
+      if(totalBytes>24_000_000)throw Error('הנפח הכולל של התמונות שנבחרו מוגבל ל־24MB');
+      referenceGuidance=references.length?'\nUse every numbered reference according to its individual role and guidance. '+referenceArtTypes[referenceArtType]+(preserveOwnSubject?' Preserve the user requested subject.':''):'';
+      if (!window.confirm('יצירת תמונה עם הרפרנסים שנבחרו משתמשת במכסת Gemini. להמשיך?')) return;
+      const activeReferenceIds=useBrandLogo&&brandLogo?[brandLogo.id,...selected]:selected;
+      const referenceConfiguration=activeReferenceIds.map(id=>({id,...referenceOption(id),...(useBrandLogo&&id===brandLogo?.id?{role:'logo',strength:5}:{})}));
+      const data=await createImageJob({prompt:fullPrompt+referenceGuidance,aspectRatio,model,quality,excludePeople:globalPrefs.excludePeople,references},activeProject.id,{prompt:fullPrompt+referenceGuidance,aspectRatio,model,quality,createdAt:Date.now(),conceptId:selectedConceptForVisual?.id,referenceIds:activeReferenceIds,referenceConfiguration});
       if (data.imageUrl) {
         setOriginalImage(data.imageUrl);
         let finalUrl = data.imageUrl;
@@ -236,7 +254,7 @@ export const VisualGenerator: React.FC = () => {
           url: '',
           prompt: fullPrompt + referenceGuidance,
           aspectRatio, model, quality,
-          conceptId:selectedConceptForVisual?.id, referenceIds:chosenReferenceIds,
+          conceptId:selectedConceptForVisual?.id, referenceIds:activeReferenceIds, referenceConfiguration,
           createdAt: Date.now(),
         };
 
@@ -448,45 +466,27 @@ export const VisualGenerator: React.FC = () => {
             {activeProject.colorPalettes.find(p=>p.id===chosenPaletteId) && <div className="flex gap-1" aria-label="צבעי הפלטה">{activeProject.colorPalettes.find(p=>p.id===chosenPaletteId)!.colors.map((c,i)=><span title={c} key={i} className="flex-1 h-5 rounded" style={{backgroundColor:c}} />)}</div>}
           </section>
           <section className="space-y-2 border border-[#31535A] bg-[#183036] rounded-xl p-3">
-            <h3 className="font-bold text-white">רפרנסים מתיקיית ההשראות</h3>
-            <p className="text-xs text-zinc-200">בחר תמונת השראה או מוצר. לוגו המותג יכול להישלח בנוסף אליה.</p>
-            {brandLogo&&<div className="rounded-lg border border-[#43D6CB]/50 p-2 space-y-2"><label className="flex items-center gap-2 text-white"><input type="checkbox" checked={useBrandLogo} onChange={e=>setUseBrandLogo(e.target.checked)}/>שלב את לוגו המותג בתמונה</label><div className="flex items-center gap-2"><img src={referencePreviews[brandLogo.id]} alt="לוגו המותג" className="h-14 w-14 object-contain rounded bg-white/10"/><span className="truncate text-zinc-200">{brandLogo.title}</span></div><button type="button" onClick={()=>{setUseBrandLogo(true);setSelectedStyle('studio_packaging');setRemoveBg(false);setTransparentPref(false);setPrompt('צור מוקאפ פוטוריאליסטי מקצועי של אריזה ממותגת עם לוגו המותג המצורף. שלב את הלוגו באופן טבעי על האריזה ושמור על הכיתוב, הצבעים והפרופורציות שלו. תאורת סטודיו רכה, חומרים מציאותיים וקומפוזיציה נקייה.');}} className="rounded-lg bg-[#43D6CB] px-3 py-2 font-bold text-[#183036]">הכן מוקאפ עם הלוגו</button></div>}
-            <div className="max-h-40 overflow-y-auto space-y-2">
+            <h3 className="font-bold text-white">רפרנסים מתיקיית ההשראות</h3><p role="status" className="text-[#43D6CB]">נבחרו {chosenReferenceIds.length+(useBrandLogo&&brandLogo?1:0)} מתוך 6 תמונות</p>
+            <p className="text-xs text-zinc-200">בחר כמה תמונות, והגדר מה לקחת מכל אחת. עד 6 תמונות בסך הכול כולל לוגו, ועד 24MB לכל הבקשה.</p>
+            {brandLogo&&<div className="rounded-lg border border-[#43D6CB]/50 p-2 space-y-2"><label className="flex items-center gap-2 text-white"><input type="checkbox" checked={useBrandLogo} onChange={e=>setUseBrandLogo(e.target.checked)}/>שלב את לוגו המותג בתמונה</label><div className="flex items-center gap-2"><img src={referencePreviews[brandLogo.id]} alt="לוגו המותג" className="h-14 w-14 object-contain rounded bg-white/10"/><span className="truncate text-zinc-200">{brandLogo.title}</span></div><textarea aria-label="הנחיה ללוגו המותג" value={referenceOption(brandLogo.id).instruction} onChange={e=>updateReferenceOption(brandLogo.id,{instruction:e.target.value})} maxLength={1000} placeholder="איך לשלב את הלוגו? למשל הדפסה על האריזה" className="w-full rounded bg-[#102B31] p-2 text-white" rows={2}/><button type="button" onClick={()=>{setUseBrandLogo(true);setSelectedStyle('studio_packaging');setRemoveBg(false);setTransparentPref(false);setPrompt('צור מוקאפ פוטוריאליסטי מקצועי של אריזה ממותגת עם לוגו המותג המצורף. שלב את הלוגו באופן טבעי על האריזה ושמור על הכיתוב, הצבעים והפרופורציות שלו. תאורת סטודיו רכה, חומרים מציאותיים וקומפוזיציה נקייה.');}} className="rounded-lg bg-[#43D6CB] px-3 py-2 font-bold text-[#183036]">הכן מוקאפ עם הלוגו</button></div>}
+            <input ref={referenceInput} type="file" multiple accept="image/png,image/jpeg,image/webp" className="hidden" aria-label="העלאת כמה תמונות רפרנס" onChange={e=>void uploadReferences(e.target.files)}/><button disabled={uploadingReferences} onClick={()=>referenceInput.current?.click()} className="rounded-lg border border-[#43D6CB] p-2 text-[#43D6CB]">{uploadingReferences?'מעלה תמונות…':'＋ העלה כמה תמונות רפרנס'}</button>
+            <div className="max-h-96 overflow-y-auto space-y-2">
               {activeProject.savedInspirations.length===0 && <p className="text-zinc-200">עדיין לא נשמרו השראות בפרויקט.</p>}
-              {activeProject.savedInspirations.filter(ref=>ref.assetRole!=='logo').map(ref=><label key={ref.id} className="flex gap-2 items-center bg-[#102B31] text-white rounded-lg p-2 cursor-pointer">
-                <input type="radio" name="dekel-reference" checked={chosenReferenceIds[0]===ref.id} onChange={()=>setChosenReferenceIds([ref.id])}/>
-                <img src={referencePreviews[ref.id]} alt="" className="h-12 w-12 rounded-md object-cover bg-[#183036]" onError={e=>{e.currentTarget.style.visibility="hidden"}}/><span className="truncate">{ref.title}</span>
-              </label>)}
+              {activeProject.savedInspirations.filter(ref=>ref.id!==brandLogo?.id).map(ref=><div key={ref.id} className="rounded-lg bg-[#102B31] p-2 space-y-2 text-white"><label className="flex items-center gap-2"><input type="checkbox" aria-label={'בחר רפרנס '+ref.title} checked={chosenReferenceIds.includes(ref.id)} onChange={e=>{if(e.target.checked&&chosenReferenceIds.length+(useBrandLogo&&brandLogo?1:0)>=6){showToast('אפשר לבחור עד 6 תמונות כולל הלוגו','info');return;}setChosenReferenceIds(previous=>e.target.checked?[...previous,ref.id]:previous.filter(id=>id!==ref.id));}}/><img src={referencePreviews[ref.id]} alt="" className="h-12 w-12 rounded object-contain"/><span>{ref.title}</span></label>{chosenReferenceIds.includes(ref.id)&&<div className="space-y-2"><label className="block">תפקיד התמונה<select aria-label={'תפקיד עבור '+ref.title} value={referenceOption(ref.id).role} onChange={e=>updateReferenceOption(ref.id,{role:e.target.value})} className="block w-full rounded bg-[#183036] p-2">{referenceChoices.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label><textarea aria-label={'הנחיה עבור '+ref.title} value={referenceOption(ref.id).instruction} maxLength={1000} placeholder="מה לקחת מהתמונה הזו ומה לשמור?" onChange={e=>updateReferenceOption(ref.id,{instruction:e.target.value})} className="w-full rounded bg-[#183036] p-2" rows={2}/><label className="block">עוצמת השפעה: {referenceOption(ref.id).strength}/5<input aria-label={'עוצמה עבור '+ref.title} type="range" min="1" max="5" value={referenceOption(ref.id).strength} onChange={e=>updateReferenceOption(ref.id,{strength:Number(e.target.value)})} className="w-full"/></label></div>}</div>)}
               {chosenReferenceIds.length>0&&<button onClick={()=>setChosenReferenceIds([])} className="text-[#43D6CB] underline">הסר בחירת רפרנס</button>}
             </div>
-            {chosenReferenceIds.length > 0 && <div className="space-y-3 rounded-xl border border-[#43D6CB]/40 bg-[#102B31] p-3" dir="rtl">
-              <label className="block space-y-1.5"><span className="font-bold text-white">מה לקחת מהרפרנס?</span>
-                <select value={referenceRole} onChange={e=>setReferenceRole(e.target.value as typeof referenceRole)} className="w-full rounded-lg border border-[#45656A] bg-[#183036] p-2 text-white">
-                  <option value="art_style">סגנון אמנותי</option><option value="composition">קומפוזיציה וזווית</option>
-                  <option value="materials">חומרים וטקסטורות</option><option value="colors">צבעוניות</option>
-                  <option value="lighting">תאורה ואווירה</option><option value="close">מאפיינים חזותיים קרובים למקור</option>
-                </select>
-              </label>
-              <label className="block space-y-1.5"><span className="font-bold text-white">סוג האמנות הרצוי</span>
-                <select value={referenceArtType} onChange={e=>setReferenceArtType(e.target.value)} className="w-full rounded-lg border border-[#45656A] bg-[#183036] p-2 text-white">
-                  <option value="auto">לפי האמנות בתמונה (זיהוי בזמן היצירה)</option>
-                  <option value="photo">צילום פוטוריאליסטי</option><option value="three_d">רינדור תלת־ממד</option>
-                  <option value="vector">איור וקטורי</option><option value="oil">ציור שמן</option>
-                  <option value="watercolor">ציור בצבעי מים</option><option value="drawing">איור ידני</option>
-                </select>
-              </label>
-              <label className="block space-y-1"><span className="flex justify-between font-bold text-white"><span>עוצמת השפעת הרפרנס</span><span>{referenceStrength} מתוך 5</span></span>
-                <input type="range" min="1" max="5" step="1" value={referenceStrength} onChange={e=>setReferenceStrength(Number(e.target.value))} className="w-full accent-[#43D6CB]" />
-              </label>
-              <label className="flex items-start gap-2 text-white"><input type="checkbox" checked={preserveOwnSubject} onChange={e=>setPreserveOwnSubject(e.target.checked)} className="mt-0.5 accent-[#43D6CB]"/><span>שמור על הנושא שלי — למד מהרפרנס רק את הסגנון או המאפיינים שבחרתי</span></label>
-              <p className="text-[12px] text-zinc-300 leading-relaxed">הבחירות נשלחות כהנחיות ביחד עם הרפרנס בפעולת היצירה הרגילה. אין חיוב נוסף על ניתוח נפרד; עוצמת ההשפעה היא הנחיה ולא מדד מדויק.</p>
-            </div>}
+            {chosenReferenceIds.length > 0 && <details className="rounded-xl border border-[#43D6CB]/40 bg-[#102B31] p-3" dir="rtl"><summary className="cursor-pointer font-bold text-white">הגדרות משותפות לרפרנסים</summary><div className="mt-3 space-y-3">
+              <label className="block space-y-1.5"><span className="font-bold text-white">סוג האמנות הרצוי</span><select value={referenceArtType} onChange={e=>setReferenceArtType(e.target.value)} className="w-full rounded-lg border border-[#45656A] bg-[#183036] p-2 text-white"><option value="auto">לפי האמנות בתמונות</option><option value="photo">צילום פוטוריאליסטי</option><option value="three_d">רינדור תלת־ממד</option><option value="vector">איור בסגנון וקטורי</option><option value="oil">ציור שמן</option><option value="watercolor">ציור בצבעי מים</option><option value="drawing">איור ידני</option></select></label>
+              <label className="flex items-start gap-2 text-white"><input type="checkbox" checked={preserveOwnSubject} onChange={e=>setPreserveOwnSubject(e.target.checked)} className="mt-0.5 accent-[#43D6CB]"/><span>שמור על הנושא שלי ולמד מכל רפרנס את המאפיינים שנבחרו עבורו</span></label>
+              <p className="text-[12px] text-zinc-300">כל התמונות נשלחות יחד ליצירה. עוצמת ההשפעה היא הנחיה יצירתית, ולא מדד מדויק. מספר התמונות עשוי להשפיע על השימוש במכסה.</p>
+            </div></details>}
+
 
           </section>
           <p className="text-[#D9F9F3] text-xs">יצירת תמונה צורכת קרדיטים.</p>
           <button
             onClick={handleGenerate}
-            disabled={isGenerating || !prompt.trim()}
+            disabled={isGenerating || uploadingReferences || !prompt.trim()}
             className="w-full py-3 bg-gradient-to-r from-[#43D6CB] to-[#43D6CB] hover:from-teal-500 hover:to-teal-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-teal-500/25"
           >
             {isGenerating ? (

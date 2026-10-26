@@ -14,3 +14,5 @@ try{
  await call({});assert.equal(sent.contents.flatMap(content=>content.parts).filter(p=>p.inlineData).length,0);
  console.log('PASS: exact logo and product bytes reach mocked Gemini in the same request with distinct roles; logo-preservation instructions; invalid images rejected before model call; ordinary generation unchanged');
 }finally{globalThis.fetch=original;}
+
+await import('./verify-multi-reference.mjs');
