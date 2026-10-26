@@ -15,6 +15,7 @@ const STYLE_PRESETS = [
 export const VisualGenerator: React.FC = () => {
   const {
     selectedConceptForVisual,
+    setSelectedConceptForVisual,
     globalPrefs,
     updateActiveProject,
     activeProject,
@@ -125,8 +126,8 @@ export const VisualGenerator: React.FC = () => {
   };
   // If a concept was passed, update prompt
   useEffect(() => {
-    if (selectedConceptForVisual?.imageGenerationPrompt) {
-      setPrompt(selectedConceptForVisual.imageGenerationPrompt);
+    if (selectedConceptForVisual) {
+      setPrompt(selectedConceptForVisual.imageGenerationPrompt || [selectedConceptForVisual.coreIdea, selectedConceptForVisual.visualExecution].filter(Boolean).join('\n'));
     }
   }, [selectedConceptForVisual]);
 
@@ -337,6 +338,19 @@ export const VisualGenerator: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Prompt Editor & Controls (5 cols) */}
         <div className="lg:col-span-5 bg-[#103F46] border border-zinc-800 rounded-2xl p-5 space-y-4 text-xs">
+          <div className="space-y-2">
+            <label htmlFor="visual-concept" className="block font-bold text-zinc-300">בחירת קונספט מהפרויקט</label>
+            <select id="visual-concept" value={selectedConceptForVisual?.id || ''} onChange={event => {
+              const concept = activeProject.concepts.find(item => item.id === event.target.value) || null;
+              setSelectedConceptForVisual(concept);
+              setPrompt(concept ? concept.imageGenerationPrompt || [concept.coreIdea, concept.visualExecution].filter(Boolean).join('\n') : activeProject.brief.productOrService || '');
+            }} className="w-full rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-white">
+              <option value="">כתיבת פרומפט חופשי</option>
+              {selectedConceptForVisual && !activeProject.concepts.some(item => item.id === selectedConceptForVisual.id) && <option value={selectedConceptForVisual.id}>{selectedConceptForVisual.conceptName}</option>}
+              {activeProject.concepts.map(concept => <option key={concept.id} value={concept.id}>{concept.conceptName}</option>)}
+            </select>
+            {selectedConceptForVisual && <p className="text-xs leading-6 text-[#C1D1D5]">{selectedConceptForVisual.coreIdea}</p>}
+          </div>
           <div className="flex items-center justify-between">
             <label className="text-zinc-300 font-bold block">פרומפט להדמיה (אנגלית/עברית):</label>
             <button

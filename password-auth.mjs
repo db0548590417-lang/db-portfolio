@@ -20,7 +20,7 @@ export async function verifyPassword(password, stored) {
   return timingSafeEqual(digest, Buffer.from(hash, 'hex'));
 }
 
-export function createPasswordAuth({ secret, ownerPassword, storePromise }) {
+export function createPasswordAuth({ secret, ownerPassword, storePromise, getStore }) {
   const sessionSecret = secret + ':password-session-v1';
   const cookie = (value, age) => `${SESSION}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${age}`;
   const sessionCookie = user => cookie(encryptConfig({ purpose: 'password-session', user }, sessionSecret), 30 * 86400);
@@ -42,8 +42,9 @@ export function createPasswordAuth({ secret, ownerPassword, storePromise }) {
     async handle(request, response, origin) {
       const pathname = new URL(request.url, origin).pathname;
       if (!pathname.startsWith('/api/auth/') && !pathname.startsWith('/auth/')) return false;
-      const store = await storePromise;
+
       if (pathname === '/api/auth/session' && request.method === 'GET') {
+        const store = await (getStore ? getStore() : storePromise);
         send(response, { user: this.readUser(request), registrationEnabled: Boolean(store), ownerLoginEnabled: Boolean(ownerPassword), authMode: 'password' }); return true;
       }
       if (request.method !== 'POST') { send(response, { error: 'הפעולה אינה זמינה' }, 405); return true; }
@@ -63,6 +64,7 @@ export function createPasswordAuth({ secret, ownerPassword, storePromise }) {
         const owner = { id: 'owner', username: 'בעל הסטודיו', email: '', provider: 'owner' };
         send(response, { user: owner }, 200, sessionCookie(owner)); return true;
       }
+      const store = await (getStore ? getStore() : storePromise);
       if (!store) { send(response, { error: 'ההרשמה והכניסה לחשבונות ייפתחו לאחר חיבור מסד הנתונים. בעל הסטודיו יכול להיכנס עם הסיסמה הקיימת.' }, 503); return true; }
       if (!/^[\p{L}\p{N}_.-]{3,32}$/u.test(username) || password.length < (pathname === '/api/auth/register' ? 8 : 1) || password.length > 128) {
         send(response, { error: 'שם משתמש: 3–32 אותיות, מספרים, נקודה, קו או קו תחתון. סיסמה: 8–128 תווים.' }, 400); return true;

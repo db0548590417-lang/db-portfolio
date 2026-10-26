@@ -18,7 +18,7 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState('');
   const acceptUser = (value: User) => { setStorageUser(value.id); setUser(value); };
   useEffect(() => {
-    fetch('/api/auth/session').then(async response => {
+    fetch('/api/auth/session', { signal: AbortSignal.timeout(20000) }).then(async response => {
       if (!response.ok) throw new Error('לא ניתן לבדוק את החיבור. נסה לרענן את העמוד.');
       const session = await response.json();
       setRegistrationEnabled(session.registrationEnabled);
@@ -39,7 +39,7 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
       const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
       headers.set('x-dekel-user-id', user.id);
       const response = await previous(input, { ...init, headers });
-      if (response.status === 401 || response.status === 409) location.reload();
+      if (response.status === 401 || response.status === 409) void checkAccount();
       return response;
     }) as typeof fetch;
     return () => { window.fetch = previous; window.removeEventListener('focus', checkAccount); };
@@ -54,7 +54,7 @@ export function AccountGate({ children }: { children: React.ReactNode }) {
     setBusy(true);
     try {
       const response = await fetch('/api/auth/' + mode, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username:submittedUsername, password:submittedPassword }) });
-      const result = await response.json();
+      const result = await response.json().catch(() => ({ error: response.status === 429 ? 'יותר מדי ניסיונות כניסה. המתן דקה ונסה שוב.' : 'לא ניתן להתחבר כרגע. נסה שוב בעוד רגע.' }));
       if (!response.ok) throw new Error(result.error || 'לא ניתן להשלים את הפעולה');
       // Use the browser password manager; never persist passwords in app storage.
       try { const Credential=(window as any).PasswordCredential;if(Credential&&navigator.credentials?.store)void navigator.credentials.store(new Credential({id:submittedUsername,password:submittedPassword})).catch(()=>{}); }catch{/* Browser preferences control whether saving is available. */}

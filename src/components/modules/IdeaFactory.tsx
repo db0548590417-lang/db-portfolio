@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { Icon } from '../common/Icon';
 import { buildBrandContext } from '../../data/brandContext';
@@ -40,6 +40,10 @@ export const IdeaFactory: React.FC = () => {
   const setSettings = (patch: Partial<NonNullable<typeof saved>>) => updateActiveProject(p => ({
     ...p, ideaFactoryWorkspace: { focus: p.ideaFactoryWorkspace?.focus ?? '', method: p.ideaFactoryWorkspace?.method ?? 'auto', intensity: p.ideaFactoryWorkspace?.intensity ?? 3, ...patch }
   }));
+  const projectIdRef = useRef(activeProject.id); projectIdRef.current = activeProject.id;
+  const seedIdea = saved?.seedIdea || '';
+  const feedback = saved?.feedback || '';
+  const selectedConceptIds = saved?.selectedConceptIds || [];
   const [selectedCompare, setSelectedCompare] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [resultData, setResultData] = useState<{
@@ -56,13 +60,21 @@ export const IdeaFactory: React.FC = () => {
       suggestedCopy: string;
       imagePrompt: string;
     }[];
-  } | null>(null);
+  } | null>(saved?.drafts?.length ? { ideas: saved.drafts } : null);
+  useEffect(() => { setResultData(activeProject.ideaFactoryWorkspace?.drafts?.length ? {ideas: activeProject.ideaFactoryWorkspace.drafts} : null); setSelectedCompare([]); }, [activeProject.id]);
 
   const handleRunIdea = async (actionName: string) => {
     if (!effectiveTopic.trim()) {
       showToast('הזן נושא או מוצר תחילה', 'info');
       return;
     }
+    if (isLoading) return;
+    const previousIdeas = (resultData?.ideas || []).filter((idea, idx) => selectedCompare.includes(String(idea.id || idx)));
+    const sourceConcepts = activeProject.concepts.filter(concept => selectedConceptIds.includes(concept.id));
+    if (actionName === 'שלב קונספטים' && previousIdeas.length + sourceConcepts.length < 2) { showToast('בחר לפחות שני קונספטים או רעיונות לשילוב', 'info'); return; }
+    if (actionName === 'המשך את הרעיון שלי' && !seedIdea.trim()) { showToast('כתוב התחלה של רעיון', 'info'); return; }
+    if (actionName === 'לטש לפי ההערות' && !previousIdeas.length && !sourceConcepts.length && !seedIdea.trim()) { showToast('בחר רעיון או קונספט לליטוש', 'info'); return; }
+    const targetProjectId = activeProject.id;
     setIsLoading(true);
     try {
       const res = await fetch('/api/idea-factory/generate', {
@@ -74,12 +86,17 @@ export const IdeaFactory: React.FC = () => {
           intensity,
           action: actionName,
           excludePeople: globalPrefs.excludePeople,
+          seedIdea, feedback, sourceConcepts, previousIdeas,
         }),
       });
 
       if (!res.ok) { const e = await res.json().catch(() => ({})); const raw = String(e.error || ''); throw new Error(/429|RESOURCE_EXHAUSTED|quota/i.test(raw) ? 'מכסת Gemini מוגבלת כרגע. ההגדרות נשמרו; אפשר להמשיך אחר כך.' : 'שגיאה בהפקת רעיונות במעבדה'); }
       const data = await res.json();
+      if (projectIdRef.current !== targetProjectId) return;
+      if (!Array.isArray(data.ideas) || !data.ideas.length) throw new Error('לא התקבלו רעיונות. נסה שוב.');
+      data.ideas = data.ideas.map((idea: any) => ({...idea, id: crypto.randomUUID()}));
       setResultData(data);
+      setSettings({drafts: data.ideas});
       setSelectedCompare([]);
       showToast(`הופקו ${data.ideas?.length || 0} רעיונות לפעולה "${actionName}"!`, 'success');
     } catch (err: any) {
@@ -91,7 +108,7 @@ export const IdeaFactory: React.FC = () => {
 
   const saveIdeaAsConcept = (idea: any) => {
     const concept = {
-      id: 'concept-idea-' + Date.now(),
+      id: 'concept-idea-' + (idea.id || idea.title),
       conceptName: idea.title,
       coreIdea: idea.mechanism,
       visualExecution: idea.visualHook,
@@ -104,15 +121,15 @@ export const IdeaFactory: React.FC = () => {
     };
     updateActiveProject((p) => ({
       ...p,
-      concepts: [concept, ...(p.concepts || [])],
+      concepts: [concept, ...(p.concepts || []).filter(c => c.id !== concept.id)],
     }));
     showToast(`הרעיון "${idea.title}" נשמר כקונספט בפרויקט!`, 'success');
   };
 
   const sendIdeaToDirector = (idea: any) => {
-    saveIdeaAsConcept(idea);
+
     updateActiveProject(p => ({ ...p, creativeWorkspace: {
-      mode: 'refine', approvedCopy: p.creativeWorkspace?.approvedCopy || idea.suggestedCopy || '',
+      mode: 'refine', approvedCopy: idea.suggestedCopy || '',
       visualDirection: idea.visualHook || '', visualReferenceUrl: p.creativeWorkspace?.visualReferenceUrl || '',
       notes: [p.creativeWorkspace?.notes || '', `רעיון ממעבדת רעיונות: ${idea.title}. ${idea.mechanism}`].filter(Boolean).join('\n'),
       lockedCopy: p.creativeWorkspace?.lockedCopy || false, lockedVisual: p.creativeWorkspace?.lockedVisual || false,
@@ -155,6 +172,18 @@ export const IdeaFactory: React.FC = () => {
             <div className="font-bold text-[#43D6CB]">הקשר הפרויקט נטען אוטומטית</div>
             <div className="line-clamp-3 whitespace-pre-line leading-relaxed">{buildBrandContext(activeProject) || 'לא הוגדרו עדיין נתוני פרויקט. אפשר לערוך בפאנל מאפיינים והקשר כלי.'}</div>
             <div className="text-[#C1D1D5]">הגדרות המעבדה נשמרות אוטומטית לכל פרויקט, גם בלי Gemini.</div>
+          </div>
+          <div className="space-y-3 rounded-xl border border-[#31535A] p-3">
+            <label htmlFor="seed-idea" className="block font-bold text-white">יש לי התחלה של רעיון</label>
+            <textarea id="seed-idea" value={seedIdea} onChange={e => setSettings({seedIdea:e.target.value})} rows={3} placeholder="כתוב את הרעיון שלך וה־AI יפתח אותו" className="w-full rounded-lg bg-zinc-900 p-3 text-white" />
+            <button disabled={isLoading} onClick={() => handleRunIdea('המשך את הרעיון שלי')} className="rounded-lg border border-[#43D6CB] p-2 text-[#43D6CB] disabled:opacity-50">המשך את הרעיון שלי</button>
+            <fieldset className="space-y-2"><legend className="mb-2 font-bold text-white">קונספטים לשילוב ולליטוש</legend>
+              {!activeProject.concepts.length && <p className="text-zinc-300">קונספטים ששמרת בפרויקט יופיעו כאן.</p>}
+              <div className="max-h-48 overflow-y-auto space-y-2">{activeProject.concepts.map(concept => <label key={concept.id} className="flex gap-2 text-zinc-200"><input type="checkbox" checked={selectedConceptIds.includes(concept.id)} onChange={e => setSettings({selectedConceptIds:e.target.checked ? [...selectedConceptIds,concept.id] : selectedConceptIds.filter(id => id !== concept.id)})} />{concept.conceptName}</label>)}</div>
+            </fieldset>
+            <label htmlFor="idea-feedback" className="block font-bold text-white">הערות לליטוש הקריאייטיב</label>
+            <textarea id="idea-feedback" value={feedback} onChange={e => setSettings({feedback:e.target.value})} rows={2} placeholder="מה לשמר, מה לשנות ולאיזה כיוון להתקדם?" className="w-full rounded-lg bg-zinc-900 p-3 text-white" />
+            <div className="flex flex-wrap gap-2"><button disabled={isLoading} onClick={() => handleRunIdea('שלב קונספטים')} className="rounded-lg border border-[#43D6CB] p-2 text-[#43D6CB] disabled:opacity-50">שלב קונספטים נבחרים</button><button disabled={isLoading} onClick={() => handleRunIdea('לטש לפי ההערות')} className="rounded-lg border border-[#43D6CB] p-2 text-[#43D6CB] disabled:opacity-50">לטש לפי ההערות</button></div>
           </div>
           {/* Intensity Slider */}
           <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl space-y-2">
@@ -253,6 +282,7 @@ export const IdeaFactory: React.FC = () => {
               </div>
 
               {selectedCompare.length >= 2 && <div className="rounded-xl border border-[#43D6CB]/40 p-4 bg-[#183036] space-y-3">
+                <button disabled={isLoading} onClick={() => handleRunIdea('שלב קונספטים')} className="rounded-lg border border-[#43D6CB] p-2 text-[#43D6CB]">שלב את הרעיונות שנבחרו</button>
                 <h4 className="font-bold text-white text-sm">השוואת רעיונות ({selectedCompare.length})</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">{(resultData.ideas || []).filter((idea, idx) => selectedCompare.includes(String(idea.id || idx))).map((idea, idx) =>
                   <div key={idx} className="p-3 rounded-lg bg-[#103F46] text-xs space-y-2"><strong className="text-[#43D6CB]">{idea.title}</strong><p className="text-zinc-200">{idea.visualHook}</p><p className="text-[#C1D1D5]">{idea.mechanism}</p></div>)}</div>
@@ -294,8 +324,8 @@ export const IdeaFactory: React.FC = () => {
 
                     <div className="pt-2 border-t border-zinc-800 flex flex-wrap gap-2">
                       <button type="button" onClick={() => setSelectedCompare(old => old.includes(String(idea.id || idx)) ? old.filter(id => id !== String(idea.id || idx)) : old.length < 3 ? [...old, String(idea.id || idx)] : old)}
-                        className={`px-3 py-1.5 rounded-lg text-xs border ${selectedCompare.includes(String(idea.id || idx)) ? 'border-[#43D6CB] text-[#43D6CB]' : 'border-zinc-700 text-zinc-300'}`}>{selectedCompare.includes(String(idea.id || idx)) ? '✓ להשוואה' : 'השווה'}</button>
-                      <button type="button" onClick={() => sendIdeaToDirector(idea)} className="px-3 py-1.5 rounded-lg text-xs border border-zinc-600 text-white hover:border-[#43D6CB]">העבר למודול 2</button>
+                        className={`px-3 py-1.5 rounded-lg text-xs border ${selectedCompare.includes(String(idea.id || idx)) ? 'border-[#43D6CB] text-[#43D6CB]' : 'border-zinc-700 text-zinc-300'}`}>{selectedCompare.includes(String(idea.id || idx)) ? '✓ נבחר לפיתוח' : 'בחר לפיתוח / שילוב'}</button>
+                      <button type="button" onClick={() => sendIdeaToDirector(idea)} className="px-3 py-1.5 rounded-lg text-xs border border-zinc-600 text-white hover:border-[#43D6CB]">המשך ליטוש בבמאי הקריאייטיב</button>
                       <button
                         onClick={() => saveIdeaAsConcept(idea)}
                         className="flex-1 py-1.5 bg-[#43D6CB]/15 hover:bg-[#43D6CB]/25 text-[#43D6CB] text-xs font-bold rounded-lg border border-[#43D6CB]/30 transition flex items-center justify-center gap-1"

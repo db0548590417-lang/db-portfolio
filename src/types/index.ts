@@ -240,7 +240,7 @@ export interface Project {
   brand?: BrandProfile;
   creativeProfile?: GlobalPreferences['creativeProfile'];
   creativeWorkspace?: CreativeWorkspace;
-  ideaFactoryWorkspace?: { focus: string; method: string; intensity: number };
+  ideaFactoryWorkspace?: { focus: string; method: string; intensity: number; seedIdea?: string; feedback?: string; selectedConceptIds?: string[]; drafts?: { id: string; title: string; visualHook: string; mechanism: string; executionTip: string; suggestedCopy: string; imagePrompt: string }[] };
   designAssets?: DesignAsset[];
   savedInspirations: InspirationItem[];
   concepts: CreativeConcept[];

@@ -108,7 +108,7 @@ const sanitizeProject = (raw: any): Project => {
     },
     brand: raw.brand && typeof raw.brand === 'object' ? raw.brand : {},
     creativeWorkspace: raw.creativeWorkspace && typeof raw.creativeWorkspace === 'object' ? raw.creativeWorkspace : undefined,
-    ideaFactoryWorkspace: raw.ideaFactoryWorkspace && typeof raw.ideaFactoryWorkspace === 'object' ? { focus: String(raw.ideaFactoryWorkspace.focus || ''), method: String(raw.ideaFactoryWorkspace.method || 'auto'), intensity: Math.max(1, Math.min(5, Number(raw.ideaFactoryWorkspace.intensity) || 3)) } : undefined,
+    ideaFactoryWorkspace: raw.ideaFactoryWorkspace && typeof raw.ideaFactoryWorkspace === 'object' ? { ...raw.ideaFactoryWorkspace, focus: String(raw.ideaFactoryWorkspace.focus || ''), method: String(raw.ideaFactoryWorkspace.method || 'auto'), intensity: Math.max(1, Math.min(5, Number(raw.ideaFactoryWorkspace.intensity) || 3)) } : undefined,
     creativeProfile: ['modern_luxury','hasidic_traditional','bold_brutalist','minimalist'].includes(raw.creativeProfile) ? raw.creativeProfile : defaultPreferences.creativeProfile,
     designAssets: Array.isArray(raw.designAssets) ? raw.designAssets : [],
     savedInspirations: Array.isArray(raw.savedInspirations) ? raw.savedInspirations : [],
@@ -160,7 +160,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Cross-module states
   const [selectedInspirationForAnalysis, setSelectedInspirationForAnalysis] = useState<InspirationItem | null>(null);
-  const [selectedConceptForVisual, setSelectedConceptForVisual] = useState<CreativeConcept | null>(null);
+  const [visualConceptSelection, setVisualConceptSelection] = useState<{ projectId: string; concept: CreativeConcept } | null>(null);
   const [selectedArtworkForMockup, setSelectedArtworkForMockup] = useState<string | null>(null);
   const [selectedImageForShadowMaster, setSelectedImageForShadowMaster] = useState<string | null>(null);
 
@@ -196,6 +196,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // The active project is the single source of truth for all AI requests.
   const projectForAiRef = useRef<Project | null>(null);
   const activeProject = sanitizeProject(projects.find((p) => p.id === activeProjectId) || projects[0] || createInitialProject());
+  const selectedConceptForVisual = visualConceptSelection?.projectId === activeProject.id ? visualConceptSelection.concept : null;
+  const setSelectedConceptForVisual = (concept: CreativeConcept | null) => setVisualConceptSelection(concept ? { projectId: activeProject.id, concept } : null);
   projectForAiRef.current = activeProject;
   useEffect(() => {
     const originalFetch = window.fetch.bind(window);

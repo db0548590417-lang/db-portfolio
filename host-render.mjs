@@ -1,4 +1,4 @@
-import http from 'node:http';
+﻿import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import worker from './dist/server/index.js';
 import { createPasswordAuth, readCookie } from './password-auth.mjs';
@@ -18,11 +18,20 @@ export function createRenderServer(options = {}) {
   if (password && password.length < 12) throw new Error('APP_ACCESS_PASSWORD must contain at least 12 characters.');
   const databaseUrl = options.databaseUrl || process.env.DATABASE_URL;
   const sqlitePath = options.sqlitePath || process.env.ACCOUNTS_SQLITE_PATH;
-  const storePromise = (options.accountStore ? Promise.resolve(options.accountStore)
-    : databaseUrl ? createPostgresAccountStore(databaseUrl)
-    : sqlitePath && !isHosted ? createSqliteAccountStore(sqlitePath)
-    : Promise.resolve(null)).catch(() => { console.error('Account database is unavailable. Check DATABASE_URL in the hosting dashboard.'); return null; });
-  const auth = createPasswordAuth({ secret, ownerPassword: password, storePromise });
+  let accountStore = options.accountStore || null;
+  let connecting;
+  let retryAt = 0;
+  async function getStore() {
+    if (accountStore) return accountStore;
+    if (Date.now() < retryAt) return null;
+    if (!connecting) connecting = (databaseUrl ? createPostgresAccountStore(databaseUrl)
+      : sqlitePath && !isHosted ? createSqliteAccountStore(sqlitePath) : Promise.resolve(null))
+      .then(store => { accountStore = store; return store; })
+      .catch(() => { retryAt = Date.now() + 15000; console.error('Account database is unavailable. Retrying in 15 seconds.'); return null; })
+      .finally(() => { connecting = null; });
+    return connecting;
+  }
+  const auth = createPasswordAuth({ secret, ownerPassword: password, getStore });
   const cache = new Map();
   const failures = new Map();
   return http.createServer(async (incoming, outgoing) => {
@@ -35,7 +44,7 @@ export function createRenderServer(options = {}) {
       // The trusted proxy's client address is the last address in its forwarded chain.
       const address = isHosted ? String(incoming.headers['x-forwarded-for'] || '').split(',').at(-1).trim() || incoming.socket.remoteAddress : incoming.socket.remoteAddress;
       const failure = failures.get(address);
-      if (failure && failure.count >= 20 && Date.now() - failure.at < 60000) {
+      if (['/api/auth/owner', '/api/auth/register', '/api/auth/login'].includes(pathname) && failure && failure.count >= 20 && Date.now() - failure.at < 60000) {
         outgoing.writeHead(429, { 'Retry-After': '60', 'Cache-Control': 'no-store' }).end('Please wait one minute before trying again.');
         return;
       }

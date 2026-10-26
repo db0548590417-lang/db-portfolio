@@ -1,9 +1,9 @@
-import fs from 'node:fs';
+﻿import fs from 'node:fs';
 import path from 'node:path';
 import { build as viteBuild } from 'vite';
 import { build as bundle } from 'rolldown';
 
-await viteBuild();
+await viteBuild({ configLoader: 'runner' });
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.json': 'application/json' };
 const assets = {};
 function collect(directory) {

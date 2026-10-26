@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useProject } from '../../context/ProjectContext';
 import { MODULES_LIST } from '../../data/modules';
 import { Icon } from '../common/Icon';
@@ -10,7 +10,13 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
-  const { activeModule, setActiveModule, activeProject } = useProject();
+  const { activeModule, setActiveModule, activeProject, setSelectedConceptForVisual } = useProject();
+
+  const previousConcepts = useRef({ projectId: activeProject.id, count: activeProject.concepts.length });
+  useEffect(() => {
+    if (previousConcepts.current.projectId === activeProject.id && activeProject.concepts.length > previousConcepts.current.count && isCollapsed) onToggleCollapse();
+    previousConcepts.current = { projectId: activeProject.id, count: activeProject.concepts.length };
+  }, [activeProject.id, activeProject.concepts.length, isCollapsed, onToggleCollapse]);
 
   const categories = [
     { id: 'discover', label: 'גילוי והשראה' },
@@ -121,6 +127,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
           );
         })}
       </div>
+
+      {!isCollapsed && activeProject.concepts.length > 0 && <section aria-label="קונספטים שמורים" className="shrink-0 border-t border-[#31535A] p-3 text-right">
+        <h2 className="mb-2 text-xs font-bold text-[#43D6CB]">הקונספטים שלי ({activeProject.concepts.length})</h2>
+        <div className="max-h-48 space-y-2 overflow-y-auto">{activeProject.concepts.map(concept => <button key={concept.id} onClick={() => { setSelectedConceptForVisual(concept); setActiveModule('visual_generator'); }} className="block w-full rounded-lg border border-[#31535A] p-2 text-right hover:border-[#43D6CB]">
+          <span className="block text-xs font-bold text-white">{concept.conceptName}</span>
+          <span className="mt-1 block text-[12px] text-zinc-300 line-clamp-2">{concept.coreIdea}</span>
+          <span className="mt-1 block text-[12px] text-[#43D6CB]">יצירת תמונה מהקונספט ←</span>
+        </button>)}</div>
+      </section>}
 
       {/* Project Quick Info Footer */}
       {!isCollapsed && (

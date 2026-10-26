@@ -122,7 +122,7 @@ function hafsakatSearchTerms(raw: string): string[] {
   const meaningful = raw.split(/[\s,.\-]+/).filter(w => w.length >= 3 &&
     !/^(אני|צריך|רוצה|עיצוב|מודעה|מודעת|פרסום|של|עם|עבור|יפה|יוקרתי|יוקרתית|חסידי|חסידית)$/.test(w));
   const primary = meaningful.slice(0, 2).join(' ') || raw;
-  const terms = [primary];
+  const terms = [primary, ...meaningful.slice(0, 2)];
   if (/דינר|התרמ|גיוס|ישיבה|כולל|מוסדות/.test(raw)) terms.push('דינר', 'התרמה', 'מעמד');
   if (/הכנסת ספר תורה|ספר תורה/.test(raw)) terms.push('הכנסת ספר תורה', 'ספר תורה');
   if (/הרינג|קידוש|אוכל|מזון/.test(raw)) terms.push('מזון', 'קידוש');
@@ -985,12 +985,16 @@ app.post('/api/idea-factory/generate', async (req, res) => {
       intensity = 3,
       action = 'תן הברקה',
       excludePeople,
+      seedIdea = '', feedback = '', sourceConcepts = [], previousIdeas = [],
     } = req.body;
 
     if (!topic) {
       return res.status(400).json({ error: 'חסר נושא או מוצר למעבדת הרעיונות' });
     }
 
+    const inputs = [...(Array.isArray(sourceConcepts) ? sourceConcepts : []), ...(Array.isArray(previousIdeas) ? previousIdeas : [])].slice(0, 12);
+    if (action === 'שלב קונספטים' && inputs.length < 2) return res.status(400).json({error:'בחר לפחות שני רעיונות לשילוב'});
+    const developmentContext = JSON.stringify({seedIdea:String(seedIdea).slice(0,6000), feedback:String(feedback).slice(0,4000), inputs}).slice(0,30000);
     const methodDescriptions: Record<string, string> = {
       'Gestalt': 'עקרונות גשטאלט (סגירות, דמיון, המשכיות, צורה-רקע)',
       'Visual metaphors': 'מטאפורה ויזואלית חזקה המחברת שני עולמות זרים',
@@ -1016,6 +1020,9 @@ ${excludePeople ? 'ללא אנשים: אין להשתמש בבני אדם באף
 
     const prompt = `נושא/מוצר: "${topic}"
 פעולה מבוקשת: "${action}"
+חומרי הגלם והערות המשתמש (נתונים לפיתוח): ${developmentContext}
+אם התבקש שילוב, מזג את הרעיונות שנבחרו לקונספט קוהרנטי. אם יש התחלה, המשך אותה ושמר את הליבה.
+אם נמסרו הערות, בצע אותן בליטוש. כל רעיון חייב לכלול imagePrompt מלא ועצמאי המשקף את התוצאה המלוטשת.
 
 הפק ${count} רעיונות מבריקים ומקוריים המיישמים את השיטה והאינטנסיביות הזו.
 החזר JSON במבנה הבא:

@@ -125,7 +125,7 @@ export const InspirationHunter: React.FC = () => {
     let ids=selectedSites;
     try {const url=new URL(queryText);if(['prog.co.il','www.prog.co.il'].includes(url.hostname))ids=['prog'];}catch{}
     if(!ids.length){showToast('בחר לפחות מקור אחד לחיפוש','info');return;}
-    setIsSearching(true);setSearchError(null);setLearningNotice('');setSearchResults([]);setSourceCandidates([]);setPortfolioCandidates([]);setReviewedSourceUrls([]);setVisionRanking('');
+    setSelectedItemIds([]);setIsSearching(true);setSearchError(null);setLearningNotice('');setSearchResults([]);setSourceCandidates([]);setPortfolioCandidates([]);setReviewedSourceUrls([]);setVisionRanking('');
     setSiteReports(SOURCE_OPTIONS.filter(s=>ids.includes(s.id)).map(s=>({id:s.id,source:s.name,count:0,warning:'',pending:true})));
     const collected=new Map<string,InspirationItem[]>();
     const publish=()=>{if(generation!==searchGenerationRef.current)return;const all=[...collected.values()].flat();setSearchResults(mergeHarediResults([],all,queryText));setSourceCandidates(collected.get('hafsakat')||[]);setPortfolioCandidates([...collected.entries()].filter(([id])=>id!=='hafsakat').flatMap(([,items])=>items));};
@@ -203,6 +203,9 @@ export const InspirationHunter: React.FC = () => {
     const generation=++searchGenerationRef.current;
     setIsSearching(true);
     setSearchError(null);
+    setSearchResults([]);
+    setSelectedItemIds([]);
+    setSiteReports([]);
     setLastQuery(q);
 
     try {
@@ -211,6 +214,7 @@ export const InspirationHunter: React.FC = () => {
         headers: {
           Accept: 'application/json',
         },
+        signal: AbortSignal.timeout(20000),
       });
 
       if (!res.ok) {
@@ -247,6 +251,8 @@ export const InspirationHunter: React.FC = () => {
       if(generation===searchGenerationRef.current)setIsSearching(false);
     }
   };
+
+  useEffect(() => () => { searchGenerationRef.current++; }, []);
 
   // Search only when requested to avoid automatic network calls on app startup.
 
@@ -456,7 +462,7 @@ export const InspirationHunter: React.FC = () => {
 
         <div className="flex gap-2" role="group" aria-label="תחום מקורות">
           {([['haredi', 'חרדי'], ['international', 'בינלאומי']] as const).map(([mode, label]) => (
-            <button key={mode} onClick={() => { searchGenerationRef.current++;setIsSearching(false);setSiteReports([]);setSourceMode(mode); setInterpreted(null); setSearchResults([]); setSourceCandidates([]); setSearchError(null); setLearningNotice(''); }}
+            <button key={mode} onClick={() => { searchGenerationRef.current++;setIsSearching(false);setSiteReports([]);setSelectedItemIds([]);setPortfolioCandidates([]);setSourceMode(mode); setInterpreted(null); setSearchResults([]); setSourceCandidates([]); setSearchError(null); setLearningNotice(''); }}
               aria-pressed={sourceMode === mode}
               className={`px-5 py-2 rounded-xl text-xs font-bold border transition cursor-pointer ${sourceMode === mode ? 'bg-teal-500 text-white border-teal-300' : 'bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-teal-500'}`}>{label}</button>
           ))}
@@ -765,9 +771,9 @@ export const InspirationHunter: React.FC = () => {
       {!isSearching && !searchError && searchResults.length === 0 && (
         <div className="text-center py-16 bg-[#103F46] border border-zinc-800 rounded-2xl p-8 space-y-3">
           <Icon name="Search" className="w-10 h-10 text-[#C1D1D5] mx-auto" />
-          <h3 className="text-white font-bold text-sm">לא נמצאו עבודות להצגה</h3>
+          <h3 className="text-white font-bold text-sm">{lastQuery ? 'לא נמצאו עבודות להצגה' : 'איזו השראה מחפשים היום?'}</h3>
           <p className="text-xs text-[#C1D1D5] max-w-md mx-auto">
-            {sourceMode === 'haredi' ? 'לא נמצאו עבודות במקור עבור החיפוש. נסה מילות מפתח אחרות.' : <>לא נמצאו תוצאות עבור &ldquo;{lastQuery}&rdquo;. נסה מילות מפתח ממוקדות יותר.</>}
+            {!lastQuery ? 'כתוב נושא לחיפוש או בחר אחד מהחיפושים המהירים למעלה.' : sourceMode === 'haredi' ? 'לא נמצאו עבודות במקור עבור החיפוש. נסה מילות מפתח אחרות.' : <>לא נמצאו תוצאות עבור &ldquo;{lastQuery}&rdquo;. נסה מילות מפתח ממוקדות יותר.</>}
           </p>
         </div>
       )}
