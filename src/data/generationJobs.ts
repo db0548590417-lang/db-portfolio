@@ -12,12 +12,26 @@ export async function acknowledgeImageJob(id:string,failed=false){
   running.delete(id);
 }
 export async function imageJobStatus(id:string){const response=await fetch('/api/generation-jobs?id='+id,{signal:AbortSignal.timeout(20000)});const result=await response.json();if(!response.ok)throw Error(result.error||'לא ניתן לקרוא את מצב היצירה');return result;}
-export async function createImageJob(body:unknown,projectId:string,image:any){
+export async function createImageJob(body:unknown,projectId:string,image:any,onTemporary?:()=>void){
   const created={id:crypto.randomUUID()};
   const job={id:created.id,projectId,image:{...image,id:'gen-'+created.id}};
   try{localStorage.setItem(storageKey(),JSON.stringify([...pendingImageJobs(),job]));}catch{throw Error('לא ניתן לשמור פרטי מעקב במכשיר. הורד גיבוי ופנה מקום לפני יצירה חדשה. לא הופעלה בקשת AI.');}
   const response=await fetch('/api/generation-jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body as any,requestId:created.id}),signal:AbortSignal.timeout(20000)});
   const result=await response.json();
+  // The server emits this code only before starting AI work. Never retry an uncertain request.
+  if (response.status === 503 && result.code === 'BACKGROUND_STORAGE_UNAVAILABLE') {
+    localStorage.setItem(storageKey(),JSON.stringify(pendingImageJobs().filter(item=>item.id!==created.id)));
+    running.add(created.id);
+    try {
+      onTemporary?.();
+      const directResponse = await fetch('/api/visual-generator/generate', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), signal:AbortSignal.timeout(300000)
+      });
+      const directResult = await directResponse.json();
+      if (!directResponse.ok) throw Error(directResult.error || 'יצירת התמונה נכשלה. לא בוצע ניסיון חוזר אוטומטי.');
+      return {...directResult,jobId:created.id,temporary:true};
+    } finally { running.delete(created.id); }
+  }
   if(!response.ok){localStorage.setItem(storageKey(),JSON.stringify(pendingImageJobs().filter(item=>item.id!==created.id)));throw Error(result.error||'לא ניתן להתחיל את היצירה');}
   running.add(created.id);
   try{

@@ -241,7 +241,7 @@ export const VisualGenerator: React.FC = () => {
       if (!window.confirm('יצירת תמונה עם הרפרנסים שנבחרו משתמשת במכסת Gemini. להמשיך?')) return;
       const activeReferenceIds=useBrandLogo&&brandLogo?[brandLogo.id,...selected]:selected;
       const referenceConfiguration=activeReferenceIds.map(id=>({id,...referenceOption(id),...(useBrandLogo&&id===brandLogo?.id?{role:'logo',strength:5}:{})}));
-      const data=await createImageJob({prompt:fullPrompt+referenceGuidance,aspectRatio,model,quality,excludePeople:globalPrefs.excludePeople,references},activeProject.id,{prompt:fullPrompt+referenceGuidance,aspectRatio,model,quality,createdAt:Date.now(),conceptId:selectedConceptForVisual?.id,referenceIds:activeReferenceIds,referenceConfiguration});
+      const data=await createImageJob({prompt:fullPrompt+referenceGuidance,aspectRatio,model,quality,excludePeople:globalPrefs.excludePeople,references},activeProject.id,{prompt:fullPrompt+referenceGuidance,aspectRatio,model,quality,createdAt:Date.now(),conceptId:selectedConceptForVisual?.id,referenceIds:activeReferenceIds,referenceConfiguration},()=>showToast('יצירה ללא שמירה ברקע: השאר את החלון פתוח עד לסיום. התמונה תישמר במכשיר.','info'));
       if (data.imageUrl) {
         setOriginalImage(data.imageUrl);
         let finalUrl = data.imageUrl;
@@ -275,7 +275,7 @@ export const VisualGenerator: React.FC = () => {
           generatedImages: [newImgObj, ...p.generatedImages.filter(image=>image.id!==newImgObj.id)],
         }));
 
-        if (imageSaved) await acknowledgeImageJob(data.jobId).catch(()=>{});
+        if (imageSaved && !data.temporary) await acknowledgeImageJob(data.jobId).catch(()=>{});
         if (imageSaved) showToast(finalUrl === data.imageUrl && removeBg ? 'התמונה נוצרה, אך לא הוסר הרקע. המקור נשמר ללא שינוי.' : 'התמונה נוצרה ונשמרה בפרויקט', finalUrl === data.imageUrl && removeBg ? 'info' : 'success');
       }
     } catch (err: any) {

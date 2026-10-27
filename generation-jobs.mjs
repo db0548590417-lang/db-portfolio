@@ -6,7 +6,7 @@ export function createGenerationJobs({getStore,worker}){
   return async(request,response,user,env)=>{
     const url=new URL(request.url);if(url.pathname!=='/api/generation-jobs')return false;
     const store=await getStore();
-    if(!store?.readDocument){send(response,{error:'כדי לשמור יצירות ברקע נדרש חיבור למסד החשבונות'},503);return true;}
+    if(!store?.readDocument){send(response,{code:'BACKGROUND_STORAGE_UNAVAILABLE',error:'שמירה קבועה ברקע אינה זמינה ללא חיבור למסד החשבונות'},503);return true;}
     const id=url.searchParams.get('id');
     if(request.method==='POST'){
       if(active.size>=32||[...active.values()].filter(value=>value===user.id).length>=3){send(response,{error:'יש בקשות יצירה קודמות. המתן לסיומן.'},429);return true;}
