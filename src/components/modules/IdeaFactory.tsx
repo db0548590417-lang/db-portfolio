@@ -38,7 +38,7 @@ export const IdeaFactory: React.FC = () => {
   const intensity = saved?.intensity ?? 3;
   const effectiveTopic = topic.trim() || activeProject.brief.productOrService || activeProject.brand?.brandName || activeProject.name;
   const setSettings = (patch: Partial<NonNullable<typeof saved>>) => updateActiveProject(p => ({
-    ...p, ideaFactoryWorkspace: { focus: p.ideaFactoryWorkspace?.focus ?? '', method: p.ideaFactoryWorkspace?.method ?? 'auto', intensity: p.ideaFactoryWorkspace?.intensity ?? 3, ...patch }
+    ...p, ideaFactoryWorkspace: { ...p.ideaFactoryWorkspace, focus: p.ideaFactoryWorkspace?.focus ?? '', method: p.ideaFactoryWorkspace?.method ?? 'auto', intensity: p.ideaFactoryWorkspace?.intensity ?? 3, ...patch }
   }));
   const projectIdRef = useRef(activeProject.id); projectIdRef.current = activeProject.id;
   const seedIdea = saved?.seedIdea || '';
@@ -119,6 +119,7 @@ export const IdeaFactory: React.FC = () => {
       imageGenerationPrompt: idea.imagePrompt,
       createdAt: Date.now(),
       status:'approved' as const, version:1, sourceConceptIds:selectedConceptIds,
+      referenceIds: [...new Set(activeProject.concepts.filter(concept => selectedConceptIds.includes(concept.id)).flatMap(concept => concept.referenceIds || []))],
     };
     updateActiveProject((p) => ({
       ...p,
@@ -176,6 +177,7 @@ export const IdeaFactory: React.FC = () => {
           </div>
           <div className="space-y-3 rounded-xl border border-[#31535A] p-3">
             <label htmlFor="seed-idea" className="block font-bold text-white">יש לי התחלה של רעיון</label>
+            <p className="text-xs text-[#C1D1D5]">אפשר לערוך ולהרחיב כאן את הרעיון שהועבר מהבמאי, להוסיף הערות ולבקש המשך או ליטוש. העריכה נשמרת אוטומטית בפרויקט.</p>
             <textarea id="seed-idea" value={seedIdea} onChange={e => setSettings({seedIdea:e.target.value})} rows={3} placeholder="כתוב את הרעיון שלך וה־AI יפתח אותו" className="w-full rounded-lg bg-zinc-900 p-3 text-white" />
             <button disabled={isLoading} onClick={() => handleRunIdea('המשך את הרעיון שלי')} className="rounded-lg border border-[#43D6CB] p-2 text-[#43D6CB] disabled:opacity-50">המשך את הרעיון שלי</button>
             <fieldset className="space-y-2"><legend className="mb-2 font-bold text-white">קונספטים לשילוב ולליטוש</legend>

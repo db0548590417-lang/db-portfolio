@@ -105,6 +105,7 @@ export const CreativeDirector: React.FC = () => {
         const enriched: CreativeConcept[] = data.concepts.map((c: any, idx: number) => ({
           ...c,
           id: 'concept-' + Date.now() + '-' + idx,
+          referenceIds: [...new Set([...(c.referenceIds || []), ...(mode === 'combine' ? (previousConceptsPayload || []).flatMap((source: CreativeConcept) => source.referenceIds || []) : [])])],
           createdAt: Date.now(),
           suggestedHeadline: activeProject.creativeWorkspace?.lockedCopy && activeProject.creativeWorkspace?.approvedCopy?.trim() ? activeProject.creativeWorkspace.approvedCopy : c.suggestedHeadline,
           visualExecution: activeProject.creativeWorkspace?.lockedVisual && activeProject.creativeWorkspace?.visualDirection?.trim() ? activeProject.creativeWorkspace.visualDirection : c.visualExecution,
@@ -148,6 +149,24 @@ export const CreativeDirector: React.FC = () => {
     showToast('הפרומפט והקונספט נשלחו למחולל הוויזואלי', 'success');
   };
 
+  const sendToIdeaLab = (concepts: CreativeConcept[] = []) => {
+    const seedIdea = concepts.length ? concepts.map(concept => [
+      concept.conceptName, concept.coreIdea, concept.visualExecution,
+      concept.suggestedHeadline, concept.emotionalMechanism, concept.whyItWorks,
+      concept.suggestedDesignTechnique, concept.imageGenerationPrompt
+    ].filter(Boolean).join('\n')).join('\n\n') : [workspace.approvedCopy, workspace.visualDirection, workspace.notes, workspace.visualReferenceUrl].filter(Boolean).join('\n');
+    updateActiveProject(project => ({ ...project,
+      concepts: [...project.concepts, ...concepts.filter(concept => !project.concepts.some(saved => saved.id === concept.id)).map(concept => ({...concept, status:'draft' as const}))],
+      ideaFactoryWorkspace: { ...project.ideaFactoryWorkspace,
+        focus: project.ideaFactoryWorkspace?.focus || project.brief.productOrService || project.name,
+        method: project.ideaFactoryWorkspace?.method || 'auto', intensity: project.ideaFactoryWorkspace?.intensity ?? 3,
+        seedIdea, selectedConceptIds: concepts.map(concept => concept.id)
+      }
+    }));
+    setActiveModule('idea_factory');
+    showToast('הרעיון הועבר למעבדה — אפשר לערוך, להוסיף ולפתח אותו', 'success');
+  };
+
   // Toggle combine selection
   const toggleCombine = (id: string) => {
     setSelectedForCombine((prev) =>
@@ -157,6 +176,7 @@ export const CreativeDirector: React.FC = () => {
 
   return (
     <div className="h-full overflow-y-auto studio-grid p-6 space-y-6 max-w-7xl mx-auto text-right">
+      <button onClick={() => sendToIdeaLab()} className="rounded-lg border border-[#43D6CB] px-4 py-2 text-sm font-bold text-[#43D6CB]">המשך את הרעיון הנוכחי במעבדת הרעיונות</button>
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
         <div>
@@ -266,6 +286,7 @@ export const CreativeDirector: React.FC = () => {
               צמצם למינימום (Minimal Gestalt)
             </button>
 
+            {selectedForCombine.length > 0 && <button onClick={() => sendToIdeaLab(generatedConcepts.filter(concept => selectedForCombine.includes(concept.id)))} className="rounded-lg border border-[#43D6CB] px-3 py-2 text-xs font-bold text-[#43D6CB]">פתח את הנבחרים במעבדת הרעיונות</button>}
             {selectedForCombine.length >= 2 && (
               <button
                 onClick={() => handleGenerate('combine')}
@@ -370,6 +391,7 @@ export const CreativeDirector: React.FC = () => {
                       </div>
                     </div>
 
+                    <button onClick={() => sendToIdeaLab([concept])} className="w-full rounded-lg border border-[#43D6CB] px-3 py-2 text-xs font-bold text-[#43D6CB]">ערוך והרחב במעבדת הרעיונות</button>
                     {/* Bottom Actions */}
                     <div className="pt-3 border-t border-zinc-800 space-y-2">
                       <div className="grid grid-cols-2 gap-2 text-xs">
