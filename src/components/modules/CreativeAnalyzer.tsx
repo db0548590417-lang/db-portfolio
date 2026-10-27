@@ -33,11 +33,40 @@ export const CreativeAnalyzer: React.FC = () => {
     let cancelled = false;
     setImageUrl(''); setImageBase64(''); setAnalysisResult(null); setActiveAssetId(null);
     const inspiration = selectedInspirationForAnalysis;
-    if (inspiration?.url) {
-      setImageUrl(inspiration.url);
-      fetch(inspiration.url).then(r => { if (!r.ok) throw Error('Image unavailable'); return r.blob(); }).then(blob => {
-        const reader = new FileReader(); reader.onload = () => { if (!cancelled) setImageBase64(String(reader.result || '')); }; reader.readAsDataURL(blob);
-      }).catch(() => { /* Cross-origin references may only be displayed, not analyzed. */ });
+    if (inspiration) {
+      setImageUrl(inspiration.url || inspiration.thumbUrl || '');
+      (async () => {
+        let data = await loadDesignImage('ref-' + inspiration.id).catch(() => null);
+        if (!data && inspiration.id.startsWith('own-')) data = await loadDesignImage(inspiration.id.slice(4)).catch(() => null);
+        if (!data) {
+          const url = inspiration.url;
+          if (!url) throw Error('התמונה אינה זמינה באחסון הפרויקט');
+          const sources = url.startsWith('https://') ? ['/api/inspiration/image?url=' + encodeURIComponent(url), url] : [url];
+          for (const source of sources) {
+            try {
+              const response = await fetch(source);
+              if (!response.ok) throw Error('Image unavailable');
+              const blob = await response.blob();
+              if (blob.size > 8_000_000 || !['image/png','image/jpeg','image/webp','image/gif','image/avif'].includes(blob.type)) throw Error('Unsupported image');
+              if (['image/gif','image/avif'].includes(blob.type)) {
+                const bitmap = await createImageBitmap(blob);
+                try {
+                  const ratio = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height));
+                  const canvas = document.createElement('canvas');
+                  canvas.width = Math.max(1, Math.round(bitmap.width * ratio)); canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
+                  const context = canvas.getContext('2d'); if (!context) throw Error('Image conversion failed');
+                  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height); data = canvas.toDataURL('image/png');
+                } finally { bitmap.close(); }
+              } else {
+                data = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(reader.error); reader.readAsDataURL(blob); });
+              }
+              break;
+            } catch { /* Try the original source if the public image proxy cannot read it. */ }
+          }
+        }
+        if (!data) throw Error('לא ניתן לטעון את תמונת ההשראה. אפשר להעלות אותה מהמחשב.');
+        if (!cancelled) { setImageUrl(data); setImageBase64(data); }
+      })().catch((error: Error) => { if (!cancelled) showToast(error.message, 'error'); });
     } else {
       const requestedId = sessionStorage.getItem(userStorageKey(`dekel-design-${projectId}`));
       sessionStorage.removeItem(userStorageKey(`dekel-design-${projectId}`));
@@ -151,7 +180,7 @@ export const CreativeAnalyzer: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageBase64,
-          mimeType: imageBase64.includes('image/png') ? 'image/png' : 'image/jpeg',
+          mimeType: imageBase64.match(/^data:(image\/(?:png|jpeg|webp));base64,/)?.[1] || 'image/jpeg',
           designType: designKind,
           userProjectContext: buildBrandContext(activeProject),
         }),
